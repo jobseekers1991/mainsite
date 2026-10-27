@@ -1,0 +1,272 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login / Register — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- LEFT: Brand Panel -->
+  <div class="auth-left">
+    <div class="hero-grid" style="position:absolute;inset:0;"></div>
+    <div class="blob blob-1" style="width:400px;height:400px;top:-150px;right:-100px;"></div>
+    <div class="blob blob-2" style="width:300px;height:300px;bottom:-100px;left:-80px;"></div>
+
+    <div class="auth-left-content">
+      <a href="index" class="navbar-logo" style="color:#fff; margin-bottom:2.5rem; display:flex; justify-content:center;">
+        <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+        Jobseekers<span class="dot" style="color:#A5B4FC;">.ph</span>
+      </a>
+
+      <h2>Philippines' #1 VA Platform</h2>
+      <p>Join 12,000+ virtual assistants and 5,000+ businesses building remote success together.</p>
+
+      <div class="auth-perks">
+        <div class="auth-perk">
+          <div class="auth-perk-icon"><i class="fas fa-shield-alt"></i></div>
+          <div>
+            <h4>Verified &amp; Secure</h4>
+            <p>Every account is ID-verified. Your work and payments are always protected.</p>
+          </div>
+        </div>
+        <div class="auth-perk">
+          <div class="auth-perk-icon"><i class="fas fa-star"></i></div>
+          <div>
+            <h4>Top-Quality Matches</h4>
+            <p>Our algorithm connects you with the most relevant VAs or opportunities for your goals.</p>
+          </div>
+        </div>
+        <div class="auth-perk">
+          <div class="auth-perk-icon"><i class="fas fa-coins"></i></div>
+          <div>
+            <h4>Fair &amp; Transparent Pay</h4>
+            <p>Secure escrow payments and weekly payouts. No hidden fees, no payment delays.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Testimonial snippet -->
+      <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius-xl); padding:1.5rem; margin-top:2rem; backdrop-filter:blur(10px);">
+        <div style="display:flex; gap:0.25rem; color:var(--accent); margin-bottom:0.75rem; font-size:0.875rem;">★★★★★</div>
+        <p style="font-size:0.9rem; color:rgba(255,255,255,0.8); line-height:1.75; font-style:italic; margin-bottom:1rem;">"I went from zero to fully booked within 3 months of joining. Best career decision I ever made!"</p>
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <img src="https://i.pravatar.cc/150?img=47" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.3);" alt="" />
+          <div>
+            <div style="font-size:0.8125rem; font-weight:700; color:#fff;">Maria Santos</div>
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.55);">Executive VA · Member since 2024</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Auth Forms -->
+  <div class="auth-right">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <a href="index" class="navbar-logo">
+          <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+          Jobseekers<span class="dot">.ph</span>
+        </a>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-target="login-panel">Sign In</button>
+        <button class="auth-tab" data-target="register-panel">Create Account</button>
+      </div>
+
+      <!-- ===== LOGIN ===== -->
+      <div id="login-panel" class="auth-panel active">
+        <div class="auth-head">
+          <h2>Welcome back!</h2>
+          <p>Sign in to access your dashboard and opportunities.</p>
+        </div>
+
+        <!-- Social Login -->
+        <div class="social-login">
+          <button class="social-btn">
+            <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="Google" style="border-radius:2px;" />
+            Continue with Google
+          </button>
+          <button class="social-btn">
+            <img src="https://facebook.com/favicon.ico" width="18" height="18" alt="Facebook" style="border-radius:2px;" />
+            Continue with Facebook
+          </button>
+        </div>
+
+        <div class="divider">or sign in with email</div>
+
+        <form data-validate>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <div class="input-icon-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" class="form-control" placeholder="you@example.com" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+              <label class="form-label" style="margin:0;">Password</label>
+              <a href="#" style="font-size:0.8125rem; color:var(--primary); font-weight:500;">Forgot password?</a>
+            </div>
+            <div style="position:relative;">
+              <div class="input-icon-wrap">
+                <i class="fas fa-lock"></i>
+                <input type="password" class="form-control" placeholder="••••••••" required style="padding-right:3rem;" />
+              </div>
+              <button type="button" class="pw-toggle" style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-light); font-size:0.9rem;">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:0.625rem; margin-bottom:1.5rem;">
+            <input type="checkbox" id="remember" style="accent-color:var(--primary); width:16px; height:16px;" />
+            <label for="remember" style="font-size:0.875rem; color:var(--text); cursor:pointer;">Remember me for 30 days</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">
+            <i class="fas fa-sign-in-alt"></i> Sign In
+          </button>
+        </form>
+
+        <p class="auth-footer">Don't have an account? <a href="#" onclick="document.querySelector('[data-target=register-panel]').click()">Create one free →</a></p>
+      </div>
+
+      <!-- ===== REGISTER ===== -->
+      <div id="register-panel" class="auth-panel">
+        <div class="auth-head">
+          <h2>Create your free account</h2>
+          <p>Join thousands of VAs and businesses on Jobseekers.ph.</p>
+        </div>
+
+        <!-- Role selection -->
+        <p style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.75rem;">I want to...</p>
+        <div class="role-selector">
+          <div class="role-card selected" onclick="document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">
+            <div class="role-icon">🔍</div>
+            <h4>Hire a VA</h4>
+            <p>I need remote support for my business</p>
+          </div>
+          <div class="role-card" onclick="document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));this.classList.add('selected')">
+            <div class="role-icon">💼</div>
+            <h4>Work as a VA</h4>
+            <p>I want to find remote work opportunities</p>
+          </div>
+        </div>
+
+        <!-- Social Login -->
+        <div class="social-login">
+          <button class="social-btn">
+            <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="Google" style="border-radius:2px;" />
+            Continue with Google
+          </button>
+          <button class="social-btn">
+            <img src="https://facebook.com/favicon.ico" width="18" height="18" alt="Facebook" style="border-radius:2px;" />
+            Continue with Facebook
+          </button>
+        </div>
+
+        <div class="divider">or register with email</div>
+
+        <form data-validate>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">First Name <span class="form-required">*</span></label>
+              <input type="text" class="form-control" placeholder="Juan" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name <span class="form-required">*</span></label>
+              <input type="text" class="form-control" placeholder="dela Cruz" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="form-required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" class="form-control" placeholder="you@example.com" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password <span class="form-required">*</span></label>
+            <div style="position:relative;">
+              <div class="input-icon-wrap">
+                <i class="fas fa-lock"></i>
+                <input type="password" class="form-control" placeholder="Min. 8 characters" required style="padding-right:3rem;" />
+              </div>
+              <button type="button" class="pw-toggle" style="position:absolute; right:0.875rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-light); font-size:0.9rem;">
+                <i class="fas fa-eye-slash"></i>
+              </button>
+            </div>
+            <!-- Password strength -->
+            <div style="margin-top:0.5rem;">
+              <div style="display:flex; gap:0.25rem; margin-bottom:0.25rem;">
+                <div style="height:3px; flex:1; background:var(--danger); border-radius:var(--radius-full);"></div>
+                <div style="height:3px; flex:1; background:var(--border); border-radius:var(--radius-full);"></div>
+                <div style="height:3px; flex:1; background:var(--border); border-radius:var(--radius-full);"></div>
+                <div style="height:3px; flex:1; background:var(--border); border-radius:var(--radius-full);"></div>
+              </div>
+              <p style="font-size:0.75rem; color:var(--text-light);">Use 8+ characters with letters, numbers & symbols</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirm Password <span class="form-required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fas fa-lock"></i>
+              <input type="password" class="form-control" placeholder="Repeat your password" required />
+            </div>
+          </div>
+
+          <div style="background:rgba(79,70,229,0.04); border:1px solid rgba(79,70,229,0.12); border-radius:var(--radius-md); padding:0.875rem; margin-bottom:1.5rem;">
+            <label style="display:flex; align-items:flex-start; gap:0.75rem; cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--primary); margin-top:0.125rem; width:16px; height:16px; flex-shrink:0;" required />
+              <span style="font-size:0.8125rem; color:var(--text); line-height:1.6;">
+                I agree to the <a href="terms" style="color:var(--primary); font-weight:600;">Terms of Service</a> and <a href="privacy" style="color:var(--primary); font-weight:600;">Privacy Policy</a>. I am at least 18 years old.
+              </span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">
+            <i class="fas fa-user-plus"></i> Create Free Account
+          </button>
+
+          <p style="text-align:center; font-size:0.75rem; color:var(--text-light); margin-top:1rem; line-height:1.6;">
+            <i class="fas fa-check-circle" style="color:var(--success);"></i> Free forever &nbsp;·&nbsp;
+            <i class="fas fa-check-circle" style="color:var(--success);"></i> No credit card &nbsp;·&nbsp;
+            <i class="fas fa-check-circle" style="color:var(--success);"></i> Cancel anytime
+          </p>
+        </form>
+
+        <p class="auth-footer">Already have an account? <a href="#" onclick="document.querySelector('[data-target=login-panel]').click()">Sign in →</a></p>
+      </div>
+
+      <!-- Footer links -->
+      <div style="text-align:center; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+        <div style="display:flex; justify-content:center; gap:1.5rem; font-size:0.8125rem; color:var(--text-light);">
+          <a href="privacy" style="color:var(--text-light);">Privacy Policy</a>
+          <a href="terms" style="color:var(--text-light);">Terms of Service</a>
+          <a href="contact" style="color:var(--text-light);">Support</a>
+        </div>
+        <p style="font-size:0.75rem; color:var(--text-light); margin-top:0.75rem;">© 2026 Jobseekers.ph</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

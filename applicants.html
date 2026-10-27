@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jobs &amp; Applicants — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="applicants"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Jobs &amp; Applicants</h1>
+    <p>Review applicants, shortlist the best, and start a paid trial in one click.</p>
+  </div>
+  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+    <a href="ai-match" class="btn btn-outline-primary"><i class="fas fa-magic"></i> AI Match</a>
+    <a href="post-job" class="btn btn-primary"><i class="fas fa-plus"></i> Post a Job</a>
+  </div>
+</div>
+
+<div class="dash-card" style="margin-bottom:1.25rem;">
+  <div class="dash-card-body" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+    <label class="form-label" for="jobSel" style="margin:0;">Job</label>
+    <select id="jobSel" class="form-control" style="max-width:420px;"></select>
+    <span id="jobInfo" style="font-size:0.8125rem; color:var(--text-light);"></span>
+    <select id="sortSel" class="filter-sel" style="margin-left:auto;">
+      <option value="match">Sort: Best match</option>
+      <option value="rate">Sort: Lowest rate</option>
+      <option value="date">Sort: Newest</option>
+    </select>
+  </div>
+</div>
+
+<div class="seg-tabs" id="statusTabs"></div>
+<div id="applicantList"></div>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  let jobId = new URLSearchParams(location.search).get('job') || client.jobs[0].id;
+  let status = 'all';
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+
+  const STATUS = {
+    new: { label: 'New', pill: 'new' },
+    shortlisted: { label: 'Shortlisted', pill: 'viewed' },
+    trial: { label: 'Paid trial', pill: 'trial' },
+    hired: { label: 'Hired', pill: 'hired' },
+    rejected: { label: 'Declined', pill: 'rejected' },
+  };
+  const TABS = ['all', 'new', 'shortlisted', 'trial', 'hired', 'rejected'];
+
+  $('jobSel').innerHTML = client.jobs.map(j => `<option value="${j.id}"${j.id === jobId ? ' selected' : ''}>${esc(j.title)}</option>`).join('');
+  $('jobSel').addEventListener('change', () => { jobId = $('jobSel').value; status = 'all'; render(); });
+  $('sortSel').addEventListener('change', render);
+
+  const forJob = () => client.applicants.filter(a => a.jobId === jobId);
+
+  function render() {
+    const job = client.jobs.find(j => j.id === jobId);
+    const list = forJob();
+    $('jobInfo').innerHTML = `<span class="status-pill active">${job.status}</span> Posted ${fmtDay(job.posted)} · ${list.length} applicants`;
+    $('statusTabs').innerHTML = TABS.map(s => `<button type="button" data-s="${s}" class="${s === status ? 'active' : ''}">${s === 'all' ? 'All' : STATUS[s].label}<span>${s === 'all' ? list.length : list.filter(a => a.status === s).length}</span></button>`).join('');
+
+    const sort = $('sortSel').value;
+    const shown = list.filter(a => status === 'all' || a.status === status)
+      .sort((a, b) => sort === 'rate' ? a.rate - b.rate : sort === 'date' ? b.date - a.date : b.match - a.match);
+
+    $('applicantList').innerHTML = shown.map(a => {
+      const va = vaById(a.vaId);
+      const i = client.applicants.indexOf(a);
+      const st = STATUS[a.status];
+      const questions = (jobById(jobId) || { screening: ['Screening question 1', 'Screening question 2'] }).screening;
+      return `
+        <div class="item-card${a.status === 'rejected' ? ' dim' : ''}">
+          <div class="item-head">
+            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+            <div class="grow">
+              <h3><a href="va-profile">${esc(va.name)}</a> ${va.rising ? '<span class="feat-badge rising"><i class="fas fa-seedling"></i> Rising Talent</span>' : ''}</h3>
+              <p>${esc(va.title)} · ${esc(va.location || '')} · ${va.reviews ? `${va.rating.toFixed(1)}★ (${va.reviews})` : 'New'} · Applied ${fmtDay(a.date)}</p>
+              <div class="va-badges" style="margin:0.5rem 0 0;">
+                ${va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''}
+                ${(va.certs || []).map(c => `<span class="feat-badge cert"><i class="fas fa-certificate"></i> ${esc(c)}</span>`).join('')}
+                ${va.english ? `<span class="feat-badge" style="background:var(--bg); color:var(--text);">English ${va.english}</span>` : ''}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div class="match-score-ring" style="--pct:${a.match}; width:56px; height:56px; font-size:0.875rem; margin:0 0 0.375rem auto;"><span>${a.match}%</span></div>
+              <span class="status-pill ${st.pill}">${st.label}</span>
+            </div>
+          </div>
+          <div class="item-meta">
+            <span>Proposed <strong>$${a.rate}/hr</strong></span>
+            <span>Works <strong>${(va.shifts || []).map(s => SHIFT_LABELS[s]?.label.replace(' hours', '')).join(', ') || '—'}</strong></span>
+          </div>
+          <p class="item-quote">${esc(a.cover)}</p>
+          <details style="margin-top:0.75rem; font-size:0.85rem;">
+            <summary style="cursor:pointer; color:var(--primary); font-weight:600;">Screening answers</summary>
+            ${questions.map((q, qi) => `<p style="margin-top:0.5rem;"><strong style="color:var(--dark);">${esc(q)}</strong><br><span style="color:var(--text-light);">${esc(a.answers?.[qi] || '—')}</span></p>`).join('')}
+          </details>
+          <div class="trial-form inline-panel" data-trial-form="${i}" hidden>
+            <strong style="font-size:0.875rem; color:var(--dark);"><i class="fas fa-flask" style="color:var(--success);"></i> Offer a paid trial to ${esc(va.name.split(' ')[0])}</strong>
+            <div class="form-row-2" style="margin-top:0.75rem;">
+              <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Days</label><select class="form-control" data-f="days"><option>1</option><option>2</option><option selected>3</option></select></div>
+              <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Hours / day</label><select class="form-control" data-f="hours"><option>2</option><option selected>4</option><option>8</option></select></div>
+            </div>
+            <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Fixed scope</label><textarea class="form-control form-textarea" data-f="scope" style="min-height:70px;" placeholder="e.g. Clean up my inbox and book 3 meetings"></textarea></div>
+            <div class="calc-line"><span>Escrow amount</span><strong data-f="cost">${money(3 * 4 * a.rate)}</strong></div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;"><button class="btn btn-primary btn-sm" data-act="sendTrial" data-i="${i}"><i class="fas fa-lock"></i> Fund escrow &amp; send offer</button><button class="btn btn-ghost btn-sm" data-act="cancelTrial" data-i="${i}">Cancel</button></div>
+          </div>
+          <div class="item-actions">
+            ${a.status === 'new' ? `<button class="btn btn-outline-primary btn-sm" data-act="shortlist" data-i="${i}"><i class="fas fa-star"></i> Shortlist</button>` : ''}
+            ${['new', 'shortlisted'].includes(a.status) ? `<button class="btn btn-primary btn-sm" data-act="trial" data-i="${i}"><i class="fas fa-flask"></i> Offer paid trial</button>` : ''}
+            ${['shortlisted', 'trial'].includes(a.status) ? `<button class="btn btn-outline-primary btn-sm" data-act="hire" data-i="${i}"><i class="fas fa-handshake"></i> Hire</button>` : ''}
+            <a href="messages?as=client&to=${a.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
+            ${['new', 'shortlisted'].includes(a.status) ? `<button class="btn btn-ghost btn-sm" data-act="reject" data-i="${i}" style="color:var(--danger);"><i class="fas fa-times"></i> Decline</button>` : ''}
+            ${a.status === 'rejected' ? `<button class="btn btn-ghost btn-sm" data-act="undo" data-i="${i}"><i class="fas fa-undo"></i> Undo</button>` : ''}
+          </div>
+        </div>`;
+    }).join('') || `<div class="empty-state"><i class="fas fa-user-friends"></i>No applicants in this list yet.<br><a href="ai-match" style="color:var(--primary); font-weight:600;">Use AI Match to invite VAs</a></div>`;
+  }
+
+  $('statusTabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-s]');
+    if (b) { status = b.dataset.s; render(); }
+  });
+
+  $('applicantList').addEventListener('input', e => {
+    const form = e.target.closest('[data-trial-form]');
+    if (!form) return;
+    const a = client.applicants[Number(form.dataset.trialForm)];
+    const f = name => form.querySelector(`[data-f="${name}"]`);
+    f('cost').textContent = money(Number(f('days').value) * Number(f('hours').value) * a.rate);
+  });
+
+  $('applicantList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    const a = client.applicants[i];
+    const va = vaById(a.vaId);
+    const form = document.querySelector(`[data-trial-form="${i}"]`);
+    switch (btn.dataset.act) {
+      case 'shortlist': a.status = 'shortlisted'; showToast(`${va.name} shortlisted`); break;
+      case 'reject': a.status = 'rejected'; showToast(`${va.name} will get a polite "not this time" message`); break;
+      case 'undo': a.status = 'new'; break;
+      case 'trial': form.hidden = false; form.querySelector('textarea').focus(); return;
+      case 'cancelTrial': form.hidden = true; return;
+      case 'sendTrial': {
+        const f = name => form.querySelector(`[data-f="${name}"]`);
+        const scope = f('scope').value.trim();
+        if (!scope) { f('scope').style.borderColor = 'var(--danger)'; f('scope').focus(); return; }
+        a.status = 'trial';
+        client.trials.unshift({ id: 't' + Date.now(), vaId: a.vaId, role: client.jobs.find(j => j.id === jobId).title, days: Number(f('days').value), hours: Number(f('hours').value), rate: a.rate, scope, status: 'pending-accept' });
+        showToast(`Trial offer sent to ${va.name}. Escrow funded: ${f('cost').textContent}`);
+        break;
+      }
+      case 'hire':
+        a.status = 'hired';
+        if (!client.hires.some(h => h.vaId === a.vaId)) client.hires.unshift({ vaId: a.vaId, role: client.jobs.find(j => j.id === jobId).title, rate: a.rate, start: Date.now(), hoursWeek: 0 });
+        showToast(`${va.name} hired! The 30-day Replacement Guarantee starts today.`);
+        break;
+    }
+    save();
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,529 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maria Santos — Executive VA Profile | Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas" class="active">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PROFILE HERO -->
+<section class="profile-hero-wrap">
+  <div class="hero-grid" style="position:absolute;inset:0;opacity:0.5;"></div>
+  <div class="blob blob-1" style="opacity:0.12;"></div>
+  <div class="blob blob-2" style="opacity:0.08;"></div>
+
+  <div class="profile-card-wrap">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb" style="margin-bottom:1.5rem;">
+      <a href="index">Home</a><i class="fas fa-chevron-right"></i>
+      <a href="find-vas">Find VAs</a><i class="fas fa-chevron-right"></i>
+      <span>Maria Santos</span>
+    </div>
+
+    <div class="profile-main-card">
+      <div class="profile-avatar-wrap">
+        <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" class="profile-avatar" />
+        <div class="profile-status online" style="background:var(--success);"></div>
+      </div>
+
+      <div class="profile-body">
+        <div style="display:flex; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+          <h1 class="profile-name">Maria Santos</h1>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.375rem;">
+            <span class="verified"><i class="fas fa-check-circle"></i> ID Verified</span>
+            <span class="badge badge-featured"><i class="fas fa-crown"></i> Top Rated</span>
+            <span class="feat-badge brownout" title="Speed test + backup power and internet verified Oct 2026">⚡ Brownout-ready</span>
+            <span class="feat-badge cert"><i class="fas fa-certificate"></i> Executive Assistant Pro</span>
+          </div>
+        </div>
+        <p class="profile-title">Executive Virtual Assistant · Administrative Support Expert</p>
+
+        <div class="profile-meta">
+          <span><i class="fas fa-map-marker-alt"></i> Cebu City, Philippines</span>
+          <span><i class="fas fa-clock"></i> UTC+8 · Online now</span>
+          <span><i class="fas fa-briefcase"></i> 6 years experience</span>
+          <span><i class="fas fa-check-double"></i> 84 jobs completed</span>
+          <span><i class="fas fa-reply"></i> Responds within 1 hour</span>
+        </div>
+
+        <div class="profile-tags">
+          <span class="skill-tag">Admin Support</span>
+          <span class="skill-tag">Calendar Management</span>
+          <span class="skill-tag">Email Management</span>
+          <span class="skill-tag">CRM</span>
+          <span class="skill-tag">Data Entry</span>
+          <span class="skill-tag">Travel Coordination</span>
+          <span class="skill-tag">Slack</span>
+          <span class="skill-tag">Asana</span>
+          <span class="skill-tag">HubSpot</span>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <div class="profile-rate">
+          <div class="profile-rate-num">$8<span style="font-size:1rem;font-weight:500;color:var(--text-light)">/hr</span></div>
+          <div class="profile-rate-label">Hourly Rate</div>
+        </div>
+
+        <div style="background:rgba(79,70,229,0.06); border:1px solid rgba(79,70,229,0.12); border-radius:var(--radius-lg); padding:0.875rem; text-align:center;">
+          <div style="font-size:1.5rem; font-weight:800; color:var(--dark); font-family:'Poppins',sans-serif; line-height:1;">4.9<span style="color:var(--accent);font-size:1rem;">★</span></div>
+          <div style="font-size:0.75rem; color:var(--text-light);">84 reviews</div>
+        </div>
+
+        <a href="messages?as=client&to=maria-santos" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send Message</a>
+        <a href="#trial" class="btn btn-outline-primary"><i class="fas fa-flask"></i> Start Paid Trial</a>
+        <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-briefcase"></i> Hire Me</a>
+        <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i> Save Profile</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN PROFILE CONTENT -->
+<section style="padding:3rem 1.5rem; background:var(--bg);">
+  <div class="container" style="max-width:1000px;">
+    <div class="layout-aside-sm">
+
+      <!-- LEFT: Bio, Portfolio, Reviews -->
+      <div>
+
+        <!-- About -->
+        <div class="sidebar-card" style="margin-bottom:1.5rem;">
+          <h2 style="font-size:1.25rem; font-weight:700; color:var(--dark); margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">About Me</h2>
+          <p style="color:var(--text); line-height:1.85; margin-bottom:1rem; font-size:0.9375rem;">
+            I'm a seasoned Executive Virtual Assistant with over 6 years of experience supporting C-suite executives, entrepreneurs, and small business owners across the US, UK, and Australia.
+          </p>
+          <p style="color:var(--text); line-height:1.85; margin-bottom:1rem; font-size:0.9375rem;">
+            My expertise lies in transforming administrative chaos into organized, efficient workflows. I've helped my clients reclaim 15–20 hours per week by managing their inboxes, coordinating complex schedules, and handling day-to-day operational tasks.
+          </p>
+          <p style="color:var(--text); line-height:1.85; font-size:0.9375rem;">
+            I'm highly tech-savvy, proactive, and take pride in anticipating my clients' needs before they even ask. Let's discuss how I can make your workday smoother and more productive!
+          </p>
+        </div>
+
+        <!-- Skills & Expertise -->
+        <div class="sidebar-card" style="margin-bottom:1.5rem;">
+          <h2 style="font-size:1.25rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">Skills & Expertise</h2>
+          <div class="form-row-2">
+            <div>
+              <p style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.375rem;">Calendar Management</p>
+              <div class="progress-bar"><div class="progress-fill" style="width:98%"></div></div>
+            </div>
+            <div>
+              <p style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.375rem;">Email Management</p>
+              <div class="progress-bar"><div class="progress-fill" style="width:95%"></div></div>
+            </div>
+            <div>
+              <p style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.375rem;">CRM (HubSpot/Salesforce)</p>
+              <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+            </div>
+            <div>
+              <p style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.375rem;">Project Management</p>
+              <div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div>
+            </div>
+            <div>
+              <p style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.375rem;">Research & Reports</p>
+              <div class="progress-bar"><div class="progress-fill" style="width:92%"></div></div>
+            </div>
+            <div>
+              <p style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.375rem;">Travel Coordination</p>
+              <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Work History -->
+        <div class="sidebar-card" style="margin-bottom:1.5rem;">
+          <h2 style="font-size:1.25rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">Work Experience</h2>
+
+          <div style="border-left:2px solid var(--border); padding-left:1.25rem; display:flex; flex-direction:column; gap:1.5rem;">
+            <div style="position:relative;">
+              <div style="position:absolute; left:-1.5rem; top:0.25rem; width:14px; height:14px; border-radius:50%; background:var(--primary); border:2px solid #fff; box-shadow:0 0 0 2px var(--primary);"></div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.375rem;">
+                <h3 style="font-size:1rem; font-weight:700; color:var(--dark);">Executive Virtual Assistant</h3>
+                <span style="font-size:0.8125rem; color:var(--text-light); font-weight:500;">2021 – Present</span>
+              </div>
+              <p style="font-size:0.875rem; color:var(--primary); font-weight:600; margin-bottom:0.5rem;">Carter Digital Agency · Remote (US)</p>
+              <p style="font-size:0.875rem; color:var(--text-light); line-height:1.7;">Managed executive calendar, coordinated 50+ client meetings per week, handled inbox zero strategy, and produced weekly reports for C-suite review.</p>
+            </div>
+
+            <div style="position:relative;">
+              <div style="position:absolute; left:-1.5rem; top:0.25rem; width:14px; height:14px; border-radius:50%; background:var(--border); border:2px solid #fff;"></div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.375rem;">
+                <h3 style="font-size:1rem; font-weight:700; color:var(--dark);">Administrative Coordinator</h3>
+                <span style="font-size:0.8125rem; color:var(--text-light); font-weight:500;">2019 – 2021</span>
+              </div>
+              <p style="font-size:0.875rem; color:var(--primary); font-weight:600; margin-bottom:0.5rem;">Bloom & Co. · Remote (Australia)</p>
+              <p style="font-size:0.875rem; color:var(--text-light); line-height:1.7;">Streamlined admin processes, implemented CRM workflows, and provided executive support to the founding team during rapid growth phase.</p>
+            </div>
+
+            <div style="position:relative;">
+              <div style="position:absolute; left:-1.5rem; top:0.25rem; width:14px; height:14px; border-radius:50%; background:var(--border); border:2px solid #fff;"></div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.375rem;">
+                <h3 style="font-size:1rem; font-weight:700; color:var(--dark);">Customer Success VA</h3>
+                <span style="font-size:0.8125rem; color:var(--text-light); font-weight:500;">2018 – 2019</span>
+              </div>
+              <p style="font-size:0.875rem; color:var(--primary); font-weight:600; margin-bottom:0.5rem;">TechForge Solutions · Remote (UK)</p>
+              <p style="font-size:0.875rem; color:var(--text-light); line-height:1.7;">Provided white-glove customer onboarding, managed support tickets, and maintained client satisfaction scores above 96%.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="sidebar-card">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
+            <h2 style="font-size:1.25rem; font-weight:700; color:var(--dark); margin:0;">Reviews</h2>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span style="font-size:2rem; font-weight:800; color:var(--dark); font-family:'Poppins',sans-serif;">4.9</span>
+              <div>
+                <div style="color:var(--accent);">★★★★★</div>
+                <div style="font-size:0.75rem; color:var(--text-light);">84 reviews</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-card">
+            <div class="review-head">
+              <img src="https://i.pravatar.cc/150?img=33" alt="James Carter" />
+              <div><div class="review-name">James Carter</div><div class="review-date">October 2026</div></div>
+              <div class="review-stars" style="margin-left:auto;">★★★★★</div>
+            </div>
+            <p class="review-text">Maria is absolutely exceptional. She anticipated my needs before I even had to ask and kept everything running smoothly during a very busy quarter. Highly recommend!</p>
+          </div>
+
+          <div class="review-card">
+            <div class="review-head">
+              <img src="https://i.pravatar.cc/150?img=49" alt="Sophie Anderson" />
+              <div><div class="review-name">Sophie Anderson</div><div class="review-date">September 2026</div></div>
+              <div class="review-stars" style="margin-left:auto;">★★★★★</div>
+            </div>
+            <p class="review-text">Best EA I've ever worked with. Professional, detail-oriented, and proactive. She transformed how our executive team operates. Worth every dollar and more.</p>
+          </div>
+
+          <div class="review-card">
+            <div class="review-head">
+              <img src="https://i.pravatar.cc/150?img=60" alt="Michael Torres" />
+              <div><div class="review-name">Michael Torres</div><div class="review-date">August 2026</div></div>
+              <div class="review-stars" style="margin-left:auto;">★★★★★</div>
+            </div>
+            <p class="review-text">Maria handled our CRM migration flawlessly while keeping up with all daily admin tasks. Super reliable and always delivers on time. We've hired her for another contract.</p>
+          </div>
+
+          <div style="text-align:center; margin-top:1.25rem;">
+            <button class="btn btn-ghost" style="width:100%;">Load More Reviews (81)</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Sticky info card -->
+      <aside style="position:sticky; top:90px;">
+
+        <!-- Availability -->
+        <div class="sidebar-card">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Availability</h3>
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+            <span class="online-dot"></span>
+            <span style="font-size:0.9rem; font-weight:600; color:var(--success);">Available Now</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.875rem; color:var(--text-light);">
+            <div style="display:flex; justify-content:space-between;"><span>Weekly Hours</span><strong style="color:var(--dark);">Up to 40 hrs</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Schedule</span><strong style="color:var(--dark);">Flexible</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Timezone</span><strong style="color:var(--dark);">UTC+8 (PH)</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span>Response Time</span><strong style="color:var(--dark);">< 1 hour</strong></div>
+          </div>
+          <div style="border-top:1px solid var(--border); margin-top:1rem; padding-top:1rem;">
+            <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-light); margin-bottom:0.5rem;">Covers your hours</p>
+            <div style="display:flex; flex-direction:column; gap:0.375rem; font-size:0.8125rem;">
+              <div style="display:flex; justify-content:space-between;"><span><i class="fas fa-check-circle" style="color:var(--success);"></i> US Eastern (EST)</span><span style="color:var(--text-light);">PH 9PM–5AM</span></div>
+              <div style="display:flex; justify-content:space-between;"><span><i class="fas fa-check-circle" style="color:var(--success);"></i> US Pacific (PST)</span><span style="color:var(--text-light);">PH 12AM–8AM</span></div>
+              <div style="display:flex; justify-content:space-between; color:var(--text-light);"><span><i class="fas fa-times-circle"></i> UK hours</span><span>Not available</span></div>
+              <div style="display:flex; justify-content:space-between; color:var(--text-light);"><span><i class="fas fa-times-circle"></i> AU hours</span><span>Not available</span></div>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border); margin-top:1rem; padding-top:1rem;">
+            <a href="messages?as=client&to=maria-santos" class="btn btn-primary" style="width:100%"><i class="fas fa-paper-plane"></i> Message Maria</a>
+          </div>
+        </div>
+
+        <!-- Paid Trial -->
+        <div class="sidebar-card" id="trial" style="border:1.5px solid rgba(16,185,129,0.35);">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:0.25rem;"><i class="fas fa-flask" style="color:var(--success);"></i> Paid Trial</h3>
+          <p style="font-size:0.8rem; color:var(--text-light); margin-bottom:1rem; line-height:1.6;">Try Maria on a real task before committing. Payment is held in escrow and released when you approve.</p>
+          <div class="form-row-2">
+            <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label" for="tDays">Days</label><select id="tDays" class="form-control"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></div>
+            <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label" for="tHours">Hrs / day</label><select id="tHours" class="form-control"><option value="2">2</option><option value="4" selected>4</option><option value="8">8</option></select></div>
+          </div>
+          <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label" for="tScope">Trial tasks</label><textarea id="tScope" class="form-control form-textarea" style="min-height:70px;" placeholder="e.g. Inbox cleanup and book 3 meetings"></textarea></div>
+          <div class="calc-line"><span><span id="tTotalHrs">12</span> hrs × $8/hr</span><strong id="tCost">$96.00</strong></div>
+          <button class="btn btn-primary" id="tStart" style="width:100%; margin-top:0.75rem;"><i class="fas fa-flask"></i> Start Paid Trial</button>
+          <p style="font-size:0.72rem; color:var(--text-light); margin-top:0.625rem; text-align:center;">Not a fit? End it after the trial, no questions asked.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="sidebar-card">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Stats</h3>
+          <div style="display:flex; flex-direction:column; gap:0.875rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.875rem; color:var(--text-light);">Jobs Completed</span>
+              <strong style="color:var(--dark);">84</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.875rem; color:var(--text-light);">Repeat Hire Rate</span>
+              <strong style="color:var(--success);">92%</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.875rem; color:var(--text-light);">On-Time Delivery</span>
+              <strong style="color:var(--success);">100%</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.875rem; color:var(--text-light);">Member Since</span>
+              <strong style="color:var(--dark);">Jan 2020</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Work Setup -->
+        <div class="sidebar-card">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Work Setup <span class="feat-badge brownout" style="float:right;">⚡ Brownout-ready</span></h3>
+          <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.85rem;">
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-light);"><i class="fas fa-wifi"></i> Internet</span><strong style="color:var(--dark);">PLDT Fiber</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-light);"><i class="fas fa-tachometer-alt"></i> Tested speed</span><strong style="color:var(--dark);">94 ↓ / 48 ↑ Mbps</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-light);"><i class="fas fa-car-battery"></i> Backup power</span><strong style="color:var(--dark);">UPS, PC + modem (4h+)</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-light);"><i class="fas fa-signal"></i> Backup internet</span><strong style="color:var(--dark);">Globe LTE pocket WiFi</strong></div>
+          </div>
+          <div class="ets-verified" style="margin-top:0.875rem;"><i class="fas fa-shield-alt"></i> Verified via Setup Check · Oct 2026</div>
+        </div>
+
+        <!-- Certificates -->
+        <div class="sidebar-card">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">VA Academy Certificates</h3>
+          <div style="display:flex; flex-direction:column; gap:0.625rem;">
+            <div style="display:flex; gap:0.75rem; align-items:center;"><div class="value-icon" style="width:36px;height:36px;font-size:0.9rem;margin:0;background:rgba(79,70,229,0.1);color:var(--primary);"><i class="fas fa-certificate"></i></div><div><strong style="font-size:0.875rem; color:var(--dark);">Executive Assistant Pro</strong><div style="font-size:0.75rem; color:var(--text-light);">Score 96% · Sep 2026</div></div></div>
+            <div style="display:flex; gap:0.75rem; align-items:center;"><div class="value-icon" style="width:36px;height:36px;font-size:0.9rem;margin:0;background:rgba(79,70,229,0.1);color:var(--primary);"><i class="fas fa-certificate"></i></div><div><strong style="font-size:0.875rem; color:var(--dark);">VA Foundations</strong><div style="font-size:0.75rem; color:var(--text-light);">Score 100% · Jan 2026</div></div></div>
+          </div>
+          <a href="academy" style="display:block; font-size:0.8rem; color:var(--primary); font-weight:600; margin-top:0.875rem;">About VA Academy →</a>
+        </div>
+
+        <!-- English Test Score -->
+        <div class="sidebar-card">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">English Test Score</h3>
+
+          <div class="ets-score-box">
+            <div class="ets-big-score">
+              <span>95</span>
+              <span>/ 100</span>
+            </div>
+            <div class="ets-score-meta">
+              <div class="ets-level excellent"><i class="fas fa-circle" style="font-size:0.45rem;"></i> Excellent</div>
+              <div style="font-size:0.8125rem; color:var(--text-light); line-height:1.4;">Top 8% of all<br>tested VAs</div>
+            </div>
+          </div>
+
+          <div class="ets-breakdown">
+            <div class="ets-breakdown-item">
+              <div class="ets-bar-label"><span>Grammar</span><span style="font-weight:600;color:var(--dark);">93</span></div>
+              <div class="ets-bar-wrap"><div class="ets-bar-fill" style="width:93%;"></div></div>
+            </div>
+            <div class="ets-breakdown-item">
+              <div class="ets-bar-label"><span>Vocabulary</span><span style="font-weight:600;color:var(--dark);">97</span></div>
+              <div class="ets-bar-wrap"><div class="ets-bar-fill" style="width:97%;"></div></div>
+            </div>
+            <div class="ets-breakdown-item">
+              <div class="ets-bar-label"><span>Reading</span><span style="font-weight:600;color:var(--dark);">95</span></div>
+              <div class="ets-bar-wrap"><div class="ets-bar-fill" style="width:95%;"></div></div>
+            </div>
+            <div class="ets-breakdown-item">
+              <div class="ets-bar-label"><span>Writing</span><span style="font-weight:600;color:var(--dark);">91</span></div>
+              <div class="ets-bar-wrap"><div class="ets-bar-fill" style="width:91%;"></div></div>
+            </div>
+          </div>
+
+          <div class="ets-verified">
+            <i class="fas fa-shield-alt"></i> Verified by Jobseekers.ph · Oct 2026
+          </div>
+        </div>
+
+        <!-- Languages -->
+        <div class="sidebar-card">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Languages</h3>
+          <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.875rem;">
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--text);">English</span><span style="color:var(--primary); font-weight:600;">Native / Fluent</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--text);">Filipino</span><span style="color:var(--primary); font-weight:600;">Native</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:var(--text);">Spanish</span><span style="color:var(--text-light); font-weight:500;">Conversational</span></div>
+          </div>
+        </div>
+
+        <!-- Education -->
+        <div class="sidebar-card">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Education</h3>
+          <div>
+            <div style="font-size:0.9rem; font-weight:600; color:var(--dark);">BS Business Administration</div>
+            <div style="font-size:0.8125rem; color:var(--text-light);">University of San Carlos, Cebu City</div>
+            <div style="font-size:0.8125rem; color:var(--text-light);">Graduated 2018</div>
+          </div>
+        </div>
+
+        <!-- Profile URL + Share -->
+        <div class="sidebar-card">
+          <p style="font-size:0.8rem; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">Public Profile Link</p>
+          <div style="display:flex; align-items:center; gap:0.5rem; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-md); padding:0.5rem 0.75rem; margin-bottom:0.875rem;">
+            <i class="fas fa-link" style="font-size:0.75rem; color:var(--primary); flex-shrink:0;"></i>
+            <span style="font-size:0.8rem; color:var(--dark); font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">jobseekers.ph/maria-santos</span>
+            <button onclick="copyProfileUrl()" style="background:transparent; border:none; cursor:pointer; color:var(--primary); font-size:0.75rem; font-weight:600; flex-shrink:0;" title="Copy link">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-light); margin-bottom:0.625rem;">Share this profile</p>
+          <div style="display:flex; justify-content:center; gap:0.5rem;">
+            <a href="#" class="btn btn-ghost btn-sm"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="btn btn-ghost btn-sm"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="btn btn-ghost btn-sm"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-link"></i></a>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- Similar VAs -->
+<section style="padding:3rem 1.5rem; background:#fff;">
+  <div class="container" style="max-width:1000px;">
+    <h2 style="font-size:1.375rem; font-weight:700; color:var(--dark); margin-bottom:1.5rem;">Similar Virtual Assistants</h2>
+    <div class="grid-3">
+      <div class="va-card">
+        <div class="va-card-head">
+          <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=25" alt="Grace" /><div class="va-status online"></div></div>
+          <div class="va-info"><div class="va-name">Grace Villanueva</div><div class="va-title">Customer Support Specialist</div><div class="va-rating"><span class="stars">★★★★★</span> <strong>5.0</strong></div></div>
+          <div class="va-rate">$7/hr</div>
+        </div>
+        <div class="va-card-foot"><div class="va-location"><i class="fas fa-map-marker-alt"></i> Iloilo</div><a href="va-profile" class="btn btn-primary btn-sm">View</a></div>
+      </div>
+      <div class="va-card">
+        <div class="va-card-head">
+          <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=9" alt="Anna" /><div class="va-status away"></div></div>
+          <div class="va-info"><div class="va-name">Anna Reyes</div><div class="va-title">Content Writer & Copywriter</div><div class="va-rating"><span class="stars">★★★★½</span> <strong>4.8</strong></div></div>
+          <div class="va-rate">$9/hr</div>
+        </div>
+        <div class="va-card-foot"><div class="va-location"><i class="fas fa-map-marker-alt"></i> QC</div><a href="va-profile" class="btn btn-primary btn-sm">View</a></div>
+      </div>
+      <div class="va-card">
+        <div class="va-card-head">
+          <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=5" alt="Jessa" /><div class="va-status online"></div></div>
+          <div class="va-info"><div class="va-name">Jessa Cruz</div><div class="va-title">Social Media Manager</div><div class="va-rating"><span class="stars">★★★★★</span> <strong>4.9</strong></div></div>
+          <div class="va-rate">$10/hr</div>
+        </div>
+        <div class="va-card-foot"><div class="va-location"><i class="fas fa-map-marker-alt"></i> Manila</div><a href="va-profile" class="btn btn-primary btn-sm">View</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  function copyProfileUrl() {
+    const url = 'https://jobseekers.ph/maria-santos';
+    navigator.clipboard.writeText(url).then(() => {
+      const toast = document.createElement('div');
+      toast.textContent = 'Profile link copied!';
+      Object.assign(toast.style, {
+        position:'fixed', bottom:'1.5rem', right:'1.5rem',
+        background:'#0F172A', color:'#fff', padding:'0.75rem 1.25rem',
+        borderRadius:'10px', fontSize:'0.875rem', fontWeight:'600',
+        zIndex:'9999', boxShadow:'0 8px 32px rgba(0,0,0,0.2)',
+        transition:'opacity 0.3s ease'
+      });
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2000);
+    });
+  }
+
+  // Paid trial cost
+  const TRIAL_RATE = 8;
+  function updateTrialCost() {
+    const hours = Number(document.getElementById('tDays').value) * Number(document.getElementById('tHours').value);
+    document.getElementById('tTotalHrs').textContent = hours;
+    document.getElementById('tCost').textContent = '$' + (hours * TRIAL_RATE).toFixed(2);
+  }
+  document.querySelectorAll('#tDays, #tHours').forEach(el => el.addEventListener('input', updateTrialCost));
+  document.getElementById('tStart').addEventListener('click', () => {
+    const scope = document.getElementById('tScope');
+    if (!scope.value.trim()) { scope.focus(); scope.style.borderColor = 'var(--danger)'; return; }
+    scope.style.borderColor = '';
+    showToast('Trial request sent to Maria. Funds will be held in escrow once she accepts.');
+  });
+  updateTrialCost();
+</script>
+</body>
+</html>

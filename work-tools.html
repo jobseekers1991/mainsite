@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Work Tools — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="dash-sidebar" id="dashSidebar">
+    <a href="/" class="dash-brand">
+      <div class="dash-brand-icon"><i class="fas fa-briefcase"></i></div>
+      <span class="dash-brand-name">Jobseekers<span>.ph</span></span>
+    </a>
+
+    <div class="dash-user-card">
+      <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" class="dash-user-avatar" />
+      <div>
+        <div class="dash-user-name">Maria Santos</div>
+        <div class="dash-user-role">Virtual Assistant</div>
+      </div>
+      <div class="dash-online-dot" title="Online"></div>
+    </div>
+
+    <nav class="dash-nav">
+      <div class="dash-nav-section">Main</div>
+      <a href="dashboard-va" class="dash-nav-item"><i class="fas fa-th-large"></i> Overview</a>
+      <a href="my-applications" class="dash-nav-item"><i class="fas fa-file-alt"></i> My Applications <span class="dash-nav-badge">3</span></a>
+      <a href="browse-jobs" class="dash-nav-item"><i class="fas fa-search"></i> Browse Jobs</a>
+      <a href="messages" class="dash-nav-item"><i class="fas fa-comments"></i> Messages <span class="dash-nav-badge">5</span></a>
+
+      <div class="dash-nav-section">My Account</div>
+      <a href="edit-profile" class="dash-nav-item"><i class="fas fa-user-circle"></i> My Profile</a>
+      <a href="work-tools" class="dash-nav-item"><i class="fas fa-wallet"></i> Earnings</a>
+      <a href="#" class="dash-nav-item"><i class="fas fa-star"></i> Reviews</a>
+
+      <div class="dash-nav-section">Grow &amp; Tools</div>
+      <a href="work-tools" class="dash-nav-item active"><i class="fas fa-stopwatch"></i> Work Tools</a>
+      <a href="academy" class="dash-nav-item"><i class="fas fa-graduation-cap"></i> VA Academy</a>
+      <a href="setup-check" class="dash-nav-item"><i class="fas fa-bolt"></i> Setup Check</a>
+      <a href="compliance" class="dash-nav-item"><i class="fas fa-file-signature"></i> Contracts &amp; Taxes</a>
+      <a href="community" class="dash-nav-item"><i class="fas fa-users"></i> Community</a>
+
+      <div class="dash-nav-divider"></div>
+      <a href="#" class="dash-nav-item"><i class="fas fa-cog"></i> Settings</a>
+      <a href="auth" class="dash-nav-item" style="color:rgba(239,68,68,0.7);"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+    </nav>
+  </aside>
+
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <!-- ===================== MAIN ===================== -->
+  <div class="dash-main">
+    <header class="dash-topbar">
+      <button class="dash-topbar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+      <div class="dash-search-wrap">
+        <i class="fas fa-search" style="color:var(--text-light); font-size:0.8125rem; flex-shrink:0;"></i>
+        <input type="text" placeholder="Search jobs, companies…" />
+      </div>
+      <div class="dash-topbar-right">
+        <button class="dash-icon-btn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-dot"></span></button>
+        <button class="dash-avatar-btn">
+          <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" />
+          <span>Maria</span>
+          <i class="fas fa-chevron-down" style="font-size:0.625rem; color:var(--text-light);"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="dash-content">
+      <div class="dash-page-header">
+        <h1>Work Tools</h1>
+        <p>Track time, send EOD reports, and invoice clients without leaving Jobseekers.ph. No Hubstaff subscription needed.</p>
+      </div>
+
+      <div class="how-tabs-wrap" style="justify-content:flex-start; margin-bottom:1.5rem;">
+        <div class="how-tabs" style="background:#fff; flex-wrap:wrap;">
+          <button class="how-tab active" data-target="tab-timer"><i class="fas fa-stopwatch"></i> Time Tracker</button>
+          <button class="how-tab" data-target="tab-eod"><i class="fas fa-clipboard-list"></i> EOD Report</button>
+          <button class="how-tab" data-target="tab-invoice"><i class="fas fa-file-invoice-dollar"></i> Invoices</button>
+        </div>
+      </div>
+
+      <!-- ========== TIME TRACKER ========== -->
+      <div id="tab-timer" class="tab-panel active">
+        <div class="dash-grid-2 wide-left">
+          <div class="dash-card">
+            <div class="dash-card-header"><span class="dash-card-title">Current session</span><span class="status-pill active" id="timerState" hidden>Tracking</span></div>
+            <div class="dash-card-body">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label" for="tClient">Client</label>
+                  <select id="tClient" class="form-control">
+                    <option value="Carter Digital Agency" data-rate="8">Carter Digital Agency ($8/hr)</option>
+                    <option value="Bloom &amp; Co." data-rate="10">Bloom &amp; Co. ($10/hr)</option>
+                    <option value="TechForge Solutions" data-rate="9">TechForge Solutions ($9/hr)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="tTask">What are you working on?</label>
+                  <input id="tTask" class="form-control" placeholder="e.g. Inbox cleanup & calendar" />
+                </div>
+              </div>
+              <div class="timer-display" id="timerDisplay">00:00:00</div>
+              <div style="display:flex; justify-content:center; gap:0.75rem; margin-top:1.25rem;">
+                <button class="btn btn-primary btn-lg" id="timerBtn"><i class="fas fa-play"></i> Start</button>
+                <button class="btn btn-ghost btn-lg" id="manualBtn" title="Add time manually"><i class="fas fa-plus"></i> Manual</button>
+              </div>
+              <p class="form-hint" style="text-align:center; margin-top:0.75rem;">The timer keeps running even if you close this tab.</p>
+            </div>
+          </div>
+
+          <div class="dash-card">
+            <div class="dash-card-header"><span class="dash-card-title">Tracking settings</span></div>
+            <div class="dash-card-body">
+              <div class="toggle-row">
+                <div>Screenshots<small>Off by default. Only on if your client's contract asks for it. You can delete any screenshot before it's sent.</small></div>
+                <label class="switch"><input type="checkbox" id="setShots" /><span></span></label>
+              </div>
+              <div class="toggle-row">
+                <div>Blur screenshots<small>Protects your other tabs &amp; private info</small></div>
+                <label class="switch"><input type="checkbox" id="setBlur" checked /><span></span></label>
+              </div>
+              <div class="toggle-row">
+                <div>Idle reminder<small>Asks before counting time with no activity for 10 min</small></div>
+                <label class="switch"><input type="checkbox" id="setIdle" checked /><span></span></label>
+              </div>
+              <div class="toggle-row">
+                <div>Brownout auto-pause<small>Stops the timer if your connection drops, then resumes when you're back</small></div>
+                <label class="switch"><input type="checkbox" id="setBrownout" checked /><span></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-card" style="margin-top:1.5rem;">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Time log</span>
+            <span style="font-size:0.875rem; color:var(--text-light);">This week: <strong style="color:var(--dark);" id="weekTotal">0h 0m</strong></span>
+          </div>
+          <div class="table-responsive">
+            <table class="dash-table" style="width:100%;">
+              <thead><tr><th>Date</th><th>Client</th><th>Task</th><th style="text-align:right;">Duration</th><th></th></tr></thead>
+              <tbody id="logBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== EOD REPORT ========== -->
+      <div id="tab-eod" class="tab-panel">
+        <div class="dash-grid-2 even">
+          <div class="dash-card">
+            <div class="dash-card-header"><span class="dash-card-title">End-of-day report</span><a href="#" class="dash-card-link" id="eodFill"><i class="fas fa-magic"></i> Fill from time log</a></div>
+            <div class="dash-card-body">
+              <form id="eodForm">
+                <div class="form-row-2">
+                  <div class="form-group"><label class="form-label" for="eClient">Client</label><input id="eClient" class="form-control" value="Carter Digital Agency" /></div>
+                  <div class="form-group"><label class="form-label" for="eHours">Hours today</label><input id="eHours" class="form-control" placeholder="e.g. 8h 0m" /></div>
+                </div>
+                <div class="form-group"><label class="form-label" for="eDone">✅ Completed today <small style="font-weight:400;color:var(--text-light);">(one per line)</small></label><textarea id="eDone" class="form-control form-textarea" style="min-height:100px;" placeholder="Cleared inbox to zero (142 emails)&#10;Booked flights for Denver trip"></textarea></div>
+                <div class="form-group"><label class="form-label" for="eProgress">🔄 In progress</label><textarea id="eProgress" class="form-control form-textarea" style="min-height:70px;" placeholder="Q4 vendor spreadsheet (70% done)"></textarea></div>
+                <div class="form-group"><label class="form-label" for="eBlockers">⚠️ Blockers / questions</label><textarea id="eBlockers" class="form-control form-textarea" style="min-height:70px;" placeholder="Need login for the new CRM"></textarea></div>
+                <div class="form-group"><label class="form-label" for="eTomorrow">📅 Plan for tomorrow</label><textarea id="eTomorrow" class="form-control form-textarea" style="min-height:70px;" placeholder="Finish vendor sheet&#10;Prep Monday meeting agenda"></textarea></div>
+              </form>
+            </div>
+          </div>
+          <div>
+            <div class="doc-preview pre" id="eodPreview"></div>
+            <div style="display:flex; gap:0.75rem; margin-top:1rem; flex-wrap:wrap;">
+              <button class="btn btn-primary" id="eodCopy"><i class="fas fa-copy"></i> Copy for Slack / Email</button>
+              <button class="btn btn-outline-primary" id="eodSend"><i class="fas fa-paper-plane"></i> Send to client</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== INVOICES ========== -->
+      <div id="tab-invoice" class="tab-panel">
+        <div class="dash-grid-2 wide-right">
+          <div class="dash-card">
+            <div class="dash-card-header"><span class="dash-card-title">Create invoice</span></div>
+            <div class="dash-card-body">
+              <div class="form-group">
+                <label class="form-label" for="iClient">Bill to</label>
+                <select id="iClient" class="form-control"></select>
+                <p class="form-hint">Line items come from your time log for this client.</p>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label" for="iPlan">Your plan fee</label>
+                  <select id="iPlan" class="form-control">
+                    <option value="10">Basic (10%)</option>
+                    <option value="5">Pro (5%)</option>
+                    <option value="3">Premium (3%)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="iFx">USD → PHP rate</label>
+                  <input id="iFx" type="number" step="0.01" class="form-control" value="57.50" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="iPayout">Payout to</label>
+                <select id="iPayout" class="form-control">
+                  <option>GCash · 0917 ••• 4821</option>
+                  <option>Maya · 0998 ••• 1120</option>
+                  <option>BPI Savings · ••••6612</option>
+                </select>
+              </div>
+              <div class="alert alert-info" style="font-size:0.8125rem;"><i class="fas fa-shield-alt"></i><div>Invoices paid through Jobseekers.ph are covered by payment protection. Off-platform payments aren't.</div></div>
+              <button class="btn btn-primary" id="iSend" style="width:100%;"><i class="fas fa-paper-plane"></i> Send Invoice</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="doc-preview print-area" id="invoicePreview" style="white-space:normal;"></div>
+            <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+              <button class="btn btn-outline-primary" onclick="window.print()"><i class="fas fa-print"></i> Print / Save PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const dashSidebar   = document.getElementById('dashSidebar');
+  const dashOverlay   = document.getElementById('dashOverlay');
+  function openSidebar()  { dashSidebar.classList.add('open'); dashOverlay.classList.add('visible'); }
+  function closeSidebar() { dashSidebar.classList.remove('open'); dashOverlay.classList.remove('visible'); }
+  sidebarToggle.addEventListener('click', () => { dashSidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
+  dashOverlay.addEventListener('click', closeSidebar);
+
+  /* ---------- Storage (this browser only, until the backend exists) ---------- */
+  const KEY = 'jsph-worktools';
+  const DAY = 86400000;
+  const seed = () => {
+    const now = Date.now();
+    return {
+      running: null,
+      log: [
+        { start: now - 1 * DAY, ms: 4.5 * 3600000, client: 'Carter Digital Agency', task: 'Inbox zero + calendar triage', rate: 8 },
+        { start: now - 1 * DAY, ms: 3.25 * 3600000, client: 'Carter Digital Agency', task: 'Travel booking: Denver offsite', rate: 8 },
+        { start: now - 2 * DAY, ms: 2 * 3600000, client: 'Bloom & Co.', task: 'Instagram content calendar', rate: 10 },
+        { start: now - 3 * DAY, ms: 6 * 3600000, client: 'Carter Digital Agency', task: 'CRM cleanup in HubSpot', rate: 8 },
+      ],
+    };
+  };
+  let state;
+  try { state = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch (e) { state = seed(); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  const pad = n => String(n).padStart(2, '0');
+  const clock = ms => { const s = Math.floor(ms / 1000); return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`; };
+  const hm = ms => { const m = Math.round(ms / 60000); return `${Math.floor(m / 60)}h ${m % 60}m`; };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const fmtDate = t => new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
+
+  /* ---------- Time tracker ---------- */
+  const timerBtn = document.getElementById('timerBtn');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const clientSel = document.getElementById('tClient');
+  const taskInput = document.getElementById('tTask');
+  let tick = null;
+
+  function renderTimer() {
+    const r = state.running;
+    timerDisplay.textContent = clock(r ? Date.now() - r.start : 0);
+    timerDisplay.classList.toggle('running', !!r);
+    document.getElementById('timerState').hidden = !r;
+    timerBtn.innerHTML = r ? '<i class="fas fa-stop"></i> Stop' : '<i class="fas fa-play"></i> Start';
+    timerBtn.classList.toggle('btn-accent', !!r);
+    timerBtn.classList.toggle('btn-primary', !r);
+  }
+
+  function startTicking() { clearInterval(tick); tick = setInterval(renderTimer, 1000); }
+
+  timerBtn.addEventListener('click', () => {
+    if (state.running) {
+      const r = state.running;
+      state.log.unshift({ ...r, ms: Date.now() - r.start });
+      state.running = null;
+      clearInterval(tick);
+      showToast(`Logged ${hm(state.log[0].ms)} for ${r.client}`);
+    } else {
+      const opt = clientSel.selectedOptions[0];
+      state.running = { start: Date.now(), client: opt.value, rate: Number(opt.dataset.rate), task: taskInput.value.trim() || 'General tasks' };
+      startTicking();
+    }
+    save(); renderTimer(); renderLog(); renderInvoice();
+  });
+
+  document.getElementById('manualBtn').addEventListener('click', () => {
+    const opt = clientSel.selectedOptions[0];
+    state.log.unshift({ start: Date.now(), ms: 3600000, client: opt.value, rate: Number(opt.dataset.rate), task: (taskInput.value.trim() || 'Manual entry') + ' (manual)' });
+    save(); renderLog(); renderInvoice();
+    showToast('Added 1h manual entry (flagged as manual for your client)');
+  });
+
+  function renderLog() {
+    const body = document.getElementById('logBody');
+    body.innerHTML = state.log.length ? state.log.map((e, i) => `
+      <tr>
+        <td>${fmtDate(e.start)}</td>
+        <td>${esc(e.client)}</td>
+        <td>${esc(e.task)}</td>
+        <td style="text-align:right; font-weight:600;">${hm(e.ms)}</td>
+        <td style="text-align:right;"><button class="btn btn-ghost btn-xs" data-del="${i}" title="Delete"><i class="fas fa-trash"></i></button></td>
+      </tr>`).join('') : '<tr><td colspan="5" style="text-align:center; color:var(--text-light); padding:2rem;">No time logged yet. Hit Start!</td></tr>';
+    const weekAgo = Date.now() - 7 * DAY;
+    document.getElementById('weekTotal').textContent = hm(state.log.filter(e => e.start >= weekAgo).reduce((t, e) => t + e.ms, 0));
+  }
+
+  document.getElementById('logBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-del]');
+    if (!btn) return;
+    state.log.splice(Number(btn.dataset.del), 1);
+    save(); renderLog(); renderInvoice();
+  });
+
+  /* ---------- EOD report ---------- */
+  const eodFields = ['eClient', 'eHours', 'eDone', 'eProgress', 'eBlockers', 'eTomorrow'].map(id => document.getElementById(id));
+  const bullets = text => text.split('\n').map(l => l.trim()).filter(Boolean).map(l => `  • ${l}`).join('\n') || '  • —';
+
+  function renderEod() {
+    const [client, hours, done, progress, blockers, tomorrow] = eodFields.map(f => f.value);
+    const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('eodPreview').textContent =
+`EOD Report: ${date}
+Client: ${client || '—'}   |   Hours: ${hours || '—'}
+
+✅ Completed today
+${bullets(done)}
+
+🔄 In progress
+${bullets(progress)}
+
+⚠️ Blockers / questions
+${bullets(blockers)}
+
+📅 Plan for tomorrow
+${bullets(tomorrow)}
+
+— Maria Santos, via Jobseekers.ph`;
+  }
+  eodFields.forEach(f => f.addEventListener('input', renderEod));
+
+  document.getElementById('eodFill').addEventListener('click', (e) => {
+    e.preventDefault();
+    const client = eodFields[0].value;
+    let entries = state.log.filter(x => sameDay(x.start, Date.now()) && x.client === client);
+    if (!entries.length) {
+      // Nothing logged today for this client yet: use their most recent day instead
+      const last = state.log.find(x => x.client === client);
+      entries = last ? state.log.filter(x => x.client === client && sameDay(x.start, last.start)) : [];
+    }
+    if (!entries.length) { showToast('No time logged for this client yet'); return; }
+    eodFields[1].value = hm(entries.reduce((t, x) => t + x.ms, 0));
+    eodFields[2].value = entries.map(x => x.task).join('\n');
+    renderEod();
+    showToast('Filled from your time log');
+  });
+
+  document.getElementById('eodCopy').addEventListener('click', () => {
+    const text = document.getElementById('eodPreview').textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+      .then(() => showToast('Copied! Paste it into Slack or email.'))
+      .catch(() => showToast('Select the report text and copy it manually'));
+  });
+  document.getElementById('eodSend').addEventListener('click', () => showToast('EOD report sent to ' + (eodFields[0].value || 'your client')));
+
+  /* ---------- Invoices ---------- */
+  const iClient = document.getElementById('iClient');
+  const money = (n, cur = 'USD') => n.toLocaleString(cur === 'PHP' ? 'en-PH' : 'en-US', { style: 'currency', currency: cur });
+
+  function refreshInvoiceClients() {
+    const current = iClient.value;
+    const clients = [...new Set(state.log.map(e => e.client))];
+    iClient.innerHTML = clients.map(c => `<option${c === current ? ' selected' : ''}>${esc(c)}</option>`).join('') || '<option>No clients yet</option>';
+  }
+
+  function renderInvoice() {
+    refreshInvoiceClients();
+    const client = iClient.value;
+    const entries = state.log.filter(e => e.client === client).slice().reverse();
+    const fee = Number(document.getElementById('iPlan').value) / 100;
+    const fx = parseFloat(document.getElementById('iFx').value) || 0;
+    const subtotal = entries.reduce((t, e) => t + (e.ms / 3600000) * e.rate, 0);
+    const platformFee = subtotal * fee;
+    const net = subtotal - platformFee;
+    const invNo = 'INV-' + new Date().getFullYear() + '-' + String(state.log.length + 100).padStart(4, '0');
+
+    document.getElementById('invoicePreview').innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+        <div>
+          <div style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.375rem; color:var(--dark);">INVOICE</div>
+          <div style="color:var(--text-light); font-size:0.8125rem;">${invNo} · ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+        </div>
+        <div style="text-align:right; font-size:0.8125rem;">
+          <strong style="color:var(--dark);">Maria Santos</strong><br>Executive Virtual Assistant<br>Cebu City, Philippines
+        </div>
+      </div>
+      <div style="font-size:0.8125rem; margin-bottom:1rem;"><span style="color:var(--text-light);">Bill to:</span> <strong style="color:var(--dark);">${esc(client)}</strong></div>
+      <table class="doc-table">
+        <thead><tr><th>Date</th><th>Description</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+        <tbody>${entries.map(e => `<tr><td>${fmtDate(e.start)}</td><td>${esc(e.task)}</td><td class="num">${(e.ms / 3600000).toFixed(2)}</td><td class="num">${money(e.rate)}</td><td class="num">${money(e.ms / 3600000 * e.rate)}</td></tr>`).join('') || '<tr><td colspan="5">No time logged</td></tr>'}</tbody>
+        <tfoot><tr><td colspan="4">Total due</td><td class="num">${money(subtotal)}</td></tr></tfoot>
+      </table>
+      <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px dashed var(--border); font-size:0.8125rem;">
+        <div style="font-weight:700; color:var(--dark); margin-bottom:0.375rem;">Your payout estimate (not shown to client)</div>
+        <div class="calc-line"><span>Total billed</span><strong>${money(subtotal)}</strong></div>
+        <div class="calc-line"><span>Platform fee (${fee * 100}%)</span><strong>−${money(platformFee)}</strong></div>
+        <div class="calc-line total"><span>You receive · ${esc(document.getElementById('iPayout').value)}</span><strong>${money(net * fx, 'PHP')}</strong></div>
+      </div>`;
+  }
+  ['iClient', 'iPlan', 'iFx', 'iPayout'].forEach(id => document.getElementById(id).addEventListener('input', renderInvoice));
+  document.getElementById('iSend').addEventListener('click', () => showToast('Invoice sent to ' + iClient.value));
+
+  /* ---------- Init ---------- */
+  if (state.running) startTicking();
+  renderTimer(); renderLog(); renderEod(); renderInvoice();
+</script>
+</body>
+</html>

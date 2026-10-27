@@ -1,0 +1,273 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Us — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>Contact</span></div>
+    <h1>We'd Love to Hear From You</h1>
+    <p>Have a question, feedback, or need help? Our team is available 24/7 and responds within 1 hour.</p>
+  </div>
+</section>
+
+<!-- CONTACT INFO CARDS -->
+<section style="padding:3.5rem 1.5rem; background:var(--bg);">
+  <div class="container">
+    <div class="grid-3" style="margin-bottom:3rem;">
+      <div class="contact-info-card on-scroll">
+        <div class="contact-icon" style="background:rgba(79,70,229,0.1); color:var(--primary);"><i class="fas fa-envelope"></i></div>
+        <h3>Email Us</h3>
+        <p>General inquiries and support requests<br /><br />
+          <a href="mailto:hello@jobseekers.ph">hello@jobseekers.ph</a><br />
+          <a href="mailto:support@jobseekers.ph">support@jobseekers.ph</a>
+        </p>
+        <p style="font-size:0.8rem; color:var(--text-light); margin-top:1rem;"><i class="fas fa-clock"></i> Response within 1–2 hours</p>
+      </div>
+
+      <div class="contact-info-card on-scroll" style="transition-delay:0.1s;">
+        <div class="contact-icon" style="background:rgba(16,185,129,0.1); color:var(--success);"><i class="fas fa-comments"></i></div>
+        <h3>Live Chat</h3>
+        <p>Get instant help from our support team<br /><br />Available through the chat widget on any page of our platform.</p>
+        <p style="font-size:0.8rem; color:var(--success); margin-top:1rem; font-weight:600;">
+          <span class="online-dot"></span> Currently Online — Average 3 min response
+        </p>
+        <a href="#" style="display:inline-block; margin-top:0.75rem;" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Start Chat</a>
+      </div>
+
+      <div class="contact-info-card on-scroll" style="transition-delay:0.2s;">
+        <div class="contact-icon" style="background:rgba(245,158,11,0.1); color:var(--accent);"><i class="fas fa-phone-alt"></i></div>
+        <h3>Call Us</h3>
+        <p>Speak directly with our team<br /><br />
+          <a href="tel:+63912345678">+63 (912) 345-6789</a><br />
+          <span style="font-size:0.875rem; color:var(--text-light);">Mon – Fri · 8am – 8pm PHT</span>
+        </p>
+        <p style="font-size:0.8rem; color:var(--text-light); margin-top:1rem;"><i class="fas fa-globe"></i> WhatsApp & Viber available</p>
+      </div>
+    </div>
+
+    <!-- MAIN CONTACT FORM + INFO -->
+    <div class="layout-aside-lg">
+
+      <!-- FORM -->
+      <div class="contact-form-card on-scroll">
+        <h2 style="font-size:1.5rem; font-weight:700; color:var(--dark); margin-bottom:0.5rem;">Send us a Message</h2>
+        <p style="color:var(--text-light); font-size:0.9rem; margin-bottom:2rem;">Fill in the form below and we'll get back to you within 1–2 hours during business hours.</p>
+
+        <form data-validate>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">First Name <span class="form-required">*</span></label>
+              <input type="text" class="form-control" placeholder="Juan" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name <span class="form-required">*</span></label>
+              <input type="text" class="form-control" placeholder="dela Cruz" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="form-required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" class="form-control" placeholder="you@example.com" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">I am a...</label>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; cursor:pointer;">
+                <input type="radio" name="userType" value="client" style="accent-color:var(--primary);" /> Business / Client
+              </label>
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; cursor:pointer;">
+                <input type="radio" name="userType" value="va" style="accent-color:var(--primary);" /> Virtual Assistant
+              </label>
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; cursor:pointer;">
+                <input type="radio" name="userType" value="other" style="accent-color:var(--primary);" /> Other
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Subject <span class="form-required">*</span></label>
+            <select class="form-control" required>
+              <option value="">Select a topic</option>
+              <option>General Inquiry</option>
+              <option>Help Finding a VA</option>
+              <option>Account / Login Issues</option>
+              <option>Payment or Billing</option>
+              <option>VA Profile Help</option>
+              <option>Report a Problem</option>
+              <option>Enterprise / Bulk Hiring</option>
+              <option>Partnership Opportunity</option>
+              <option>Press / Media</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Message <span class="form-required">*</span></label>
+            <textarea class="form-control" placeholder="Tell us how we can help you. The more detail you provide, the better we can assist you..." style="min-height:160px;" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label style="display:flex; align-items:flex-start; gap:0.75rem; cursor:pointer; font-size:0.875rem; color:var(--text);">
+              <input type="checkbox" style="accent-color:var(--primary); margin-top:0.125rem; width:16px; height:16px; flex-shrink:0;" />
+              I agree to receive follow-up communications related to my inquiry. I can unsubscribe at any time.
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">
+            <i class="fas fa-paper-plane"></i> Send Message
+          </button>
+        </form>
+      </div>
+
+      <!-- RIGHT SIDEBAR -->
+      <aside style="position:sticky; top:90px;">
+
+        <!-- Office Info -->
+        <div class="sidebar-card" style="margin-bottom:1.25rem;">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem;">Our Office</h3>
+          <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+              <div style="width:32px; height:32px; background:rgba(79,70,229,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:0.8125rem; flex-shrink:0; margin-top:0.125rem;"><i class="fas fa-map-marker-alt"></i></div>
+              <div>
+                <div style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.25rem;">Headquarters</div>
+                <div style="font-size:0.8125rem; color:var(--text-light); line-height:1.6;">8F, Cebu Business Park Tower<br />Cebu City, 6000<br />Philippines</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+              <div style="width:32px; height:32px; background:rgba(79,70,229,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:0.8125rem; flex-shrink:0; margin-top:0.125rem;"><i class="fas fa-clock"></i></div>
+              <div>
+                <div style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.25rem;">Business Hours</div>
+                <div style="font-size:0.8125rem; color:var(--text-light); line-height:1.6;">Mon – Fri: 8am – 8pm PHT<br />Saturday: 9am – 5pm PHT<br />Sunday: Closed (Email available)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Links -->
+        <div class="sidebar-card" style="margin-bottom:1.25rem;">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Connect with Us</h3>
+          <div style="display:flex; flex-direction:column; gap:0.625rem;">
+            <a href="#" style="display:flex; align-items:center; gap:0.75rem; font-size:0.875rem; color:var(--text); padding:0.625rem; border-radius:var(--radius-md); transition:var(--transition-fast);" onmouseover="this.style.background='rgba(79,70,229,0.07)'" onmouseout="this.style.background=''">
+              <div style="width:32px; height:32px; background:#1877F2; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.875rem;"><i class="fab fa-facebook-f"></i></div>
+              <span>facebook.com/jobseekersph</span>
+            </a>
+            <a href="#" style="display:flex; align-items:center; gap:0.75rem; font-size:0.875rem; color:var(--text); padding:0.625rem; border-radius:var(--radius-md); transition:var(--transition-fast);" onmouseover="this.style.background='rgba(79,70,229,0.07)'" onmouseout="this.style.background=''">
+              <div style="width:32px; height:32px; background:#1DA1F2; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.875rem;"><i class="fab fa-twitter"></i></div>
+              <span>@jobseekersph</span>
+            </a>
+            <a href="#" style="display:flex; align-items:center; gap:0.75rem; font-size:0.875rem; color:var(--text); padding:0.625rem; border-radius:var(--radius-md); transition:var(--transition-fast);" onmouseover="this.style.background='rgba(79,70,229,0.07)'" onmouseout="this.style.background=''">
+              <div style="width:32px; height:32px; background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.875rem;"><i class="fab fa-instagram"></i></div>
+              <span>@jobseekers.ph</span>
+            </a>
+            <a href="#" style="display:flex; align-items:center; gap:0.75rem; font-size:0.875rem; color:var(--text); padding:0.625rem; border-radius:var(--radius-md); transition:var(--transition-fast);" onmouseover="this.style.background='rgba(79,70,229,0.07)'" onmouseout="this.style.background=''">
+              <div style="width:32px; height:32px; background:#0A66C2; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.875rem;"><i class="fab fa-linkedin-in"></i></div>
+              <span>Jobseekers.ph on LinkedIn</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Quick Help -->
+        <div class="sidebar-card" style="background:rgba(79,70,229,0.04); border:1.5px dashed rgba(79,70,229,0.25);">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;"><i class="fas fa-bolt" style="color:var(--accent);"></i> Quick Help</h3>
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <a href="how-it-works" style="display:flex; align-items:center; gap:0.625rem; font-size:0.875rem; color:var(--primary); font-weight:500;"><i class="fas fa-chevron-right" style="font-size:0.75rem;"></i> How the platform works</a>
+            <a href="pricing" style="display:flex; align-items:center; gap:0.625rem; font-size:0.875rem; color:var(--primary); font-weight:500;"><i class="fas fa-chevron-right" style="font-size:0.75rem;"></i> Pricing & plans</a>
+            <a href="auth" style="display:flex; align-items:center; gap:0.625rem; font-size:0.875rem; color:var(--primary); font-weight:500;"><i class="fas fa-chevron-right" style="font-size:0.75rem;"></i> Create your account</a>
+            <a href="find-vas" style="display:flex; align-items:center; gap:0.625rem; font-size:0.875rem; color:var(--primary); font-weight:500;"><i class="fas fa-chevron-right" style="font-size:0.75rem;"></i> Browse virtual assistants</a>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- MAP PLACEHOLDER -->
+<div style="width:100%; height:300px; background:var(--bg); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+  <div style="position:absolute; inset:0; background:linear-gradient(135deg, rgba(79,70,229,0.05) 0%, rgba(124,58,237,0.08) 100%);"></div>
+  <div style="text-align:center; position:relative; z-index:1;">
+    <div style="font-size:3rem; margin-bottom:0.75rem;">📍</div>
+    <p style="font-size:1rem; font-weight:600; color:var(--dark); margin-bottom:0.25rem;">Cebu Business Park</p>
+    <p style="font-size:0.875rem; color:var(--text-light);">Cebu City, Philippines</p>
+    <a href="#" class="btn btn-primary btn-sm" style="margin-top:1rem;"><i class="fas fa-map-marked-alt"></i> View on Maps</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social"><a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a><a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a></div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li><li><a href="#">Blog</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

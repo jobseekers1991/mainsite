@@ -1,0 +1,359 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Us — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about" class="active"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>About Us</span></div>
+    <h1>Built for Filipino Talent,<br />Designed for Global Success</h1>
+    <p>We believe every Filipino VA deserves access to world-class opportunities — and every business deserves world-class support.</p>
+  </div>
+</section>
+
+<!-- MISSION / VISION -->
+<section class="section" style="background:#fff;">
+  <div class="container">
+    <div class="grid-2" style="align-items:center; gap:4rem;">
+      <div class="on-scroll">
+        <span class="section-badge"><i class="fas fa-heart"></i> Our Story</span>
+        <h2 class="section-title" style="text-align:left;">We started with a simple belief</h2>
+        <p style="color:var(--text-light); line-height:1.85; margin-bottom:1.5rem; font-size:1rem;">
+          In 2020, our founder — a Filipino entrepreneur who had experienced both the frustration of finding quality remote talent and the difficulty of breaking into the global market — decided something had to change.
+        </p>
+        <p style="color:var(--text-light); line-height:1.85; margin-bottom:1.5rem; font-size:1rem;">
+          Filipino virtual assistants are among the most skilled, dedicated, and English-proficient remote workers in the world. Yet there was no platform built specifically for them — one that understood the Philippine context, celebrated Filipino talent, and connected them directly with the clients who needed them most.
+        </p>
+        <p style="color:var(--text-light); line-height:1.85; font-size:1rem;">
+          Jobseekers.ph was born from that vision. Today, we're proud to be the Philippines' #1 VA marketplace, having helped over 12,000 virtual assistants find meaningful, well-paying remote work — and helped thousands of global businesses find the incredible support they needed to grow.
+        </p>
+      </div>
+      <div class="on-scroll" style="background:var(--grad-hero); border-radius:var(--radius-2xl); padding:3rem; position:relative; overflow:hidden;">
+        <div class="hero-grid" style="position:absolute;inset:0;opacity:0.5;"></div>
+        <div style="position:relative; z-index:1;">
+          <div style="font-size:4rem; line-height:1; margin-bottom:1rem;">🇵🇭</div>
+          <h3 style="font-size:1.75rem; font-weight:800; color:#fff; margin-bottom:1rem;">Philippines-First Platform</h3>
+          <p style="color:rgba(255,255,255,0.7); line-height:1.8; margin-bottom:2rem; font-size:0.9375rem;">We're built by Filipinos, for Filipinos — with deep understanding of local culture, work ethic, and the unique strengths that make Filipino VAs exceptional.</p>
+          <div class="form-row-2">
+            <div style="background:rgba(255,255,255,0.1); border-radius:var(--radius-lg); padding:1.25rem; text-align:center; border:1px solid rgba(255,255,255,0.15);">
+              <div style="font-size:2rem; font-weight:900; color:#fff; font-family:'Poppins',sans-serif;">2020</div>
+              <div style="font-size:0.75rem; color:rgba(255,255,255,0.6);">Founded</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.1); border-radius:var(--radius-lg); padding:1.25rem; text-align:center; border:1px solid rgba(255,255,255,0.15);">
+              <div style="font-size:2rem; font-weight:900; color:#fff; font-family:'Poppins',sans-serif;">PH</div>
+              <div style="font-size:0.75rem; color:rgba(255,255,255,0.6);">Proudly Local</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats-band">
+  <div class="container">
+    <div class="stats-band-grid">
+      <div class="on-scroll" style="text-align:center">
+        <div class="stat-num counter" data-target="12000" data-suffix="+">12,000+</div>
+        <div class="stat-label">Virtual Assistants</div>
+      </div>
+      <div class="on-scroll" style="text-align:center; transition-delay:0.1s">
+        <div class="stat-num counter" data-target="5400" data-suffix="+">5,400+</div>
+        <div class="stat-label">Happy Clients</div>
+      </div>
+      <div class="on-scroll" style="text-align:center; transition-delay:0.2s">
+        <div class="stat-num counter" data-target="48000" data-suffix="+">48,000+</div>
+        <div class="stat-label">Jobs Completed</div>
+      </div>
+      <div class="on-scroll" style="text-align:center; transition-delay:0.3s">
+        <div class="stat-num counter" data-target="40" data-suffix="+">40+</div>
+        <div class="stat-label">Countries Served</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section class="section" style="background:var(--bg);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-gem"></i> Our Values</span>
+      <h2 class="section-title">What we stand for</h2>
+      <p class="section-sub">Every decision we make is guided by these core principles.</p>
+    </div>
+
+    <div class="grid-3">
+      <div class="value-card on-scroll">
+        <div class="value-icon" style="background:rgba(79,70,229,0.1); color:var(--primary)"><i class="fas fa-shield-alt"></i></div>
+        <h3>Trust & Transparency</h3>
+        <p>We believe in honest communication and clear expectations — from pricing to platform policies. No hidden fees, no surprises, no fine print games.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.1s">
+        <div class="value-icon" style="background:rgba(236,72,153,0.1); color:#EC4899"><i class="fas fa-heart"></i></div>
+        <h3>People First</h3>
+        <p>Behind every profile is a real person with real ambitions. We design every feature to genuinely improve the lives of VAs and the businesses they support.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.2s">
+        <div class="value-icon" style="background:rgba(16,185,129,0.1); color:var(--success)"><i class="fas fa-star"></i></div>
+        <h3>Excellence Always</h3>
+        <p>We set a high bar for quality on both sides. Every VA is verified, every job posting is reviewed, and every transaction is secured.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.3s">
+        <div class="value-icon" style="background:rgba(245,158,11,0.1); color:var(--accent)"><i class="fas fa-rocket"></i></div>
+        <h3>Empowerment</h3>
+        <p>We empower Filipino VAs to build sustainable careers on their own terms — choosing their clients, setting their rates, and working when they want.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.4s">
+        <div class="value-icon" style="background:rgba(6,182,212,0.1); color:#06B6D4"><i class="fas fa-globe"></i></div>
+        <h3>Global Mindset</h3>
+        <p>We bridge the gap between Filipino talent and global opportunity. Geography should never be a barrier to great work or fair pay.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.5s">
+        <div class="value-icon" style="background:rgba(124,58,237,0.1); color:var(--secondary)"><i class="fas fa-users"></i></div>
+        <h3>Community</h3>
+        <p>We're more than a marketplace. We're a community of remote workers supporting each other with resources, mentorship, and shared success.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="section" style="background:#fff;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-users"></i> The Team</span>
+      <h2 class="section-title">Meet the people behind the platform</h2>
+      <p class="section-sub">A passionate team of Filipinos building the future of remote work.</p>
+    </div>
+
+    <div class="grid-4">
+      <div class="team-card on-scroll">
+        <div class="team-img-wrap">
+          <img src="https://i.pravatar.cc/150?img=12" alt="Carlos Ramos" />
+          <div class="team-overlay">
+            <a href="#" class="team-social-btn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="team-social-btn"><i class="fab fa-twitter"></i></a>
+          </div>
+        </div>
+        <div class="team-info">
+          <div class="team-name">Carlos Ramos</div>
+          <div class="team-role">CEO & Co-Founder</div>
+          <div class="team-bio">Serial entrepreneur with 12 years in PH tech. Former freelancer turned platform builder.</div>
+        </div>
+      </div>
+
+      <div class="team-card on-scroll" style="transition-delay:0.1s">
+        <div class="team-img-wrap">
+          <img src="https://i.pravatar.cc/150?img=47" alt="Ana Reyes" />
+          <div class="team-overlay">
+            <a href="#" class="team-social-btn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="team-social-btn"><i class="fab fa-twitter"></i></a>
+          </div>
+        </div>
+        <div class="team-info">
+          <div class="team-name">Ana Reyes</div>
+          <div class="team-role">COO & Co-Founder</div>
+          <div class="team-bio">Operations expert who scaled two BPO companies before co-founding Jobseekers.ph.</div>
+        </div>
+      </div>
+
+      <div class="team-card on-scroll" style="transition-delay:0.2s">
+        <div class="team-img-wrap">
+          <img src="https://i.pravatar.cc/150?img=32" alt="Miguel Santos" />
+          <div class="team-overlay">
+            <a href="#" class="team-social-btn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="team-social-btn"><i class="fab fa-github"></i></a>
+          </div>
+        </div>
+        <div class="team-info">
+          <div class="team-name">Miguel Santos</div>
+          <div class="team-role">CTO</div>
+          <div class="team-bio">Full-stack engineer with background in building marketplace platforms at scale.</div>
+        </div>
+      </div>
+
+      <div class="team-card on-scroll" style="transition-delay:0.3s">
+        <div class="team-img-wrap">
+          <img src="https://i.pravatar.cc/150?img=5" alt="Jessa Lim" />
+          <div class="team-overlay">
+            <a href="#" class="team-social-btn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="team-social-btn"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+        <div class="team-info">
+          <div class="team-name">Jessa Lim</div>
+          <div class="team-role">Head of Marketing</div>
+          <div class="team-bio">Brand strategist who grew multiple Philippine startups to national recognition.</div>
+        </div>
+      </div>
+
+      <div class="team-card on-scroll" style="transition-delay:0.1s">
+        <div class="team-img-wrap">
+          <img src="https://i.pravatar.cc/150?img=25" alt="Grace Torres" />
+          <div class="team-overlay">
+            <a href="#" class="team-social-btn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+        <div class="team-info">
+          <div class="team-name">Grace Torres</div>
+          <div class="team-role">Head of Trust & Safety</div>
+          <div class="team-bio">Former compliance officer ensuring all VAs and clients are verified and protected.</div>
+        </div>
+      </div>
+
+      <div class="team-card on-scroll" style="transition-delay:0.2s">
+        <div class="team-img-wrap">
+          <img src="https://i.pravatar.cc/150?img=16" alt="Leo Cruz" />
+          <div class="team-overlay">
+            <a href="#" class="team-social-btn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="team-social-btn"><i class="fab fa-twitter"></i></a>
+          </div>
+        </div>
+        <div class="team-info">
+          <div class="team-name">Leo Cruz</div>
+          <div class="team-role">Product Designer</div>
+          <div class="team-bio">UX/UI designer passionate about creating beautiful, intuitive products for Filipino users.</div>
+        </div>
+      </div>
+
+      <div class="team-card on-scroll" style="transition-delay:0.3s">
+        <div class="team-img-wrap">
+          <img src="https://i.pravatar.cc/150?img=9" alt="Diana Flores" />
+          <div class="team-overlay">
+            <a href="#" class="team-social-btn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+        <div class="team-info">
+          <div class="team-name">Diana Flores</div>
+          <div class="team-role">Head of VA Success</div>
+          <div class="team-bio">Dedicated to helping VAs maximize their careers with coaching, resources, and community.</div>
+        </div>
+      </div>
+
+      <div class="team-card on-scroll" style="transition-delay:0.4s">
+        <div class="team-img-wrap">
+          <img src="https://i.pravatar.cc/150?img=41" alt="Ben Villanueva" />
+          <div class="team-overlay">
+            <a href="#" class="team-social-btn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+        <div class="team-info">
+          <div class="team-name">Ben Villanueva</div>
+          <div class="team-role">Client Success Manager</div>
+          <div class="team-bio">Ensures every client finds and retains the perfect VA for their specific needs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:2.5rem;">
+      <p style="color:var(--text-light); margin-bottom:1rem;">Want to join our team?</p>
+      <a href="#" class="btn btn-outline-primary"><i class="fas fa-briefcase"></i> View Open Positions</a>
+    </div>
+  </div>
+</section>
+
+<!-- PRESS / AWARDS -->
+<section class="section" style="background:var(--bg); padding-bottom:4rem;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-award"></i> Recognition</span>
+      <h2 class="section-title">In the News</h2>
+    </div>
+    <div style="display:flex; justify-content:center; align-items:center; gap:3rem; flex-wrap:wrap; opacity:0.45; filter:grayscale(1);">
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.5rem; color:var(--dark);">TechCrunch</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.5rem; color:var(--dark);">Forbes</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.5rem; color:var(--dark);">CNN Philippines</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.5rem; color:var(--dark);">Business Insider</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.5rem; color:var(--dark);">Rappler</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="hero-grid" style="position:absolute;inset:0;opacity:0.5;"></div>
+  <div class="cta-content" style="position:relative; z-index:1;">
+    <h2 class="cta-title">Join the Jobseekers.ph community</h2>
+    <p class="cta-sub">Be part of the movement transforming remote work in the Philippines. Start for free today.</p>
+    <div class="cta-ctas">
+      <a href="auth" class="btn btn-white btn-lg"><i class="fas fa-user-plus"></i> Sign Up Free</a>
+      <a href="contact" class="btn btn-outline-white btn-lg"><i class="fas fa-envelope"></i> Get in Touch</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social"><a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a><a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a></div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li><li><a href="#">Blog</a></li><li><a href="#">Careers</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

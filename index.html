@@ -1,0 +1,798 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jobseekers.ph — Philippines' #1 Virtual Assistant Platform</title>
+  <meta name="description" content="Hire elite Filipino virtual assistants or launch your remote career. Connect with top-rated VAs specializing in admin, social media, bookkeeping, and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index" class="active">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a>
+  <a href="find-vas">Find VAs</a>
+  <a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a>
+  <a href="pricing">Pricing</a>
+  <a href="about">About</a>
+  <a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions">
+    <a href="auth" class="btn btn-outline-primary">Login</a>
+    <a href="post-job" class="btn btn-primary">Post a Job</a>
+  </div>
+</div>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-grid"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-badge anim-fade-up">
+      <i class="fas fa-star"></i>
+      Trusted by 5,000+ companies across the globe
+    </div>
+
+    <h1 class="hero-title anim-fade-up anim-d1">
+      Hire <span class="accent">Elite Filipino</span><br />Virtual Assistants
+    </h1>
+
+    <p class="hero-sub anim-fade-up anim-d2">
+      Connect with top-rated Filipino VAs who transform your business. Skilled, dedicated, and ready to elevate your workflow — all at unbeatable value.
+    </p>
+
+    <div class="hero-search-wrap anim-fade-up anim-d3">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search by skill, role, or keyword..." />
+      <button onclick="window.location='find-vas.html'">Search VAs</button>
+    </div>
+
+    <div class="hero-tags anim-fade-up anim-d3">
+      <span>Popular:</span>
+      <a href="find-vas">Virtual Assistant</a>
+      <a href="find-vas">Social Media Manager</a>
+      <a href="find-vas">Bookkeeper</a>
+      <a href="find-vas">Graphic Designer</a>
+      <a href="find-vas">Customer Support</a>
+    </div>
+
+    <div class="hero-ctas anim-fade-up anim-d4">
+      <a href="ai-match" class="btn btn-white btn-lg">
+        <i class="fas fa-magic"></i> Try AI Match
+      </a>
+      <a href="auth" class="btn btn-outline-white btn-lg">
+        <i class="fas fa-rocket"></i> Start as a VA
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stats-inner">
+      <div class="hero-stat">
+        <div class="hero-stat-num counter" data-target="12000" data-suffix="+">12,000+</div>
+        <div class="hero-stat-label">Virtual Assistants</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num counter" data-target="5400" data-suffix="+">5,400+</div>
+        <div class="hero-stat-label">Verified Clients</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num counter" data-target="48000" data-suffix="+">48,000+</div>
+        <div class="hero-stat-label">Jobs Completed</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">4.9<span style="font-size:1.25rem">★</span></div>
+        <div class="hero-stat-label">Average Rating</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TRUSTED BY ===== -->
+<section style="padding:2.5rem 1.5rem; background:#fff; border-bottom:1px solid var(--border);">
+  <div class="container">
+    <p style="text-align:center; font-size:0.8125rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-light); margin-bottom:1.5rem;">Trusted by innovative companies worldwide</p>
+    <div style="display:flex; justify-content:center; align-items:center; gap:3rem; flex-wrap:wrap; opacity:0.45; filter:grayscale(100%);">
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.375rem; color:var(--dark);">Shopify</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.375rem; color:var(--dark);">HubSpot</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.375rem; color:var(--dark);">Notion</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.375rem; color:var(--dark);">Stripe</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.375rem; color:var(--dark);">Zapier</span>
+      <span style="font-family:'Poppins',sans-serif; font-weight:800; font-size:1.375rem; color:var(--dark);">Slack</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="section" style="background:#fff;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-map-signs"></i> Simple Process</span>
+      <h2 class="section-title">Get started in minutes</h2>
+      <p class="section-sub">Whether you're a business owner or a skilled VA, our platform makes it effortless to connect and collaborate.</p>
+    </div>
+
+    <div class="how-tabs-wrap">
+      <div class="how-tabs">
+        <button class="how-tab active" data-target="tab-client">For Clients</button>
+        <button class="how-tab" data-target="tab-va">For VAs</button>
+      </div>
+    </div>
+
+    <div id="tab-client" class="tab-panel active">
+      <div class="how-steps">
+        <div class="how-connector"></div>
+        <div class="how-step on-scroll">
+          <div class="how-step-icon">
+            <i class="fas fa-edit"></i>
+            <span class="how-step-num">1</span>
+          </div>
+          <h3>Post Your Job</h3>
+          <p>Describe your needs, set your budget, and specify the skills you're looking for. It takes less than 5 minutes.</p>
+        </div>
+        <div class="how-step on-scroll" style="transition-delay:0.15s">
+          <div class="how-step-icon">
+            <i class="fas fa-user-check"></i>
+            <span class="how-step-num">2</span>
+          </div>
+          <h3>Review Profiles</h3>
+          <p>Browse curated VA profiles, check portfolios, read verified reviews, and compare rates to find your perfect match.</p>
+        </div>
+        <div class="how-step on-scroll" style="transition-delay:0.3s">
+          <div class="how-step-icon">
+            <i class="fas fa-handshake"></i>
+            <span class="how-step-num">3</span>
+          </div>
+          <h3>Hire & Collaborate</h3>
+          <p>Send an offer, agree on terms, and start working. Our platform handles contracts, payments, and time tracking.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-va" class="tab-panel">
+      <div class="how-steps">
+        <div class="how-connector"></div>
+        <div class="how-step on-scroll">
+          <div class="how-step-icon">
+            <i class="fas fa-id-card"></i>
+            <span class="how-step-num">1</span>
+          </div>
+          <h3>Build Your Profile</h3>
+          <p>Showcase your skills, experience, and portfolio. Complete your profile to stand out and attract high-paying clients.</p>
+        </div>
+        <div class="how-step on-scroll" style="transition-delay:0.15s">
+          <div class="how-step-icon">
+            <i class="fas fa-paper-plane"></i>
+            <span class="how-step-num">2</span>
+          </div>
+          <h3>Apply to Jobs</h3>
+          <p>Browse hundreds of remote job opportunities and send tailored proposals. Get matched with clients who need your skills.</p>
+        </div>
+        <div class="how-step on-scroll" style="transition-delay:0.3s">
+          <div class="how-step-icon">
+            <i class="fas fa-coins"></i>
+            <span class="how-step-num">3</span>
+          </div>
+          <h3>Work & Get Paid</h3>
+          <p>Work on your schedule, track your time, and receive secure payments directly to your account. No hassle, no delays.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CATEGORIES ===== -->
+<section class="section" style="background:var(--bg);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-th-large"></i> Browse by Category</span>
+      <h2 class="section-title">Find the right expertise</h2>
+      <p class="section-sub">From administrative support to creative services — we have VAs for every business need.</p>
+    </div>
+
+    <div class="cat-grid on-scroll">
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(79,70,229,0.1);color:var(--primary)"><i class="fas fa-headset"></i></div>
+        <div class="cat-name">Virtual Assistant</div>
+        <div class="cat-count">2,840 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(236,72,153,0.1);color:#EC4899"><i class="fas fa-share-nodes"></i></div>
+        <div class="cat-name">Social Media</div>
+        <div class="cat-count">1,650 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-calculator"></i></div>
+        <div class="cat-name">Bookkeeping</div>
+        <div class="cat-count">930 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(245,158,11,0.1);color:var(--accent)"><i class="fas fa-pen-nib"></i></div>
+        <div class="cat-name">Content Writing</div>
+        <div class="cat-count">1,240 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(6,182,212,0.1);color:#06B6D4"><i class="fas fa-palette"></i></div>
+        <div class="cat-name">Graphic Design</div>
+        <div class="cat-count">870 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(239,68,68,0.1);color:var(--danger)"><i class="fas fa-chart-line"></i></div>
+        <div class="cat-name">Digital Marketing</div>
+        <div class="cat-count">1,100 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(124,58,237,0.1);color:var(--secondary)"><i class="fas fa-code"></i></div>
+        <div class="cat-name">Web Development</div>
+        <div class="cat-count">640 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-comments"></i></div>
+        <div class="cat-name">Customer Support</div>
+        <div class="cat-count">1,380 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(245,158,11,0.1);color:var(--accent)"><i class="fas fa-video"></i></div>
+        <div class="cat-name">Video Editing</div>
+        <div class="cat-count">520 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(79,70,229,0.1);color:var(--primary)"><i class="fas fa-envelope-open-text"></i></div>
+        <div class="cat-name">Email Marketing</div>
+        <div class="cat-count">460 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(236,72,153,0.1);color:#EC4899"><i class="fas fa-shopping-cart"></i></div>
+        <div class="cat-name">eCommerce</div>
+        <div class="cat-count">720 VAs</div>
+      </a>
+      <a href="find-vas" class="cat-card">
+        <div class="cat-icon" style="background:rgba(6,182,212,0.1);color:#06B6D4"><i class="fas fa-ellipsis-h"></i></div>
+        <div class="cat-name">View All</div>
+        <div class="cat-count">40+ categories</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURED VAs ===== -->
+<section class="section" style="background:#fff;">
+  <div class="container">
+    <div class="section-header" style="display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:1rem; text-align:left; margin-bottom:2.5rem;">
+      <div>
+        <span class="section-badge"><i class="fas fa-crown"></i> Top Talent</span>
+        <h2 class="section-title" style="margin-bottom:0.5rem;">Featured Virtual Assistants</h2>
+        <p style="color:var(--text-light); font-size:1rem;">Hand-picked, verified, and ready to work with you.</p>
+      </div>
+      <a href="find-vas" class="btn btn-outline-primary">View All VAs <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="grid-3">
+      <!-- VA Card 1 -->
+      <div class="va-card on-scroll">
+        <div class="featured-badge"><i class="fas fa-star"></i> Featured</div>
+        <div class="va-card-head">
+          <div class="va-avatar">
+            <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" />
+            <div class="va-status online"></div>
+          </div>
+          <div class="va-info">
+            <div class="va-name">Maria Santos <span class="verified"><i class="fas fa-check-circle"></i> Verified</span></div>
+            <div class="va-title">Executive Virtual Assistant</div>
+            <div class="va-rating">
+              <span class="stars">★★★★★</span>
+              <strong>5.0</strong> (84 reviews)
+            </div>
+          </div>
+          <div class="va-rate">$8<span style="font-size:0.75rem;font-weight:500;color:var(--text-light)">/hr</span></div>
+        </div>
+        <div class="va-skills">
+          <span class="skill-tag">Admin</span>
+          <span class="skill-tag">Calendar Mgmt</span>
+          <span class="skill-tag">Email</span>
+          <span class="skill-tag">CRM</span>
+        </div>
+        <div class="va-card-foot">
+          <div class="va-location"><i class="fas fa-map-marker-alt"></i> Cebu City, PH</div>
+          <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+        </div>
+      </div>
+
+      <!-- VA Card 2 -->
+      <div class="va-card on-scroll" style="transition-delay:0.1s">
+        <div class="va-card-head">
+          <div class="va-avatar">
+            <img src="https://i.pravatar.cc/150?img=5" alt="Jessa Cruz" />
+            <div class="va-status online"></div>
+          </div>
+          <div class="va-info">
+            <div class="va-name">Jessa Cruz <span class="verified"><i class="fas fa-check-circle"></i> Verified</span></div>
+            <div class="va-title">Social Media Manager</div>
+            <div class="va-rating">
+              <span class="stars">★★★★★</span>
+              <strong>4.9</strong> (61 reviews)
+            </div>
+          </div>
+          <div class="va-rate">$10<span style="font-size:0.75rem;font-weight:500;color:var(--text-light)">/hr</span></div>
+        </div>
+        <div class="va-skills">
+          <span class="skill-tag">Instagram</span>
+          <span class="skill-tag">TikTok</span>
+          <span class="skill-tag">Canva</span>
+          <span class="skill-tag">Analytics</span>
+        </div>
+        <div class="va-card-foot">
+          <div class="va-location"><i class="fas fa-map-marker-alt"></i> Manila, PH</div>
+          <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+        </div>
+      </div>
+
+      <!-- VA Card 3 -->
+      <div class="va-card on-scroll" style="transition-delay:0.2s">
+        <div class="featured-badge" style="background:var(--grad-warm)"><i class="fas fa-fire"></i> Top Rated</div>
+        <div class="va-card-head">
+          <div class="va-avatar">
+            <img src="https://i.pravatar.cc/150?img=12" alt="Ramon Dela Cruz" />
+            <div class="va-status online"></div>
+          </div>
+          <div class="va-info">
+            <div class="va-name">Ramon Dela Cruz</div>
+            <div class="va-title">Online Bookkeeper & Accountant</div>
+            <div class="va-rating">
+              <span class="stars">★★★★★</span>
+              <strong>5.0</strong> (103 reviews)
+            </div>
+          </div>
+          <div class="va-rate">$12<span style="font-size:0.75rem;font-weight:500;color:var(--text-light)">/hr</span></div>
+        </div>
+        <div class="va-skills">
+          <span class="skill-tag">QuickBooks</span>
+          <span class="skill-tag">Xero</span>
+          <span class="skill-tag">Payroll</span>
+          <span class="skill-tag">Tax Filing</span>
+        </div>
+        <div class="va-card-foot">
+          <div class="va-location"><i class="fas fa-map-marker-alt"></i> Davao City, PH</div>
+          <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+        </div>
+      </div>
+
+      <!-- VA Card 4 -->
+      <div class="va-card on-scroll" style="transition-delay:0.3s">
+        <div class="va-card-head">
+          <div class="va-avatar">
+            <img src="https://i.pravatar.cc/150?img=9" alt="Anna Reyes" />
+            <div class="va-status away"></div>
+          </div>
+          <div class="va-info">
+            <div class="va-name">Anna Reyes <span class="verified"><i class="fas fa-check-circle"></i> Verified</span></div>
+            <div class="va-title">Content Writer & Copywriter</div>
+            <div class="va-rating">
+              <span class="stars">★★★★½</span>
+              <strong>4.8</strong> (47 reviews)
+            </div>
+          </div>
+          <div class="va-rate">$9<span style="font-size:0.75rem;font-weight:500;color:var(--text-light)">/hr</span></div>
+        </div>
+        <div class="va-skills">
+          <span class="skill-tag">SEO Writing</span>
+          <span class="skill-tag">Blog Posts</span>
+          <span class="skill-tag">Copywriting</span>
+        </div>
+        <div class="va-card-foot">
+          <div class="va-location"><i class="fas fa-map-marker-alt"></i> Quezon City, PH</div>
+          <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+        </div>
+      </div>
+
+      <!-- VA Card 5 -->
+      <div class="va-card on-scroll" style="transition-delay:0.4s">
+        <div class="va-card-head">
+          <div class="va-avatar">
+            <img src="https://i.pravatar.cc/150?img=16" alt="Carlo Mendoza" />
+            <div class="va-status online"></div>
+          </div>
+          <div class="va-info">
+            <div class="va-name">Carlo Mendoza</div>
+            <div class="va-title">Graphic Designer & Video Editor</div>
+            <div class="va-rating">
+              <span class="stars">★★★★★</span>
+              <strong>4.9</strong> (38 reviews)
+            </div>
+          </div>
+          <div class="va-rate">$11<span style="font-size:0.75rem;font-weight:500;color:var(--text-light)">/hr</span></div>
+        </div>
+        <div class="va-skills">
+          <span class="skill-tag">Photoshop</span>
+          <span class="skill-tag">Illustrator</span>
+          <span class="skill-tag">Premiere Pro</span>
+        </div>
+        <div class="va-card-foot">
+          <div class="va-location"><i class="fas fa-map-marker-alt"></i> Makati, PH</div>
+          <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+        </div>
+      </div>
+
+      <!-- VA Card 6 -->
+      <div class="va-card on-scroll" style="transition-delay:0.5s">
+        <div class="va-card-head">
+          <div class="va-avatar">
+            <img src="https://i.pravatar.cc/150?img=25" alt="Grace Villanueva" />
+            <div class="va-status online"></div>
+          </div>
+          <div class="va-info">
+            <div class="va-name">Grace Villanueva <span class="verified"><i class="fas fa-check-circle"></i> Verified</span></div>
+            <div class="va-title">Customer Support Specialist</div>
+            <div class="va-rating">
+              <span class="stars">★★★★★</span>
+              <strong>5.0</strong> (56 reviews)
+            </div>
+          </div>
+          <div class="va-rate">$7<span style="font-size:0.75rem;font-weight:500;color:var(--text-light)">/hr</span></div>
+        </div>
+        <div class="va-skills">
+          <span class="skill-tag">Zendesk</span>
+          <span class="skill-tag">Live Chat</span>
+          <span class="skill-tag">Email Support</span>
+        </div>
+        <div class="va-card-foot">
+          <div class="va-location"><i class="fas fa-map-marker-alt"></i> Iloilo, PH</div>
+          <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:2.5rem;">
+      <a href="find-vas" class="btn btn-primary btn-lg"><i class="fas fa-users"></i> Explore All Virtual Assistants</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHY CHOOSE US ===== -->
+<section class="section" style="background:var(--bg);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-shield-alt"></i> Why Us</span>
+      <h2 class="section-title">Why thousands choose Jobseekers.ph</h2>
+      <p class="section-sub">We've built the most trusted VA marketplace in the Philippines with features that protect both sides.</p>
+    </div>
+
+    <div class="grid-4">
+      <div class="value-card on-scroll">
+        <div class="value-icon" style="background:rgba(79,70,229,0.1);color:var(--primary)"><i class="fas fa-shield-check"></i></div>
+        <h3>Verified Profiles</h3>
+        <p>Every VA is ID-verified and skill-tested before joining. No fake profiles, no surprises.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.1s">
+        <div class="value-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-lock"></i></div>
+        <h3>Secure Payments</h3>
+        <p>Funds held in escrow until work is approved. Pay with confidence, every time.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.2s">
+        <div class="value-icon" style="background:rgba(245,158,11,0.1);color:var(--accent)"><i class="fas fa-star"></i></div>
+        <h3>Quality Guaranteed</h3>
+        <p>Unhappy with the work? We'll make it right with our satisfaction guarantee policy.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.3s">
+        <div class="value-icon" style="background:rgba(236,72,153,0.1);color:#EC4899"><i class="fas fa-headset"></i></div>
+        <h3>24/7 Support</h3>
+        <p>Our dedicated team is always available to help you resolve any issue quickly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ONLY ON JOBSEEKERS.PH ===== -->
+<section class="section" style="background:#fff;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-star"></i> Only on Jobseekers.ph</span>
+      <h2 class="section-title" data-tl="Gawa para sa Pinoy VAs at sa clients nila">Built for Filipino VAs and the people who hire them</h2>
+      <p class="section-sub">Features you won't find on OnlineJobs.ph or Upwork, built around how remote work actually happens in the Philippines.</p>
+    </div>
+
+    <div class="grid-4">
+      <a href="ai-match" class="value-card on-scroll">
+        <div class="value-icon" style="background:rgba(124,58,237,0.1);color:var(--secondary)"><i class="fas fa-magic"></i></div>
+        <h3>AI Match</h3>
+        <p>Describe the role in plain words. Get your top 5 VAs, each with the reason they fit.</p>
+      </a>
+      <a href="find-vas?shift=us-east" class="value-card on-scroll" style="transition-delay:0.1s">
+        <div class="value-icon" style="background:rgba(49,46,129,0.1);color:#312E81"><i class="fas fa-moon"></i></div>
+        <h3>Shift matching</h3>
+        <p>Filter for VAs who already work your hours, whether that's US night shift, UK evenings, or AU mornings.</p>
+      </a>
+      <a href="post-job#trial" class="value-card on-scroll" style="transition-delay:0.2s">
+        <div class="value-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-flask"></i></div>
+        <h3>Paid trials</h3>
+        <p>Start with a 1–3 day paid trial with a fixed scope. Less risk for you, fair pay for the VA.</p>
+      </a>
+      <a href="setup-check" class="value-card on-scroll" style="transition-delay:0.3s">
+        <div class="value-icon" style="background:rgba(245,158,11,0.1);color:#B45309"><i class="fas fa-bolt"></i></div>
+        <h3>Brownout-ready ⚡</h3>
+        <p>Speed-tested internet plus verified backup power and internet, right on the profile.</p>
+      </a>
+      <a href="browse-jobs" class="value-card on-scroll">
+        <div class="value-icon" style="background:rgba(239,68,68,0.1);color:var(--danger)"><i class="fas fa-user-shield"></i></div>
+        <h3>Scam-proof job posts</h3>
+        <p>Verified clients, trust scores rated by VAs, and auto-flagging of fee or Telegram scams.</p>
+      </a>
+      <a href="academy" class="value-card on-scroll" style="transition-delay:0.1s">
+        <div class="value-icon" style="background:rgba(236,72,153,0.1);color:#EC4899"><i class="fas fa-graduation-cap"></i></div>
+        <h3>VA Academy</h3>
+        <p>Free courses and certificates. New VAs who pass join Rising Talent, so no reviews is no longer a dead end.</p>
+      </a>
+      <a href="work-tools" class="value-card on-scroll" style="transition-delay:0.2s">
+        <div class="value-icon" style="background:rgba(79,70,229,0.1);color:var(--primary)"><i class="fas fa-stopwatch"></i></div>
+        <h3>Built-in work tools</h3>
+        <p>Time tracker, EOD reports, and invoices paid out to GCash, Maya, or your bank.</p>
+      </a>
+      <a href="compliance" class="value-card on-scroll" style="transition-delay:0.3s">
+        <div class="value-icon" style="background:rgba(16,185,129,0.1);color:#047857"><i class="fas fa-file-signature"></i></div>
+        <h3>Contracts &amp; BIR kit</h3>
+        <p>NDA and contractor templates, plus a BIR-ready earnings summary at tax time. And a 30-day replacement guarantee.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STATS BAND ===== -->
+<section class="stats-band">
+  <div class="container">
+    <div class="stats-band-grid">
+      <div class="on-scroll" style="text-align:center">
+        <div class="stat-num counter" data-target="12000" data-suffix="+">12,000+</div>
+        <div class="stat-label">Active Virtual Assistants</div>
+      </div>
+      <div class="on-scroll" style="text-align:center; transition-delay:0.1s">
+        <div class="stat-num counter" data-target="98" data-suffix="%">98%</div>
+        <div class="stat-label">Client Satisfaction Rate</div>
+      </div>
+      <div class="on-scroll" style="text-align:center; transition-delay:0.2s">
+        <div class="stat-num counter" data-target="5400" data-suffix="+">5,400+</div>
+        <div class="stat-label">Businesses Served</div>
+      </div>
+      <div class="on-scroll" style="text-align:center; transition-delay:0.3s">
+        <div class="stat-num counter" data-target="48" data-suffix="K+">48K+</div>
+        <div class="stat-label">Jobs Completed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="section" style="background:var(--bg);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-quote-left"></i> Client Stories</span>
+      <h2 class="section-title">What our clients say</h2>
+      <p class="section-sub">Real reviews from real business owners who found their perfect VA on Jobseekers.ph.</p>
+    </div>
+
+    <div class="grid-3">
+      <div class="testimonial-card on-scroll">
+        <div class="t-stars">★★★★★</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">Maria has been an absolute game-changer for my business. She manages my inbox, schedules meetings, and even handles my social media. I've saved 15+ hours a week since hiring her.</p>
+        <div class="t-author">
+          <img src="https://i.pravatar.cc/150?img=33" alt="James Carter" />
+          <div class="t-author-info">
+            <h4>James Carter</h4>
+            <p>CEO, Carter Digital Agency</p>
+          </div>
+          <span class="t-label">Client</span>
+        </div>
+      </div>
+
+      <div class="testimonial-card on-scroll" style="transition-delay:0.15s">
+        <div class="t-stars">★★★★★</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">I was skeptical at first, but Ramon's bookkeeping skills are outstanding. He cleaned up 2 years of messy accounts in a week. Highly professional and very affordable.</p>
+        <div class="t-author">
+          <img src="https://i.pravatar.cc/150?img=49" alt="Sophie Anderson" />
+          <div class="t-author-info">
+            <h4>Sophie Anderson</h4>
+            <p>Founder, Bloom & Co.</p>
+          </div>
+          <span class="t-label">Client</span>
+        </div>
+      </div>
+
+      <div class="testimonial-card on-scroll" style="transition-delay:0.3s">
+        <div class="t-stars">★★★★★</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">Grace's customer support work has improved our response time by 300%. Our customer satisfaction scores have never been higher. She's worth every penny and then some.</p>
+        <div class="t-author">
+          <img src="https://i.pravatar.cc/150?img=60" alt="Michael Torres" />
+          <div class="t-author-info">
+            <h4>Michael Torres</h4>
+            <p>COO, TechForge Solutions</p>
+          </div>
+          <span class="t-label">Client</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VA testimonials -->
+    <div class="grid-2" style="margin-top:1.5rem;">
+      <div class="testimonial-card on-scroll">
+        <div class="t-stars">★★★★★</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">Jobseekers.ph helped me land my first international client within a week of joining. The platform is so easy to use and the support team is incredible. I now earn 3x my previous salary!</p>
+        <div class="t-author">
+          <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" />
+          <div class="t-author-info">
+            <h4>Maria Santos</h4>
+            <p>Executive VA, 5 years experience</p>
+          </div>
+          <span class="t-label" style="background:rgba(16,185,129,0.08);color:var(--success)">VA</span>
+        </div>
+      </div>
+
+      <div class="testimonial-card on-scroll" style="transition-delay:0.15s">
+        <div class="t-stars">★★★★★</div>
+        <div class="t-quote">"</div>
+        <p class="t-text">The best decision I made was creating my profile on Jobseekers.ph. I went from zero to fully booked in 3 months. The community is amazing and clients are respectful and professional.</p>
+        <div class="t-author">
+          <img src="https://i.pravatar.cc/150?img=5" alt="Jessa Cruz" />
+          <div class="t-author-info">
+            <h4>Jessa Cruz</h4>
+            <p>Social Media Manager</p>
+          </div>
+          <span class="t-label" style="background:rgba(16,185,129,0.08);color:var(--success)">VA</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="cta-section">
+  <div class="hero-bg">
+    <div class="hero-grid"></div>
+    <div class="blob blob-1" style="opacity:0.1"></div>
+    <div class="blob blob-2" style="opacity:0.1"></div>
+  </div>
+  <div class="cta-content">
+    <span class="section-badge" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:#C7D2FE;">
+      <i class="fas fa-rocket"></i> Get Started Today
+    </span>
+    <h2 class="cta-title">Ready to transform<br />your business?</h2>
+    <p class="cta-sub">Join thousands of businesses that have already discovered the power of Filipino virtual assistants. Start for free today.</p>
+    <div class="cta-ctas">
+      <a href="find-vas" class="btn btn-white btn-lg"><i class="fas fa-search"></i> Find a VA Now</a>
+      <a href="post-job" class="btn btn-outline-white btn-lg"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <p style="color:rgba(255,255,255,0.45); font-size:0.875rem; margin-top:1.5rem;">
+      <i class="fas fa-check-circle" style="color:var(--success)"></i> No credit card required &nbsp;·&nbsp;
+      <i class="fas fa-check-circle" style="color:var(--success)"></i> Free to post &nbsp;·&nbsp;
+      <i class="fas fa-check-circle" style="color:var(--success)"></i> 30-day money back
+    </p>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo">
+        <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+        Jobseekers<span class="dot">.ph</span>
+      </a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses. Start your remote journey today.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a>
+        <a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a>
+        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        <a href="#"><i class="fab fa-youtube"></i></a>
+      </div>
+      <div class="newsletter-strip">
+        <h4>Stay in the loop</h4>
+        <p>Get job alerts, VA tips, and platform updates.</p>
+        <div class="newsletter-form">
+          <input type="email" placeholder="your@email.com" />
+          <button class="btn btn-primary btn-sm">Subscribe</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-col">
+      <h4>For Clients</h4>
+      <ul class="footer-links">
+        <li><a href="find-vas">Find Virtual Assistants</a></li>
+        <li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li>
+        <li><a href="pricing">Pricing Plans</a></li>
+        <li><a href="how-it-works">How It Works</a></li>
+        <li><a href="#">Enterprise Solutions</a></li>
+        <li><a href="compliance">Contracts &amp; Taxes</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>For Virtual Assistants</h4>
+      <ul class="footer-links">
+        <li><a href="browse-jobs">Browse Jobs</a></li>
+        <li><a href="auth">Create Profile</a></li>
+        <li><a href="academy">VA Academy</a></li>
+        <li><a href="setup-check">Setup Check</a></li>
+        <li><a href="community">Community Forum</a></li>
+        <li><a href="community#stories">Success Stories</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul class="footer-links">
+        <li><a href="about">About Us</a></li>
+        <li><a href="contact">Contact</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Press Kit</a></li>
+        <li><a href="#">Partners</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links">
+      <a href="privacy">Privacy Policy</a>
+      <a href="terms">Terms of Service</a>
+      <a href="privacy#cookies">Cookie Policy</a>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

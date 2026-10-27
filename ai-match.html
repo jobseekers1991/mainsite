@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Match — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match" class="active"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero" style="padding-bottom:6rem;">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>AI Match</span></div>
+    <h1 data-tl="Ilarawan ang role. <span class='gradient-text'>Top 5 VAs</span> agad.">Describe the role. Get your <span class="gradient-text">top 5 VAs</span> instantly.</h1>
+    <p data-tl="Huwag nang mag-scroll sa 500 profiles. Ikukumpara namin ang skills, shift, budget at track record ng bawat VA.">Skip scrolling through 500 profiles. We compare every VA's skills, shift, budget and track record, then tell you exactly why each one fits.</p>
+  </div>
+</section>
+
+<!-- MATCH FORM -->
+<section style="padding:0 1.5rem 3rem; background:var(--bg);">
+  <div class="match-form-card">
+    <form id="matchForm">
+      <div class="form-group">
+        <label class="form-label" for="roleDesc">What do you need help with? <span class="form-required">*</span></label>
+        <textarea id="roleDesc" class="form-control form-textarea" style="min-height:130px;" required
+          placeholder="e.g. I run a Shopify store and need someone to handle customer emails in Gorgias, update product listings and track inventory. We're in New York so I need coverage during EST business hours."></textarea>
+        <div class="match-examples">
+          <span style="font-size:0.775rem; color:var(--text-light); align-self:center;">Try:</span>
+          <button type="button" data-example="Executive assistant to manage my inbox, calendar and travel. Must know HubSpot CRM. I'm in New York (EST).">Executive assistant</button>
+          <button type="button" data-example="Bookkeeper for QuickBooks Online — monthly reconciliation, invoicing and payroll in Gusto. Sydney-based business.">Bookkeeper (AU)</button>
+          <button type="button" data-example="Social media manager for Instagram and TikTok: content calendar, Canva graphics, captions and monthly analytics.">Social media</button>
+          <button type="button" data-example="Customer support for our SaaS: live chat and email tickets in Zendesk, US Pacific hours.">Customer support (PST)</button>
+          <button type="button" data-example="Real estate cold caller to generate leads and set appointments, logging everything in Podio. EST hours.">Real estate caller</button>
+        </div>
+      </div>
+
+      <div class="option-grid cols-3" style="align-items:start;">
+        <div class="form-group">
+          <label class="form-label" for="clientTz">Your working hours</label>
+          <select id="clientTz" class="form-control">
+            <option value="any">Detect from description</option>
+            <option value="us-east">US Eastern (EST)</option>
+            <option value="us-west">US Pacific (PST)</option>
+            <option value="uk">UK business hours</option>
+            <option value="au">AU business hours</option>
+            <option value="ph">PH / Asia daytime</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="budget">Max budget</label>
+          <div class="input-icon-wrap"><i class="fas fa-dollar-sign"></i><input id="budget" type="number" min="3" max="50" class="form-control" placeholder="per hour, e.g. 10" /></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="hours">Hours per week</label>
+          <select id="hours" class="form-control">
+            <option>Full-time (40 hrs)</option>
+            <option>Part-time (20 hrs)</option>
+            <option>Project / ad hoc</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Must-haves</label>
+        <div class="option-grid cols-3">
+          <label class="option-tile"><input type="checkbox" id="mustBrownout" /><span><strong>⚡ Brownout-ready</strong><small>Backup power &amp; internet verified</small></span></label>
+          <label class="option-tile"><input type="checkbox" id="mustTrial" /><span><strong>Offers a paid trial</strong><small>1–3 day trial before you commit</small></span></label>
+          <label class="option-tile"><input type="checkbox" id="mustEnglish" /><span><strong>English 90+</strong><small>Verified English test score</small></span></label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;"><i class="fas fa-magic"></i> Find My Matches</button>
+    </form>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="container" style="max-width:880px; margin-top:2.5rem;">
+    <div class="match-loading" id="matchLoading">
+      <i class="fas fa-circle-notch fa-spin"></i>
+      <p id="loadingText">Reading your role description…</p>
+    </div>
+    <div id="matchSummary"></div>
+    <div id="matchResults"></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" style="background:#fff;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-magic"></i> How matching works</span>
+      <h2 class="section-title">Every match comes with a reason</h2>
+      <p class="section-sub">No black box. Each VA is scored on the five things clients tell us matter most.</p>
+    </div>
+    <div class="grid-4">
+      <div class="value-card on-scroll">
+        <div class="value-icon" style="background:rgba(79,70,229,0.1);color:var(--primary)"><i class="fas fa-puzzle-piece"></i></div>
+        <h3>Skills &amp; tools (45%)</h3>
+        <p>We read your description for skills and software, like "Gorgias" or "reconciliation", and compare them with each VA's verified skills.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.1s">
+        <div class="value-icon" style="background:rgba(49,46,129,0.1);color:#312E81"><i class="fas fa-moon"></i></div>
+        <h3>Shift fit (20%)</h3>
+        <p>Most Filipino VAs work night or graveyard shifts. We only rank VAs high if they already work your hours.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.2s">
+        <div class="value-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-wallet"></i></div>
+        <h3>Budget (15%)</h3>
+        <p>VAs within your rate rank first. Slightly-above-budget experts still appear, clearly labeled.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.3s">
+        <div class="value-icon" style="background:rgba(245,158,11,0.1);color:var(--accent)"><i class="fas fa-bolt"></i></div>
+        <h3>Track record &amp; reliability (20%)</h3>
+        <p>Ratings, response time, Brownout-ready setup, and Academy certificates, so new VAs with proven skills still get a fair shot.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/va-data.js"></script>
+<script>
+  const form = document.getElementById('matchForm');
+  const desc = document.getElementById('roleDesc');
+  const resultsEl = document.getElementById('matchResults');
+  const summaryEl = document.getElementById('matchSummary');
+  const loadingEl = document.getElementById('matchLoading');
+
+  document.querySelectorAll('[data-example]').forEach(btn => {
+    btn.addEventListener('click', () => { desc.value = btn.dataset.example; desc.focus(); });
+  });
+
+  const titleCase = s => s.replace(/\b\w/g, c => c.toUpperCase());
+  const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const mentions = (text, term) => new RegExp('(^|[^a-z])' + escapeRe(term) + '([^a-z]|$)').test(text);
+
+  // Skills the client asked for, plus specific tools they named
+  function readRequirements(text) {
+    const lower = text.toLowerCase();
+    const skills = Object.keys(SKILL_SYNONYMS).filter(key => SKILL_SYNONYMS[key].some(term => mentions(lower, term)));
+    const allTools = [...new Set(VAS.flatMap(v => v.tools))];
+    // Skip tools already counted as a skill (e.g. "shopify") so nothing is listed twice
+    const tools = allTools.filter(tool => mentions(lower, tool) && !skills.includes(tool));
+    return { skills, tools };
+  }
+
+  function detectShift(text) {
+    const t = text.toLowerCase();
+    if (/\b(pst|pdt|pacific|california|los angeles|san francisco|seattle|west coast)\b/.test(t)) return 'us-west';
+    if (/\b(est|edt|eastern|new york|florida|east coast|us hours|cst|central)\b/.test(t)) return 'us-east';
+    if (/\b(aest|australia|sydney|melbourne|brisbane|perth|nz|new zealand)\b/.test(t)) return 'au';
+    if (/\b(uk|gmt|bst|london|britain|europe|cet)\b/.test(t)) return 'uk';
+    if (/\b(singapore|asia|manila|ph hours|philippine time|pht)\b/.test(t)) return 'ph';
+    return null;
+  }
+
+  function scoreVA(va, req, shift, budget) {
+    const vaTerms = new Set([...va.skills, ...va.tools]);
+    const hasSkill = key => vaTerms.has(key) || SKILL_SYNONYMS[key].some(term => vaTerms.has(term));
+    const matchedSkills = req.skills.filter(hasSkill);
+    const missingSkills = req.skills.filter(k => !hasSkill(k));
+    const matchedTools = req.tools.filter(t => va.tools.includes(t));
+    const missingTools = req.tools.filter(t => !va.tools.includes(t));
+
+    const wanted = req.skills.length + req.tools.length;
+    const skillFit = wanted ? (matchedSkills.length + matchedTools.length) / wanted : 0.5;
+    const shiftFit = !shift || va.shifts.includes(shift) ? 1 : 0;
+    const budgetFit = !budget || va.rate <= budget ? 1 : Math.max(0, 1 - ((va.rate - budget) / budget) * 2);
+    let quality = Math.max(0, (va.rating - 4)) * 0.7 + Math.min(va.reviews, 100) / 100 * 0.3;
+    if (va.rising) quality = Math.max(quality, 0.65); // certified newcomers aren't buried
+    const reliability = (va.brownout ? 0.5 : 0) + (va.responseHrs <= 2 ? 0.5 : va.responseHrs <= 4 ? 0.25 : 0);
+
+    const score = Math.round(45 * skillFit + 20 * shiftFit + 15 * budgetFit + 10 * quality + 10 * reliability);
+
+    const reasons = [];
+    if (matchedSkills.length || matchedTools.length) {
+      const names = [...matchedSkills, ...matchedTools].map(titleCase).join(', ');
+      reasons.push({ ok: true, text: `Has ${matchedSkills.length + matchedTools.length} of ${wanted} things you asked for: <strong>${names}</strong>` });
+    }
+    if (shift && shiftFit) reasons.push({ ok: true, text: `Already works <strong>${SHIFTS[shift].label}</strong> (${SHIFTS[shift].ph})` });
+    if (budget && va.rate <= budget) reasons.push({ ok: true, text: `<strong>$${va.rate}/hr</strong>, within your $${budget}/hr budget` });
+    if (va.rising) reasons.push({ ok: true, text: `<strong>Rising Talent</strong>: newer to the platform but passed ${va.certs.join(' + ')}` });
+    else reasons.push({ ok: true, text: `<strong>${va.rating.toFixed(1)}★</strong> from ${va.reviews} reviews · ${va.years} yrs experience` });
+    if (va.brownout) reasons.push({ ok: true, text: '<strong>Brownout-ready ⚡</strong>: backup power &amp; internet verified' });
+    if (va.responseHrs <= 2) reasons.push({ ok: true, text: `Usually replies within ${va.responseHrs} hr${va.responseHrs > 1 ? 's' : ''}` });
+
+    const misses = [...missingSkills, ...missingTools].map(titleCase);
+    if (misses.length) reasons.push({ ok: false, text: `Not listed: ${misses.join(', ')}` });
+    if (shift && !shiftFit) reasons.push({ ok: false, text: `Doesn't currently list ${SHIFTS[shift].label} hours` });
+    if (budget && va.rate > budget) reasons.push({ ok: false, text: `$${va.rate}/hr is above your $${budget}/hr budget` });
+
+    return { va, score, reasons };
+  }
+
+  function renderResults(matches, shift, detected) {
+    summaryEl.innerHTML += `
+      <div class="alert alert-info" style="margin-bottom:1.5rem;">
+        <i class="fas fa-magic" style="margin-top:0.2rem;"></i>
+        <div>Your top ${matches.length} matches${shift ? ` for <strong>${SHIFTS[shift].label}</strong>${detected ? ' (detected from your description)' : ''}` : ''}.
+        Not quite right? Add tools or details to your description and search again.</div>
+      </div>`;
+
+    resultsEl.innerHTML = matches.map((m, i) => `
+      <div class="match-result" style="animation-delay:${i * 0.08}s">
+        <div class="match-rank">${i + 1}</div>
+        <div>
+          <div class="match-who">
+            <img src="https://i.pravatar.cc/150?img=${m.va.img}" alt="${m.va.name}" />
+            <div>
+              <h3>${m.va.name}</h3>
+              <p>${m.va.title} · ${m.va.location} · $${m.va.rate}/hr</p>
+            </div>
+          </div>
+          <div class="va-badges">
+            ${m.va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''}
+            ${m.va.trial ? '<span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span>' : ''}
+            ${m.va.rising ? '<span class="feat-badge rising"><i class="fas fa-seedling"></i> Rising Talent</span>' : ''}
+            ${m.va.certs.map(c => `<span class="feat-badge cert"><i class="fas fa-certificate"></i> ${c}</span>`).join('')}
+          </div>
+          <ul class="match-reasons">
+            ${m.reasons.map(r => `<li class="${r.ok ? '' : 'miss'}"><i class="fas ${r.ok ? 'fa-check' : 'fa-exclamation'}"></i><span>${r.text}</span></li>`).join('')}
+          </ul>
+        </div>
+        <div class="match-score">
+          <div class="match-score-ring" style="--pct:${m.score}"><span>${m.score}%</span></div>
+          <small>match</small>
+          <div style="display:flex; flex-direction:column; gap:0.375rem;">
+            <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            ${m.va.trial ? '<a href="va-profile#trial" class="btn btn-outline-primary btn-sm">Start Paid Trial</a>' : ''}
+          </div>
+        </div>
+      </div>`).join('');
+    applyLanguage(currentLang);
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = desc.value.trim();
+    if (!text) { desc.focus(); return; }
+
+    const req = readRequirements(text);
+    const chosen = document.getElementById('clientTz').value;
+    const detected = chosen === 'any' ? detectShift(text) : null;
+    const shift = chosen === 'any' ? detected : chosen;
+    const budget = parseFloat(document.getElementById('budget').value) || null;
+    const mustBrownout = document.getElementById('mustBrownout').checked;
+    const mustTrial = document.getElementById('mustTrial').checked;
+    const mustEnglish = document.getElementById('mustEnglish').checked;
+
+    const matches = VAS
+      .filter(v => (!mustBrownout || v.brownout) && (!mustTrial || v.trial) && (!mustEnglish || v.english >= 90))
+      .map(v => scoreVA(v, req, shift, budget))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    resultsEl.innerHTML = '';
+    summaryEl.innerHTML = '';
+    loadingEl.classList.add('show');
+    const steps = ['Reading your role description…', 'Comparing skills and tools…', 'Checking shifts and budgets…'];
+    steps.forEach((s, i) => setTimeout(() => { document.getElementById('loadingText').textContent = s; }, i * 350));
+
+    setTimeout(() => {
+      loadingEl.classList.remove('show');
+      if (!matches.length) {
+        summaryEl.innerHTML = '<div class="alert alert-warn"><i class="fas fa-info-circle"></i> No VAs meet all your must-haves yet. Try unticking one.</div>';
+        return;
+      }
+      if (!req.skills.length && !req.tools.length) {
+        summaryEl.innerHTML = '<div class="alert alert-warn"><i class="fas fa-info-circle"></i> We couldn\'t spot specific skills in your description. Mention tasks or tools (e.g. "QuickBooks", "Instagram", "cold calling") for sharper matches.</div>';
+      }
+      renderResults(matches, shift, !!detected);
+      if (req.skills.length || req.tools.length) resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 1100);
+  });
+
+  // Searches from elsewhere (e.g. the 404 page) arrive as ai-match?q=...
+  const incoming = new URLSearchParams(location.search).get('q');
+  if (incoming) { desc.value = incoming; form.requestSubmit(); }
+</script>
+</body>
+</html>

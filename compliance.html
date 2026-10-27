@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contracts &amp; Taxes — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>Contracts &amp; Taxes</span></div>
+    <h1 data-tl="Kontrata at buwis, <span class='gradient-text'>tapos na.</span>">Contracts and taxes, <span class="gradient-text">sorted.</span></h1>
+    <p data-tl="NDA at contractor agreement na handang pirmahan, at BIR-ready na buod ng kita mo para sa tax season.">Ready-to-sign NDA and contractor agreement templates, plus a BIR-ready earnings summary for Filipino freelancers at tax time.</p>
+  </div>
+</section>
+
+<section class="section" style="background:var(--bg); padding-top:3rem;">
+  <div class="container">
+
+    <div class="how-tabs-wrap">
+      <div class="how-tabs" style="background:#fff; flex-wrap:wrap; justify-content:center;">
+        <button class="how-tab active" data-target="tab-nda"><i class="fas fa-user-secret"></i> NDA</button>
+        <button class="how-tab" data-target="tab-contract"><i class="fas fa-file-contract"></i> Contractor Agreement</button>
+        <button class="how-tab" data-target="tab-bir"><i class="fas fa-receipt"></i> BIR Earnings Summary</button>
+      </div>
+    </div>
+
+    <!-- Shared party details for both documents -->
+    <div id="partyCard" class="sidebar-card" style="margin-bottom:1.5rem;">
+      <div class="sidebar-title" style="margin-bottom:1rem;">Who's signing? <span style="font-weight:400; font-size:0.8rem; color:var(--text-light);">Used in the NDA and the agreement</span></div>
+      <div class="option-grid cols-3">
+        <div class="form-group" style="margin:0;"><label class="form-label" for="pClient">Client / company</label><input id="pClient" class="form-control doc-input" value="Carter Digital Agency LLC" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" for="pClientLoc">Client location</label><input id="pClientLoc" class="form-control doc-input" value="New York, USA" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" for="pVa">VA full legal name</label><input id="pVa" class="form-control doc-input" value="Maria Santos" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" for="pVaLoc">VA city</label><input id="pVaLoc" class="form-control doc-input" value="Cebu City, Philippines" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" for="pStart">Start date</label><input id="pStart" type="date" class="form-control doc-input" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" for="pRole">Role</label><input id="pRole" class="form-control doc-input" value="Executive Virtual Assistant" /></div>
+      </div>
+    </div>
+
+    <!-- ===== NDA ===== -->
+    <div id="tab-nda" class="tab-panel active">
+      <div class="doc-builder">
+        <aside>
+          <div class="sidebar-card">
+            <div class="sidebar-title">NDA options</div>
+            <div class="form-group"><label class="form-label" for="ndaYears">Confidentiality lasts</label>
+              <select id="ndaYears" class="form-control doc-input"><option value="2">2 years after the work ends</option><option value="3" selected>3 years after the work ends</option><option value="5">5 years after the work ends</option></select></div>
+            <label class="option-tile" style="margin-bottom:0.5rem;"><input type="checkbox" id="ndaCreds" class="doc-input" checked /><span><strong>Account access clause</strong><small>Passwords via a password manager only</small></span></label>
+            <label class="option-tile"><input type="checkbox" id="ndaNonSolicit" class="doc-input" /><span><strong>Non-solicitation</strong><small>VA won't approach the client's customers</small></span></label>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            <button class="btn btn-primary sign-btn"><i class="fas fa-signature"></i> Send for e-signature</button>
+            <button class="btn btn-outline-primary" onclick="printDoc('ndaDoc')"><i class="fas fa-print"></i> Print / Save PDF</button>
+          </div>
+        </aside>
+        <div class="doc-preview" id="ndaDoc"></div>
+      </div>
+    </div>
+
+    <!-- ===== CONTRACTOR AGREEMENT ===== -->
+    <div id="tab-contract" class="tab-panel">
+      <div class="doc-builder">
+        <aside>
+          <div class="sidebar-card">
+            <div class="sidebar-title">Agreement terms</div>
+            <div class="form-row-2">
+              <div class="form-group"><label class="form-label" for="cRate">Rate (USD/hr)</label><input id="cRate" type="number" class="form-control doc-input" value="8" /></div>
+              <div class="form-group"><label class="form-label" for="cHours">Hrs / week</label><input id="cHours" type="number" class="form-control doc-input" value="40" /></div>
+            </div>
+            <div class="form-group"><label class="form-label" for="cShift">Working hours</label>
+              <select id="cShift" class="form-control doc-input"><option>9:00 AM – 5:00 PM US Eastern (9 PM – 5 AM PHT)</option><option>9:00 AM – 5:00 PM US Pacific (12 AM – 8 AM PHT)</option><option>9:00 AM – 5:00 PM AEST (7 AM – 3 PM PHT)</option><option>9:00 AM – 5:00 PM UK (4 PM – 12 AM PHT)</option><option>Flexible, async</option></select></div>
+            <div class="form-group"><label class="form-label" for="cPay">Paid</label>
+              <select id="cPay" class="form-control doc-input"><option>weekly</option><option selected>every two weeks</option><option>monthly</option></select></div>
+            <div class="form-group"><label class="form-label" for="cNotice">Notice to end</label>
+              <select id="cNotice" class="form-control doc-input"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option></select></div>
+            <label class="option-tile"><input type="checkbox" id="cTrial" class="doc-input" checked /><span><strong>Starts with a paid trial</strong><small>3-day trial before the full agreement</small></span></label>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            <button class="btn btn-primary sign-btn"><i class="fas fa-signature"></i> Send for e-signature</button>
+            <button class="btn btn-outline-primary" onclick="printDoc('contractDoc')"><i class="fas fa-print"></i> Print / Save PDF</button>
+          </div>
+        </aside>
+        <div class="doc-preview" id="contractDoc"></div>
+      </div>
+    </div>
+
+    <!-- ===== BIR SUMMARY ===== -->
+    <div id="tab-bir" class="tab-panel">
+      <div class="alert alert-info"><i class="fas fa-info-circle" style="margin-top:0.2rem;"></i>
+        <div>Freelance VAs in the Philippines are self-employed, so you file your own taxes with the BIR. Enter your gross income per month (or import it from your payouts) to see your estimated tax under both options and which BIR forms to file.</div>
+      </div>
+      <div class="doc-builder">
+        <aside>
+          <div class="sidebar-card">
+            <div class="sidebar-title">Gross income (PHP) <button type="button" id="birImport" style="color:var(--primary);">Import payouts</button></div>
+            <div class="form-group"><label class="form-label" for="birYear">Tax year</label><select id="birYear" class="form-control"><option>2026</option><option>2025</option></select></div>
+            <div id="birMonths" style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;"></div>
+          </div>
+          <div class="sidebar-card">
+            <div class="sidebar-title">Your situation</div>
+            <label class="option-tile" style="margin-bottom:0.5rem;"><input type="checkbox" id="birPure" checked /><span><strong>Purely self-employed</strong><small>No other job with a payslip (needed for the 8% option)</small></span></label>
+          </div>
+        </aside>
+        <div>
+          <div class="doc-preview print-area" id="birDoc" style="max-height:none;"></div>
+          <div style="display:flex; gap:0.75rem; margin-top:1rem; flex-wrap:wrap;">
+            <button class="btn btn-outline-primary" onclick="printDoc('birDoc')"><i class="fas fa-print"></i> Print / Save PDF</button>
+            <a href="community" class="btn btn-ghost"><i class="fas fa-users"></i> Ask the community about taxes</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:0.8rem; color:var(--text-light); text-align:center; margin-top:2rem; max-width:720px; margin-left:auto; margin-right:auto;">
+      <i class="fas fa-balance-scale"></i> These templates and tax estimates are general information, not legal or tax advice. Rules change, so check with a lawyer, a CPA, or your BIR Revenue District Office (RDO) before signing or filing.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const val = id => esc($(id).value.trim() || '________');
+  const longDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '________';
+
+  $('pStart').value = new Date().toISOString().slice(0, 10);
+
+  // Party details only matter for the two document tabs
+  document.querySelectorAll('.how-tab').forEach(tab => tab.addEventListener('click', () => {
+    $('partyCard').hidden = tab.dataset.target === 'tab-bir';
+  }));
+
+  function printDoc(id) {
+    document.querySelectorAll('.print-area').forEach(el => el.classList.remove('print-area'));
+    $(id).classList.add('print-area');
+    window.print();
+  }
+
+  const signatures = () => `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top:2.5rem;">
+      <div><div style="border-bottom:1px solid var(--dark); height:2.5rem;"></div><strong>${val('pClient')}</strong><br><small>Client · Date: ________</small></div>
+      <div><div style="border-bottom:1px solid var(--dark); height:2.5rem;"></div><strong>${val('pVa')}</strong><br><small>Contractor · Date: ________</small></div>
+    </div>`;
+
+  function renderNda() {
+    let n = 0;
+    const clause = (title, body) => `<p><strong>${++n}. ${title}.</strong> ${body}</p>`;
+    $('ndaDoc').innerHTML = `
+      <h4>NON-DISCLOSURE AGREEMENT</h4>
+      <p>This Non-Disclosure Agreement ("Agreement") is made on <strong>${longDate($('pStart').value)}</strong> between <strong>${val('pClient')}</strong> of ${val('pClientLoc')} ("Client") and <strong>${val('pVa')}</strong> of ${val('pVaLoc')} ("Contractor"), who will work as the Client's ${val('pRole')} through Jobseekers.ph.</p>
+      ${clause('Confidential Information', 'means any non-public information the Contractor sees while working for the Client, including customer lists, financial records, business plans, passwords, internal documents, emails, and personal data of the Client\'s customers or staff.')}
+      ${clause('Obligations', 'The Contractor will use Confidential Information only to perform work for the Client, will not share it with anyone else, and will protect it with at least the same care used for their own private information.')}
+      ${clause('Exclusions', 'This Agreement does not cover information that is already public, was lawfully known to the Contractor before working with the Client, or must be disclosed by law or court order (with prompt notice to the Client where allowed).')}
+      ${$('ndaCreds').checked ? clause('Account access', 'Logins and passwords will be shared only through a password manager (such as 1Password or Bitwarden) with two-factor authentication. The Contractor will not save client passwords in chat, notes, or personal browsers, and will not reuse them.') : ''}
+      ${clause('Personal data', 'The Contractor will handle personal data in line with the Philippine Data Privacy Act of 2012 (RA 10173) and any data protection law the Client tells the Contractor about in writing.')}
+      ${$('ndaNonSolicit').checked ? clause('Non-solicitation', 'During the engagement and for 12 months after it ends, the Contractor will not use Confidential Information to solicit the Client\'s customers for competing work.') : ''}
+      ${clause('Return of materials', 'When the work ends, the Contractor will return or permanently delete all Confidential Information and confirm this in writing within 7 days.')}
+      ${clause('Duration', `These obligations last during the engagement and for <strong>${$('ndaYears').value} years</strong> after it ends. Trade secrets and passwords stay confidential indefinitely.`)}
+      ${clause('Disputes', 'The parties will first try to resolve any dispute through Jobseekers.ph mediation before taking other legal action.')}
+      ${signatures()}`;
+  }
+
+  function renderContract() {
+    let n = 0;
+    const clause = (title, body) => `<p><strong>${++n}. ${title}.</strong> ${body}</p>`;
+    const rate = parseFloat($('cRate').value) || 0;
+    const hours = parseFloat($('cHours').value) || 0;
+    $('contractDoc').innerHTML = `
+      <h4>INDEPENDENT CONTRACTOR AGREEMENT</h4>
+      <p>This Agreement starts on <strong>${longDate($('pStart').value)}</strong> between <strong>${val('pClient')}</strong> of ${val('pClientLoc')} ("Client") and <strong>${val('pVa')}</strong> of ${val('pVaLoc')} ("Contractor"), arranged through Jobseekers.ph ("Platform").</p>
+      ${clause('Services', `The Contractor will work as the Client's <strong>${val('pRole')}</strong>. Tasks will be agreed in writing (email, Slack, or the Platform) and may change by mutual agreement.`)}
+      ${$('cTrial').checked ? clause('Paid trial', 'The engagement begins with a 3-day paid trial with a fixed scope. Either party may end it after the trial with no notice period. Trial hours are paid at the full rate below.') : ''}
+      ${clause('Independent contractor', 'The Contractor is self-employed and not an employee of the Client. The Contractor is responsible for their own taxes (BIR registration and filing) and their own SSS, PhilHealth, and Pag-IBIG contributions. Nothing in this Agreement creates an employment relationship.')}
+      ${clause('Hours', `About <strong>${hours} hours per week</strong>, normally ${esc($('cShift').value)}. The Contractor tracks time with Jobseekers.ph Work Tools and sends an end-of-day report on working days.`)}
+      ${clause('Payment', `The Client pays <strong>USD ${rate.toFixed(2)} per hour</strong> (about USD ${(rate * hours * 52 / 12).toLocaleString('en-US', { maximumFractionDigits: 0 })} per month), invoiced and paid <strong>${esc($('cPay').value)}</strong> through the Platform. Payments made outside the Platform are not covered by its payment protection.`)}
+      ${clause('Equipment', 'The Contractor provides their own computer, internet connection, and workspace, and will keep a backup power and internet plan so that brownouts or outages don\'t cause missed work. The Contractor will tell the Client right away if an outage affects scheduled hours.')}
+      ${clause('Confidentiality', 'The Contractor will keep the Client\'s information confidential under the Non-Disclosure Agreement signed by both parties, which forms part of this Agreement.')}
+      ${clause('Work ownership', 'Once paid for, all work the Contractor creates for the Client (documents, designs, content, code, and data) belongs to the Client. The Contractor may mention the Client as a reference only with written permission.')}
+      ${clause('Ending the agreement', `Either party may end this Agreement with <strong>${$('cNotice').value} days</strong> written notice, or immediately for serious breach. All approved hours up to the end date will be paid. If the Contractor leaves within the first 30 days, the Platform's Replacement Guarantee applies to the Client.`)}
+      ${clause('Disputes', 'The parties will first try to resolve disputes through Jobseekers.ph mediation. If that fails, either party may pursue remedies available under applicable law.')}
+      ${clause('Entire agreement', 'This Agreement and the NDA are the full agreement between the parties. Changes must be in writing and accepted by both.')}
+      ${signatures()}`;
+  }
+
+  /* ---------- BIR estimate ----------
+     Graduated rates are the TRAIN law schedule in effect from 2023.
+     8% option: 8% of gross receipts over ₱250,000, in place of graduated income tax and percentage tax.
+     Graduated option is shown with the 40% Optional Standard Deduction plus 3% percentage tax. */
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const DEMO = [52000, 54500, 55000, 58200, 61000, 60400, 63800, 65000, 66200, 68900, 0, 0];
+
+  $('birMonths').innerHTML = MONTHS.map((m, i) => `
+    <div><label class="form-label" style="font-size:0.75rem; margin-bottom:0.125rem;" for="m${i}">${m}</label>
+    <input id="m${i}" type="number" min="0" class="form-control bir-month" style="padding:0.5rem 0.625rem;" placeholder="0" /></div>`).join('');
+
+  function graduatedTax(taxable) {
+    const brackets = [[8000000, 2202500, 0.35], [2000000, 402500, 0.30], [800000, 102500, 0.25], [400000, 22500, 0.20], [250000, 0, 0.15]];
+    for (const [floor, base, rate] of brackets) if (taxable > floor) return base + (taxable - floor) * rate;
+    return 0;
+  }
+
+  const peso = n => '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  function renderBir() {
+    const months = MONTHS.map((_, i) => parseFloat($('m' + i).value) || 0);
+    const quarters = [0, 1, 2, 3].map(q => months.slice(q * 3, q * 3 + 3).reduce((a, b) => a + b, 0));
+    const gross = quarters.reduce((a, b) => a + b, 0);
+    const year = Number($('birYear').value);
+    const pure = $('birPure').checked;
+
+    const eightPct = Math.max(0, gross - 250000) * 0.08;
+    const gradIncome = graduatedTax(gross * 0.6);
+    const pctTax = gross * 0.03;
+    const gradTotal = gradIncome + pctTax;
+    const eightAllowed = pure && gross <= 3000000;
+    const best = eightAllowed && eightPct <= gradTotal ? '8' : 'grad';
+
+    const qRows = quarters.map((amt, q) => {
+      const cumulative = quarters.slice(0, q + 1).reduce((a, b) => a + b, 0);
+      return `<tr><td>Q${q + 1}</td><td class="num">${peso(amt)}</td><td class="num">${peso(cumulative)}</td>
+        <td>${q < 3 ? `1701Q by ${['May 15', 'Aug 15', 'Nov 15'][q]}, ${year}` : `Annual 1701A by Apr 15, ${year + 1}`}</td></tr>`;
+    }).join('');
+
+    $('birDoc').innerHTML = `
+      <h4>BIR Earnings Summary · Tax Year ${year}</h4>
+      <p style="text-align:center; color:var(--text-light); font-size:0.8125rem; margin-top:-0.75rem;">${esc($('pVa').value)} · Self-employed (freelance virtual assistant)</p>
+      <table class="doc-table" style="margin:1.25rem 0;">
+        <thead><tr><th>Quarter</th><th class="num">Gross income</th><th class="num">Year to date</th><th>File</th></tr></thead>
+        <tbody>${qRows}</tbody>
+        <tfoot><tr><td>Total</td><td class="num">${peso(gross)}</td><td></td><td></td></tr></tfoot>
+      </table>
+
+      <div class="compare-2">
+        <div class="feature-panel" style="margin:0; ${best === '8' ? 'border-color:var(--success); background:rgba(16,185,129,0.05);' : ''}">
+          <div class="feature-panel-title">8% flat rate ${best === '8' ? '<span class="feat-badge trial">Lower tax</span>' : ''}</div>
+          <div class="calc-line"><span>Gross − ₱250,000</span><strong>${peso(Math.max(0, gross - 250000))}</strong></div>
+          <div class="calc-line"><span>× 8%</span><strong>${peso(eightPct)}</strong></div>
+          <div class="calc-line"><span>Percentage tax</span><strong>None</strong></div>
+          <div class="calc-line total"><span>Estimated tax</span><strong>${eightAllowed ? peso(eightPct) : 'Not eligible'}</strong></div>
+          <small style="color:var(--text-light);">${eightAllowed ? 'Choose this on your first 1701Q of the year. It replaces income tax and percentage tax.' : 'Only for purely self-employed individuals earning ₱3M or less.'}</small>
+        </div>
+        <div class="feature-panel" style="margin:0; ${best === 'grad' ? 'border-color:var(--success); background:rgba(16,185,129,0.05);' : ''}">
+          <div class="feature-panel-title">Graduated + 40% OSD ${best === 'grad' ? '<span class="feat-badge trial">Lower tax</span>' : ''}</div>
+          <div class="calc-line"><span>Taxable (60% of gross)</span><strong>${peso(gross * 0.6)}</strong></div>
+          <div class="calc-line"><span>Income tax</span><strong>${peso(gradIncome)}</strong></div>
+          <div class="calc-line"><span>Percentage tax 3% (2551Q)</span><strong>${peso(pctTax)}</strong></div>
+          <div class="calc-line total"><span>Estimated tax</span><strong>${peso(gradTotal)}</strong></div>
+          <small style="color:var(--text-light);">Also file 2551Q each quarter for percentage tax.</small>
+        </div>
+      </div>
+
+      <p style="margin-top:1.25rem; font-size:0.8125rem; color:var(--text-light);">
+        <strong style="color:var(--dark);">Checklist:</strong> registered with BIR (Form 1901, Certificate of Registration 2303) · books of accounts registered · official receipts/invoices issued to clients · SSS, PhilHealth and Pag-IBIG as a voluntary/self-employed member.
+        Estimates only; your RDO or a CPA has the final word.
+      </p>`;
+  }
+
+  document.querySelectorAll('.bir-month, #birYear, #birPure').forEach(el => el.addEventListener('input', renderBir));
+  $('birImport').addEventListener('click', () => {
+    DEMO.forEach((v, i) => { $('m' + i).value = v || ''; });
+    renderBir();
+    showToast('Imported Jan–Oct payouts from your Jobseekers.ph earnings');
+  });
+
+  document.querySelectorAll('.doc-input').forEach(el => el.addEventListener('input', () => { renderNda(); renderContract(); }));
+  document.querySelectorAll('.sign-btn').forEach(btn => btn.addEventListener('click', () => showToast('Sent! Both parties will get a link to e-sign.')));
+
+  renderNda(); renderContract(); renderBir();
+</script>
+</body>
+</html>

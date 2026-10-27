@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>Community</span></div>
+    <h1 data-tl="Hindi ka nag-iisa, <span class='gradient-text'>ka-VA.</span>">You're not alone, <span class="gradient-text">ka-VA.</span></h1>
+    <p data-tl="Magtanong, magbahagi, at alamin kung magkano talaga ang rate ng kapwa mo VA. English, Tagalog, o Taglish — lahat welcome.">Ask questions, share wins, and see what other VAs actually charge. English, Tagalog or Taglish, everyone's welcome here.</p>
+    <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap; margin-top:2rem;">
+      <a href="#forum" class="btn btn-white"><i class="fas fa-comments"></i> Forum</a>
+      <a href="#salaries" class="btn btn-outline-white"><i class="fas fa-chart-bar"></i> Salary Benchmarks</a>
+      <a href="#stories" class="btn btn-outline-white"><i class="fas fa-trophy"></i> Success Stories</a>
+    </div>
+  </div>
+</section>
+
+<!-- FORUM -->
+<section class="section" id="forum" style="background:var(--bg); padding-top:3.5rem;">
+  <div class="container">
+    <div class="layout-sidebar">
+      <aside>
+        <div class="sidebar-card">
+          <div class="sidebar-title">Topics</div>
+          <div id="forumCats" style="display:flex; flex-direction:column; gap:0.25rem;">
+            <button class="btn btn-ghost btn-sm cat-filter active" data-cat="all" style="justify-content:flex-start;"># All topics</button>
+            <button class="btn btn-ghost btn-sm cat-filter" data-cat="Newbies" style="justify-content:flex-start;"># Newbies / Baguhan</button>
+            <button class="btn btn-ghost btn-sm cat-filter" data-cat="Night Shift" style="justify-content:flex-start;"># Night Shift Crew</button>
+            <button class="btn btn-ghost btn-sm cat-filter" data-cat="Taxes" style="justify-content:flex-start;"># Taxes &amp; BIR</button>
+            <button class="btn btn-ghost btn-sm cat-filter" data-cat="Rates" style="justify-content:flex-start;"># Rates &amp; Negotiation</button>
+            <button class="btn btn-ghost btn-sm cat-filter" data-cat="Tools" style="justify-content:flex-start;"># Tools &amp; Setup</button>
+            <button class="btn btn-ghost btn-sm cat-filter" data-cat="Scam Alert" style="justify-content:flex-start;"># Scam Alerts 🚨</button>
+          </div>
+        </div>
+        <div class="sidebar-card" style="background:var(--grad-primary); border:none; color:#fff;">
+          <h3 style="color:#fff; font-size:1rem; margin-bottom:0.5rem;"><i class="fas fa-headset"></i> Live chat rooms</h3>
+          <p style="font-size:0.8125rem; color:rgba(255,255,255,0.8); line-height:1.6; margin-bottom:0.75rem;">Real-time channels for when you need help <em>now</em>, like at 3AM on a night shift.</p>
+          <div style="font-size:0.8125rem; display:flex; flex-direction:column; gap:0.25rem; margin-bottom:1rem;">
+            <span><span class="online-dot" style="display:inline-block;"></span> #general · 412 online</span>
+            <span><span class="online-dot" style="display:inline-block;"></span> #graveyard-gang · 238 online</span>
+            <span><span class="online-dot" style="display:inline-block;"></span> #first-client-help · 96 online</span>
+          </div>
+          <a href="auth" class="btn btn-white btn-sm" style="width:100%;">Join the chat</a>
+        </div>
+      </aside>
+
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+          <h2 style="font-size:1.375rem; color:var(--dark);" data-tl="Usapang VA">VA Talk</h2>
+          <button class="btn btn-primary btn-sm" id="newTopicBtn"><i class="fas fa-plus"></i> Start New Topic</button>
+        </div>
+
+        <form id="newTopicForm" class="sidebar-card" hidden>
+          <div class="form-group"><label class="form-label" for="topicTitle">Title</label><input id="topicTitle" class="form-control" placeholder="e.g. Paano mag-negotiate ng raise after 6 months?" required /></div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label" for="topicCat">Topic</label>
+              <select id="topicCat" class="form-control"><option>Newbies</option><option>Night Shift</option><option>Taxes</option><option>Rates</option><option>Tools</option><option>Scam Alert</option></select></div>
+            <div class="form-group" style="display:flex; align-items:flex-end;"><button class="btn btn-primary" style="width:100%;" type="submit">Post topic</button></div>
+          </div>
+        </form>
+
+        <div class="sidebar-card" style="padding:0; overflow:hidden;" id="threadList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SALARY BENCHMARKS -->
+<section class="section" id="salaries" style="background:#fff;">
+  <div class="container" style="max-width:1000px;">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-chart-bar"></i> Salary Benchmarks</span>
+      <h2 class="section-title" data-tl="Magkano ba talaga?">What do VAs actually earn?</h2>
+      <p class="section-sub">Hourly rates from hires on Jobseekers.ph over the last 12 months. Use them to price yourself or to set a fair budget.</p>
+    </div>
+
+    <div class="filter-bar" style="margin-bottom:1rem;">
+      <div class="search-field" style="flex:2;"><i class="fas fa-search"></i><input type="text" id="benchSearch" placeholder="Search a role, e.g. bookkeeper" /></div>
+      <select class="filter-sel" id="benchCur"><option value="USD">Show in USD / hr</option><option value="PHP">Show in PHP / hr</option><option value="PHPM">Show monthly full-time (PHP)</option></select>
+    </div>
+
+    <div class="table-responsive" style="border:1px solid var(--border);">
+      <table class="doc-table" style="min-width:640px;">
+        <thead><tr><th>Role</th><th class="num">Entry (25th)</th><th class="num">Median</th><th class="num">Senior (75th)</th><th style="width:30%;">Range</th></tr></thead>
+        <tbody id="benchBody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:0.78rem; color:var(--text-light); margin-top:0.75rem;"><i class="fas fa-info-circle"></i> PHP figures use ₱57.50 per USD. Monthly = 160 hours. Updated monthly.</p>
+  </div>
+</section>
+
+<!-- SUCCESS STORIES -->
+<section class="section" id="stories" style="background:var(--bg);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-trophy"></i> Success Stories</span>
+      <h2 class="section-title" data-tl="Mula sa komunidad">From the community</h2>
+    </div>
+    <div class="grid-3">
+      <div class="testimonial-card">
+        <div class="va-badges"><span class="feat-badge rising"><i class="fas fa-seedling"></i> Started as Rising Talent</span></div>
+        <p class="t-text">"Zero reviews, galing BPO. I took VA Foundations and the Shopify course, got the badges, and landed a paid trial within two weeks. That trial became a full-time client. ₱18k/month to ₱52k/month in 5 months."</p>
+        <div class="t-author"><img src="https://i.pravatar.cc/150?img=68" alt="Mark Tolentino" /><div class="t-author-info"><h4>Mark Tolentino</h4><p>Shopify Assistant · Pampanga</p></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="va-badges"><span class="feat-badge brownout">⚡ Brownout-ready</span></div>
+        <p class="t-text">"Typhoon season used to scare my clients. Now my profile shows my UPS and Smart backup, and my client literally said that's why he picked me over two cheaper applicants."</p>
+        <div class="t-author"><img src="https://i.pravatar.cc/150?img=38" alt="Bea Ocampo" /><div class="t-author-info"><h4>Bea Ocampo</h4><p>Medical VA · Baguio</p></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="va-badges"><span class="feat-badge cert"><i class="fas fa-chart-line"></i> Used salary benchmarks</span></div>
+        <p class="t-text">"I was charging $4/hr as a bookkeeper for 3 years. The benchmarks showed the median was $10. I raised to $9 with my next client, and nobody even negotiated. Sana nalaman ko 'to dati."</p>
+        <div class="t-author"><img src="https://i.pravatar.cc/150?img=12" alt="Ramon Dela Cruz" /><div class="t-author-info"><h4>Ramon Dela Cruz</h4><p>Bookkeeper · Davao City</p></div></div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:2rem;">
+      <a href="auth" class="btn btn-primary"><i class="fas fa-pen"></i> Share your story</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  /* ---------- Forum ---------- */
+  const THREADS = [
+    { img: 44, cat: 'Newbies', title: 'First client interview bukas — anong usually tinatanong?', author: 'Kim N.', ago: '12 min ago', replies: 23, views: 410 },
+    { img: 32, cat: 'Scam Alert', title: '🚨 "Shopify Store Manager" post asking for ₱2,000 "laptop deposit". Reported na', author: 'Leo B.', ago: '40 min ago', replies: 41, views: 1890 },
+    { img: 25, cat: 'Night Shift', title: 'How do you sleep properly on a 9PM–5AM EST shift? Share your routine', author: 'Grace V.', ago: '1 hr ago', replies: 67, views: 2304 },
+    { img: 12, cat: 'Taxes', title: '8% vs graduated: alin ang mas tipid if ₱60k/month ka?', author: 'Ramon D.', ago: '3 hrs ago', replies: 35, views: 1502 },
+    { img: 5, cat: 'Rates', title: 'Client wants to cut my rate from $10 to $7 after 1 year. Paano sasagot?', author: 'Jessa C.', ago: '5 hrs ago', replies: 52, views: 1977 },
+    { img: 16, cat: 'Tools', title: 'Best UPS for a PC + modem setup under ₱6k? (Brownout-ready badge)', author: 'Carlo M.', ago: 'Yesterday', replies: 29, views: 980 },
+    { img: 41, cat: 'Newbies', title: 'Got my first paid trial through AI Match! Tips for nailing the 3 days?', author: 'Diana F.', ago: 'Yesterday', replies: 18, views: 640 },
+  ];
+  let activeCat = 'all';
+
+  function renderThreads() {
+    const list = THREADS.filter(t => activeCat === 'all' || t.cat === activeCat);
+    document.getElementById('threadList').innerHTML = list.map(t => `
+      <a href="#" class="forum-thread">
+        <img src="https://i.pravatar.cc/80?img=${t.img}" alt="" />
+        <div>
+          <h4>${esc(t.title)}</h4>
+          <p><span class="forum-tag">${t.cat}</span>${esc(t.author)} · ${t.ago}</p>
+        </div>
+        <div class="forum-stats"><div><strong>${t.replies}</strong>replies</div><div><strong>${t.views.toLocaleString()}</strong>views</div></div>
+      </a>`).join('') || '<p style="padding:2rem; text-align:center; color:var(--text-light);">No topics here yet. Start one!</p>';
+  }
+
+  document.querySelectorAll('.cat-filter').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-filter').forEach(b => { b.classList.remove('active'); b.style.color = ''; });
+    btn.classList.add('active');
+    btn.style.color = 'var(--primary)';
+    activeCat = btn.dataset.cat;
+    renderThreads();
+  }));
+  document.querySelector('.cat-filter.active').style.color = 'var(--primary)';
+
+  const topicForm = document.getElementById('newTopicForm');
+  document.getElementById('newTopicBtn').addEventListener('click', () => {
+    topicForm.hidden = !topicForm.hidden;
+    if (!topicForm.hidden) document.getElementById('topicTitle').focus();
+  });
+  topicForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    THREADS.unshift({ img: 47, cat: document.getElementById('topicCat').value, title: document.getElementById('topicTitle').value.trim(), author: 'You', ago: 'just now', replies: 0, views: 1 });
+    topicForm.reset();
+    topicForm.hidden = true;
+    renderThreads();
+    showToast('Topic posted!');
+  });
+
+  /* ---------- Salary benchmarks (USD per hour: 25th, median, 75th percentile) ---------- */
+  const BENCH = [
+    ['Data Entry Assistant', 3, 4, 5.5],
+    ['General Virtual Assistant', 4, 5.5, 7],
+    ['Real Estate VA / Cold Caller', 4, 5.5, 7.5],
+    ['Customer Support Specialist', 4.5, 6, 8],
+    ['Shopify / eCommerce VA', 5, 7, 10],
+    ['Social Media Manager', 5, 7.5, 10],
+    ['Content Writer', 5, 8, 12],
+    ['Executive Assistant', 6, 8, 11],
+    ['Medical VA', 6, 8, 10],
+    ['Graphic Designer', 6, 9, 13],
+    ['Video Editor', 6, 9, 14],
+    ['Bookkeeper', 7, 10, 14],
+    ['Digital Marketing / Paid Ads', 8, 12, 18],
+    ['Web Developer', 9, 14, 20],
+  ];
+  const FX = 57.5, MAX = 20;
+
+  function fmt(usd) {
+    const mode = document.getElementById('benchCur').value;
+    if (mode === 'USD') return '$' + usd.toFixed(2);
+    if (mode === 'PHP') return '₱' + Math.round(usd * FX).toLocaleString();
+    return '₱' + (Math.round(usd * FX * 160 / 1000) * 1000).toLocaleString();
+  }
+
+  function renderBench() {
+    const q = document.getElementById('benchSearch').value.trim().toLowerCase();
+    document.getElementById('benchBody').innerHTML = BENCH.filter(([role]) => role.toLowerCase().includes(q)).map(([role, lo, mid, hi]) => `
+      <tr>
+        <td><strong style="color:var(--dark);">${role}</strong></td>
+        <td class="num">${fmt(lo)}</td>
+        <td class="num" style="font-weight:700; color:var(--primary);">${fmt(mid)}</td>
+        <td class="num">${fmt(hi)}</td>
+        <td><div class="bench-bar"><span style="left:${lo / MAX * 100}%; width:${(hi - lo) / MAX * 100}%;"></span>
+          <i style="position:absolute; top:-3px; left:calc(${mid / MAX * 100}% - 1px); width:3px; height:14px; background:var(--dark); border-radius:2px;"></i></div></td>
+      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--text-light);">No matching role</td></tr>';
+  }
+  document.getElementById('benchSearch').addEventListener('input', renderBench);
+  document.getElementById('benchCur').addEventListener('input', renderBench);
+
+  renderThreads();
+  renderBench();
+</script>
+</body>
+</html>

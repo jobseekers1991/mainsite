@@ -1,0 +1,496 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find Virtual Assistants — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas" class="active">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>Find VAs</span></div>
+    <h1>Find Your Perfect Virtual Assistant</h1>
+    <p>Browse 12,000+ verified Filipino VAs ready to support your business goals.</p>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<section style="padding:3rem 1.5rem; background:var(--bg);">
+  <div class="container">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="search-field" style="flex:2; min-width:280px;">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search by skill, name, or keyword..." />
+      </div>
+      <select class="filter-sel">
+        <option>All Categories</option>
+        <option>Virtual Assistant</option>
+        <option>Social Media Manager</option>
+        <option>Bookkeeper</option>
+        <option>Content Writer</option>
+        <option>Graphic Designer</option>
+        <option>Customer Support</option>
+        <option>Web Developer</option>
+      </select>
+      <select class="filter-sel">
+        <option>Any Rate</option>
+        <option>Under $5/hr</option>
+        <option>$5 – $10/hr</option>
+        <option>$10 – $20/hr</option>
+        <option>$20+/hr</option>
+      </select>
+      <select class="filter-sel">
+        <option>Any Experience</option>
+        <option>Entry Level (0–2 yrs)</option>
+        <option>Mid-Level (2–5 yrs)</option>
+        <option>Senior (5+ yrs)</option>
+      </select>
+      <button class="btn btn-primary"><i class="fas fa-sliders-h"></i> Filter</button>
+    </div>
+
+    <button class="mobile-filter-btn"><i class="fas fa-sliders-h"></i> Show Filters</button>
+
+    <div class="layout-sidebar">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar-collapsible">
+        <!-- Shift / timezone -->
+        <div class="sidebar-card" style="border:1.5px solid rgba(49,46,129,0.2);">
+          <div class="sidebar-title"><span><i class="fas fa-moon" style="color:#312E81;"></i> Works your hours</span> <button type="button" data-clear="shift">Clear</button></div>
+          <p style="font-size:0.75rem; color:var(--text-light); margin:-0.25rem 0 0.625rem;">Most Filipino VAs work night shifts to match your day.</p>
+          <label class="filter-option"><input type="radio" name="shift" value="" checked /> Any time zone</label>
+          <label class="filter-option"><input type="radio" name="shift" value="us-east" /> US Eastern (EST) <span class="filter-count">PH 9PM–5AM</span></label>
+          <label class="filter-option"><input type="radio" name="shift" value="us-west" /> US Pacific (PST) <span class="filter-count">PH 12AM–8AM</span></label>
+          <label class="filter-option"><input type="radio" name="shift" value="uk" /> UK hours <span class="filter-count">PH 4PM–1AM</span></label>
+          <label class="filter-option"><input type="radio" name="shift" value="au" /> AU hours <span class="filter-count">PH 6AM–2PM</span></label>
+          <label class="filter-option"><input type="radio" name="shift" value="ph" /> PH / Asia daytime</label>
+        </div>
+
+        <!-- Trust & setup -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Trust &amp; Setup <button type="button" data-clear="trust">Clear</button></div>
+          <label class="filter-option"><input type="checkbox" data-flag="brownout" /> ⚡ Brownout-ready</label>
+          <label class="filter-option"><input type="checkbox" data-flag="trial" /> Offers a paid trial</label>
+          <label class="filter-option"><input type="checkbox" data-flag="certified" /> Academy certified</label>
+          <label class="filter-option"><input type="checkbox" data-flag="rising" /> 🌱 Rising Talent</label>
+        </div>
+
+        <!-- Availability -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Availability <button>Clear</button></div>
+          <label class="filter-option"><input type="checkbox" checked /> Available Now <span class="filter-count">4,821</span></label>
+          <label class="filter-option"><input type="checkbox" /> Open to Offers <span class="filter-count">6,203</span></label>
+          <label class="filter-option"><input type="checkbox" /> Full-time Only <span class="filter-count">2,140</span></label>
+          <label class="filter-option"><input type="checkbox" /> Part-time Only <span class="filter-count">3,680</span></label>
+        </div>
+
+        <!-- Skills -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Top Skills <button>Clear</button></div>
+          <label class="filter-option"><input type="checkbox" /> Email Management <span class="filter-count">3,200</span></label>
+          <label class="filter-option"><input type="checkbox" /> Calendar Management <span class="filter-count">2,800</span></label>
+          <label class="filter-option"><input type="checkbox" /> Social Media <span class="filter-count">2,600</span></label>
+          <label class="filter-option"><input type="checkbox" /> Data Entry <span class="filter-count">2,400</span></label>
+          <label class="filter-option"><input type="checkbox" /> Research <span class="filter-count">2,100</span></label>
+          <label class="filter-option"><input type="checkbox" /> WordPress <span class="filter-count">890</span></label>
+          <label class="filter-option"><input type="checkbox" /> QuickBooks <span class="filter-count">760</span></label>
+          <label class="filter-option"><input type="checkbox" /> Canva <span class="filter-count">1,450</span></label>
+        </div>
+
+        <!-- Hourly Rate -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Hourly Rate <button>Clear</button></div>
+          <div class="range-row"><span>$0</span><span>$50/hr max</span></div>
+          <input type="range" min="0" max="50" value="25" class="range-display" data-suffix="/hr" />
+          <div style="text-align:center; font-size:0.875rem; color:var(--primary); font-weight:600; margin-top:0.5rem;">Up to $25/hr</div>
+        </div>
+
+        <!-- Rating -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Minimum Rating</div>
+          <label class="filter-option"><input type="radio" name="rating" /> ★★★★★ 5.0 only <span class="filter-count">1,240</span></label>
+          <label class="filter-option"><input type="radio" name="rating" checked /> ★★★★½ 4.5 & up <span class="filter-count">5,320</span></label>
+          <label class="filter-option"><input type="radio" name="rating" /> ★★★★ 4.0 & up <span class="filter-count">8,900</span></label>
+          <label class="filter-option"><input type="radio" name="rating" /> Any rating <span class="filter-count">12,000</span></label>
+        </div>
+
+        <!-- Tools -->
+        <div class="sidebar-card">
+          <div class="sidebar-title">Tools & Software <button>Clear</button></div>
+          <label class="filter-option"><input type="checkbox" /> Slack <span class="filter-count">4,200</span></label>
+          <label class="filter-option"><input type="checkbox" /> Trello / Asana <span class="filter-count">3,800</span></label>
+          <label class="filter-option"><input type="checkbox" /> Zoom / Google Meet <span class="filter-count">6,000</span></label>
+          <label class="filter-option"><input type="checkbox" /> HubSpot / Salesforce <span class="filter-count">1,200</span></label>
+          <label class="filter-option"><input type="checkbox" /> Shopify <span class="filter-count">980</span></label>
+        </div>
+      </aside>
+
+      <!-- VA GRID -->
+      <div>
+        <!-- Sort & Results count -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+          <p style="color:var(--text-light); font-size:0.9375rem;">Showing <strong style="color:var(--dark)" id="vaCount">12,084</strong> virtual assistants</p>
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="font-size:0.875rem; color:var(--text-light)">Sort by:</span>
+            <select class="filter-sel" style="min-width:160px;">
+              <option>Best Match</option>
+              <option>Highest Rated</option>
+              <option>Most Reviews</option>
+              <option>Lowest Rate</option>
+              <option>Newest</option>
+            </select>
+            <div style="display:flex; border:1.5px solid var(--border); border-radius:var(--radius-md); overflow:hidden;">
+              <button style="padding:0.5rem 0.75rem; border:none; background:#fff; cursor:pointer; color:var(--primary);"><i class="fas fa-th-large"></i></button>
+              <button style="padding:0.5rem 0.75rem; border:none; background:var(--bg); cursor:pointer; color:var(--text-light); border-left:1px solid var(--border);"><i class="fas fa-list"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Match promo -->
+        <a href="ai-match" style="display:flex; align-items:center; gap:1rem; background:var(--grad-primary); color:#fff; border-radius:var(--radius-lg); padding:1rem 1.25rem; margin-bottom:1.5rem; box-shadow:var(--shadow-primary);">
+          <i class="fas fa-magic" style="font-size:1.5rem;"></i>
+          <div style="flex:1;"><strong style="display:block;">Too many profiles? Try AI Match.</strong><span style="font-size:0.8125rem; opacity:0.85;">Describe the role in your own words and get your top 5 VAs, with the reason each one fits.</span></div>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+
+        <div class="alert alert-warn" id="noVaMatch" hidden><i class="fas fa-info-circle"></i> No VAs on this page match those filters. Try fewer filters, or let <a href="ai-match" style="font-weight:700; text-decoration:underline;">AI Match</a> search for you.</div>
+
+        <!-- VA Cards -->
+        <div class="grid-2" style="gap:1.25rem;" id="vaGrid">
+
+          <!-- Card -->
+          <div class="va-card" data-shifts="us-east us-west" data-brownout="1" data-trial="1" data-rising="0" data-certified="1">
+            <div class="featured-badge"><i class="fas fa-crown"></i> Top Rated</div>
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Maria Santos <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+                <div class="va-title">Executive Virtual Assistant</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>5.0</strong> (84)</div>
+              </div>
+              <div class="va-rate">$8/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Admin</span><span class="skill-tag">Scheduling</span><span class="skill-tag">CRM</span><span class="skill-tag">Email</span></div>
+            <div class="shift-chips"><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span><span class="shift-chip night"><i class="fas fa-moon"></i> US Pacific</span></div>
+            <div class="va-badges"><span class="feat-badge brownout">⚡ Brownout-ready</span><span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> Executive Assistant Pro</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">Highly organized EA with 6+ years supporting C-suite executives. Expert in calendar management, travel coordination, and project tracking.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Cebu City</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="us-east uk" data-brownout="1" data-trial="1" data-rising="0" data-certified="1">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=5" alt="Jessa Cruz" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Jessa Cruz <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+                <div class="va-title">Social Media Manager</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>4.9</strong> (61)</div>
+              </div>
+              <div class="va-rate">$10/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Instagram</span><span class="skill-tag">TikTok</span><span class="skill-tag">Canva</span><span class="skill-tag">Analytics</span></div>
+            <div class="shift-chips"><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span><span class="shift-chip uk"><i class="fas fa-cloud-moon"></i> UK hours</span></div>
+            <div class="va-badges"><span class="feat-badge brownout">⚡ Brownout-ready</span><span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> Social Media Manager</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">Creative SMM specialist who's grown brands from 0 to 100K followers. I create content calendars, design graphics, and write compelling captions.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Manila</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="us-east au" data-brownout="1" data-trial="0" data-rising="0" data-certified="1">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=12" alt="Ramon Dela Cruz" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Ramon Dela Cruz</div>
+                <div class="va-title">Online Bookkeeper & Accountant</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>5.0</strong> (103)</div>
+              </div>
+              <div class="va-rate">$12/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">QuickBooks</span><span class="skill-tag">Xero</span><span class="skill-tag">Payroll</span></div>
+            <div class="shift-chips"><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span><span class="shift-chip au"><i class="fas fa-sun"></i> AU hours</span></div>
+            <div class="va-badges"><span class="feat-badge brownout">⚡ Brownout-ready</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> QuickBooks Bookkeeping</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">CPA with 8 years managing books for US-based SMBs. Specializes in reconciliation, payroll processing, and financial reporting.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Davao City</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="uk ph au" data-brownout="0" data-trial="1" data-rising="0" data-certified="0">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=9" alt="Anna Reyes" /><div class="va-status away"></div></div>
+              <div class="va-info">
+                <div class="va-name">Anna Reyes <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+                <div class="va-title">Content Writer & Copywriter</div>
+                <div class="va-rating"><span class="stars">★★★★½</span> <strong>4.8</strong> (47)</div>
+              </div>
+              <div class="va-rate">$9/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">SEO</span><span class="skill-tag">Blog Posts</span><span class="skill-tag">Email Copy</span></div>
+            <div class="shift-chips"><span class="shift-chip uk"><i class="fas fa-cloud-moon"></i> UK hours</span><span class="shift-chip"><i class="fas fa-sun"></i> PH day</span><span class="shift-chip au"><i class="fas fa-sun"></i> AU hours</span></div>
+            <div class="va-badges"><span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">SEO-focused content writer with a portfolio of 500+ published articles across health, tech, and e-commerce niches.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Quezon City</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="us-west us-east" data-brownout="1" data-trial="1" data-rising="0" data-certified="0">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=16" alt="Carlo Mendoza" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Carlo Mendoza</div>
+                <div class="va-title">Graphic Designer & Video Editor</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>4.9</strong> (38)</div>
+              </div>
+              <div class="va-rate">$11/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Photoshop</span><span class="skill-tag">Illustrator</span><span class="skill-tag">Premiere</span></div>
+            <div class="shift-chips"><span class="shift-chip night"><i class="fas fa-moon"></i> US Pacific</span><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span></div>
+            <div class="va-badges"><span class="feat-badge brownout">⚡ Brownout-ready</span><span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">Visual storyteller with a passion for branding. I create logos, social graphics, and video ads that convert and captivate.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Makati</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="us-east us-west" data-brownout="1" data-trial="1" data-rising="0" data-certified="1">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=25" alt="Grace Villanueva" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Grace Villanueva <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+                <div class="va-title">Customer Support Specialist</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>5.0</strong> (56)</div>
+              </div>
+              <div class="va-rate">$7/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Zendesk</span><span class="skill-tag">Live Chat</span><span class="skill-tag">Freshdesk</span></div>
+            <div class="shift-chips"><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span><span class="shift-chip night"><i class="fas fa-moon"></i> US Pacific</span></div>
+            <div class="va-badges"><span class="feat-badge brownout">⚡ Brownout-ready</span><span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> Customer Support Excellence</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">5-star rated customer success specialist with 4 years handling US-based SaaS clients. CSAT score consistently above 97%.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Iloilo</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="us-east uk au" data-brownout="0" data-trial="0" data-rising="0" data-certified="0">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=32" alt="Leo Bautista" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Leo Bautista</div>
+                <div class="va-title">Digital Marketing Specialist</div>
+                <div class="va-rating"><span class="stars">★★★★½</span> <strong>4.7</strong> (29)</div>
+              </div>
+              <div class="va-rate">$13/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Google Ads</span><span class="skill-tag">Facebook Ads</span><span class="skill-tag">SEO</span></div>
+            <div class="shift-chips"><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span><span class="shift-chip uk"><i class="fas fa-cloud-moon"></i> UK hours</span><span class="shift-chip au"><i class="fas fa-sun"></i> AU hours</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">Performance marketer specializing in paid ads and SEO. Managed $500K+ in ad spend with consistent 4x ROAS across multiple industries.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> BGC, Taguig</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="us-east au" data-brownout="1" data-trial="1" data-rising="0" data-certified="1">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=41" alt="Diana Flores" /><div class="va-status offline"></div></div>
+              <div class="va-info">
+                <div class="va-name">Diana Flores <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+                <div class="va-title">eCommerce VA & Shopify Expert</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>4.9</strong> (72)</div>
+              </div>
+              <div class="va-rate">$10/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Shopify</span><span class="skill-tag">Amazon FBA</span><span class="skill-tag">Product Listings</span></div>
+            <div class="shift-chips"><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span><span class="shift-chip au"><i class="fas fa-sun"></i> AU hours</span></div>
+            <div class="va-badges"><span class="feat-badge brownout">⚡ Brownout-ready</span><span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> Shopify Store Ops</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">eCommerce specialist with 5 years on Shopify and Amazon. Expert in product listing optimization, inventory management, and order fulfillment.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Cagayan de Oro</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="au ph us-east" data-brownout="1" data-trial="1" data-rising="1" data-certified="1">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=44" alt="Kim Navarro" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Kim Navarro <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+                <div class="va-title">Admin &amp; Data Entry Assistant</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>4.9</strong> (6)</div>
+              </div>
+              <div class="va-rate">$5/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Data Entry</span><span class="skill-tag">Google Workspace</span><span class="skill-tag">Research</span></div>
+            <div class="shift-chips"><span class="shift-chip au"><i class="fas fa-sun"></i> AU hours</span><span class="shift-chip"><i class="fas fa-sun"></i> PH day</span><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span></div>
+            <div class="va-badges"><span class="feat-badge rising"><i class="fas fa-seedling"></i> Rising Talent</span><span class="feat-badge brownout">⚡ Brownout-ready</span><span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> VA Foundations</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> Google Workspace Pro</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">Former bank teller turned VA. Passed VA Foundations and Google Workspace Pro with top scores. Fast, careful, and loves a tidy spreadsheet.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Batangas</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+          <div class="va-card" data-shifts="us-east" data-brownout="1" data-trial="1" data-rising="1" data-certified="1">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=38" alt="Bea Ocampo" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Bea Ocampo <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+                <div class="va-title">Medical VA &amp; Scheduler</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>5.0</strong> (18)</div>
+              </div>
+              <div class="va-rate">$9/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Medical Admin</span><span class="skill-tag">Scheduling</span><span class="skill-tag">Insurance Verification</span></div>
+            <div class="shift-chips"><span class="shift-chip night"><i class="fas fa-moon"></i> US Eastern</span></div>
+            <div class="va-badges"><span class="feat-badge rising"><i class="fas fa-seedling"></i> Rising Talent</span><span class="feat-badge brownout">⚡ Brownout-ready</span><span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> HIPAA Basics</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> VA Foundations</span></div>
+            <p style="font-size:0.875rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">Registered nurse who now supports US clinics remotely: appointment setting, insurance verification and patient follow-ups. HIPAA-trained.</p>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Baguio</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <button disabled><i class="fas fa-chevron-left"></i></button>
+          <button class="active">1</button>
+          <button>2</button>
+          <button>3</button>
+          <button>4</button>
+          <button>5</button>
+          <span style="padding:0 0.5rem; color:var(--text-light);">...</span>
+          <button>48</button>
+          <button><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA strip -->
+<section style="background:var(--dark); padding:3rem 1.5rem; text-align:center;">
+  <div class="container">
+    <h3 style="color:#fff; font-size:1.5rem; margin-bottom:0.75rem;">Can't find the right VA?</h3>
+    <p style="color:rgba(255,255,255,0.6); margin-bottom:1.5rem;">Post your job and let qualified VAs come to you.</p>
+    <a href="post-job" class="btn btn-primary btn-lg"><i class="fas fa-plus"></i> Post a Job for Free</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li><li><a href="how-it-works">How It Works</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li><li><a href="#">Blog</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  // Shift + trust filters (client-side over the cards on this page)
+  const vaCards = [...document.querySelectorAll('#vaGrid .va-card')];
+  const vaCount = document.getElementById('vaCount');
+  const totalLabel = vaCount.textContent;
+
+  function filterVAs() {
+    const shift = document.querySelector('input[name="shift"]:checked').value;
+    const flags = [...document.querySelectorAll('[data-flag]:checked')].map(el => el.dataset.flag);
+    let shown = 0;
+    vaCards.forEach(card => {
+      const ok = (!shift || card.dataset.shifts.split(' ').includes(shift)) && flags.every(f => card.dataset[f] === '1');
+      card.hidden = !ok;
+      if (ok) shown++;
+    });
+    const filtering = shift || flags.length;
+    vaCount.textContent = filtering ? shown : totalLabel;
+    document.getElementById('noVaMatch').hidden = shown > 0;
+  }
+
+  document.querySelectorAll('input[name="shift"], [data-flag]').forEach(el => el.addEventListener('change', filterVAs));
+  document.querySelector('[data-clear="shift"]').addEventListener('click', () => { document.querySelector('input[name="shift"][value=""]').checked = true; filterVAs(); });
+  document.querySelector('[data-clear="trust"]').addEventListener('click', () => { document.querySelectorAll('[data-flag]').forEach(el => { el.checked = false; }); filterVAs(); });
+
+  // Deep links, e.g. find-vas?rising=1 or find-vas?shift=us-east
+  const params = new URLSearchParams(location.search);
+  if (params.get('rising')) document.querySelector('[data-flag="rising"]').checked = true;
+  const shiftParam = document.querySelector(`input[name="shift"][value="${params.get('shift')}"]`);
+  if (shiftParam) shiftParam.checked = true;
+  filterVAs();
+</script>
+</body>
+</html>

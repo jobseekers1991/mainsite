@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VA Dashboard — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="dash-sidebar" id="dashSidebar">
+
+    <!-- Brand -->
+    <a href="/" class="dash-brand">
+      <div class="dash-brand-icon"><i class="fas fa-briefcase"></i></div>
+      <span class="dash-brand-name">Jobseekers<span>.ph</span></span>
+    </a>
+
+    <!-- User card -->
+    <div class="dash-user-card">
+      <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" class="dash-user-avatar" />
+      <div>
+        <div class="dash-user-name">Maria Santos</div>
+        <div class="dash-user-role">Virtual Assistant</div>
+      </div>
+      <div class="dash-online-dot" title="Online"></div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="dash-nav">
+      <div class="dash-nav-section">Main</div>
+
+      <a href="dashboard-va" class="dash-nav-item active">
+        <i class="fas fa-th-large"></i> Overview
+      </a>
+      <a href="my-applications" class="dash-nav-item">
+        <i class="fas fa-file-alt"></i> My Applications
+        <span class="dash-nav-badge">3</span>
+      </a>
+      <a href="browse-jobs" class="dash-nav-item">
+        <i class="fas fa-search"></i> Browse Jobs
+      </a>
+      <a href="messages" class="dash-nav-item">
+        <i class="fas fa-comments"></i> Messages
+        <span class="dash-nav-badge">5</span>
+      </a>
+
+      <div class="dash-nav-section">My Account</div>
+
+      <a href="edit-profile" class="dash-nav-item">
+        <i class="fas fa-user-circle"></i> My Profile
+      </a>
+      <a href="#" class="dash-nav-item">
+        <i class="fas fa-images"></i> Portfolio
+      </a>
+      <a href="work-tools" class="dash-nav-item">
+        <i class="fas fa-wallet"></i> Earnings
+      </a>
+      <a href="#" class="dash-nav-item">
+        <i class="fas fa-star"></i> Reviews
+      </a>
+
+      <div class="dash-nav-section">Grow &amp; Tools</div>
+      <a href="work-tools" class="dash-nav-item"><i class="fas fa-stopwatch"></i> Work Tools</a>
+      <a href="academy" class="dash-nav-item"><i class="fas fa-graduation-cap"></i> VA Academy</a>
+      <a href="setup-check" class="dash-nav-item"><i class="fas fa-bolt"></i> Setup Check</a>
+      <a href="compliance" class="dash-nav-item"><i class="fas fa-file-signature"></i> Contracts &amp; Taxes</a>
+      <a href="community" class="dash-nav-item"><i class="fas fa-users"></i> Community</a>
+
+      <div class="dash-nav-divider"></div>
+
+      <a href="#" class="dash-nav-item">
+        <i class="fas fa-cog"></i> Settings
+      </a>
+      <a href="auth" class="dash-nav-item" style="color:rgba(239,68,68,0.7);">
+        <i class="fas fa-sign-out-alt"></i> Log Out
+      </a>
+    </nav>
+
+  </aside>
+
+  <!-- Overlay for mobile -->
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <!-- ===================== MAIN ===================== -->
+  <div class="dash-main">
+
+    <!-- Top bar -->
+    <header class="dash-topbar">
+      <button class="dash-topbar-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="dash-search-wrap">
+        <i class="fas fa-search" style="color:var(--text-light); font-size:0.8125rem; flex-shrink:0;"></i>
+        <input type="text" placeholder="Search jobs, companies…" />
+      </div>
+
+      <div class="dash-topbar-right">
+        <button class="dash-icon-btn" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="notif-dot"></span>
+        </button>
+        <button class="dash-icon-btn" title="Help">
+          <i class="fas fa-question-circle"></i>
+        </button>
+        <button class="dash-avatar-btn">
+          <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" />
+          <span>Maria</span>
+          <i class="fas fa-chevron-down" style="font-size:0.625rem; color:var(--text-light);"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="dash-content">
+
+      <!-- Page header -->
+      <div class="dash-page-header">
+        <h1>Good morning, Maria 👋</h1>
+        <p>Friday, October 23, 2026 · Here's what's happening with your profile today.</p>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="stat-card-grid">
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-card-label">Applications</span>
+            <div class="stat-card-icon" style="background:rgba(79,70,229,0.1); color:var(--primary);">
+              <i class="fas fa-paper-plane"></i>
+            </div>
+          </div>
+          <div class="stat-card-num">24</div>
+          <div class="stat-card-change up"><i class="fas fa-arrow-up"></i> 4 this week</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-card-label">Profile Views</span>
+            <div class="stat-card-icon" style="background:rgba(14,165,233,0.1); color:#0284C7;">
+              <i class="fas fa-eye"></i>
+            </div>
+          </div>
+          <div class="stat-card-num">1,840</div>
+          <div class="stat-card-change up"><i class="fas fa-arrow-up"></i> +12% this month</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-card-label">Saved Jobs</span>
+            <div class="stat-card-icon" style="background:rgba(245,158,11,0.1); color:#D97706;">
+              <i class="fas fa-bookmark"></i>
+            </div>
+          </div>
+          <div class="stat-card-num">12</div>
+          <div class="stat-card-change neutral"><i class="fas fa-minus"></i> No change</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-card-label">Active Contracts</span>
+            <div class="stat-card-icon" style="background:rgba(16,185,129,0.1); color:#059669;">
+              <i class="fas fa-handshake"></i>
+            </div>
+          </div>
+          <div class="stat-card-num">1</div>
+          <div class="stat-card-change up"><i class="fas fa-arrow-up"></i> Started this week</div>
+        </div>
+
+      </div>
+
+      <!-- Main two-col grid -->
+      <div class="dash-grid-2">
+
+        <!-- LEFT: Applications table + Recommended jobs -->
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+
+          <!-- Recent Applications -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">Recent Applications</span>
+              <a href="my-applications" class="dash-card-link">View All <i class="fas fa-arrow-right" style="font-size:0.75rem;"></i></a>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="dash-table">
+                <thead>
+                  <tr>
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Applied</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div style="font-weight:600; color:var(--dark);">Executive VA (Full-Time)</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);">$8–$12/hr · Full-Time</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:500; color:var(--dark);">Carter Digital</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);"><i class="fas fa-shield-alt" style="color:var(--success);"></i> Verified</div>
+                    </td>
+                    <td style="color:var(--text-light); white-space:nowrap;">Oct 22, 2026</td>
+                    <td><span class="status-pill viewed">Viewed</span></td>
+                    <td><a href="my-applications" class="btn btn-outline-primary btn-xs">View</a></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="font-weight:600; color:var(--dark);">Social Media VA</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);">$6–$9/hr · Part-Time</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:500; color:var(--dark);">BeachHaus Co.</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);"><i class="fas fa-shield-alt" style="color:var(--success);"></i> Verified</div>
+                    </td>
+                    <td style="color:var(--text-light); white-space:nowrap;">Oct 20, 2026</td>
+                    <td><span class="status-pill pending">Pending</span></td>
+                    <td><a href="my-applications" class="btn btn-outline-primary btn-xs">View</a></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="font-weight:600; color:var(--dark);">Admin &amp; CRM Support</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);">$7–$10/hr · Full-Time</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:500; color:var(--dark);">Nexus Labs</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);">Not verified</div>
+                    </td>
+                    <td style="color:var(--text-light); white-space:nowrap;">Oct 18, 2026</td>
+                    <td><span class="status-pill hired">Shortlisted</span></td>
+                    <td><a href="my-applications" class="btn btn-outline-primary btn-xs">View</a></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="font-weight:600; color:var(--dark);">eCommerce VA – Shopify</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);">$8/hr · Project</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:500; color:var(--dark);">GreenLeaf Store</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);"><i class="fas fa-shield-alt" style="color:var(--success);"></i> Verified</div>
+                    </td>
+                    <td style="color:var(--text-light); white-space:nowrap;">Oct 15, 2026</td>
+                    <td><span class="status-pill rejected">Rejected</span></td>
+                    <td><a href="my-applications" class="btn btn-outline-primary btn-xs">View</a></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="font-weight:600; color:var(--dark);">Executive Assistant</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);">$10–$15/hr · Full-Time</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:500; color:var(--dark);">Summit Ventures</div>
+                      <div style="font-size:0.78rem; color:var(--text-light);"><i class="fas fa-shield-alt" style="color:var(--success);"></i> Verified</div>
+                    </td>
+                    <td style="color:var(--text-light); white-space:nowrap;">Oct 12, 2026</td>
+                    <td><span class="status-pill active">Active</span></td>
+                    <td><a href="work-tools" class="btn btn-primary btn-xs">Manage</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Recommended Jobs -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">Recommended for You</span>
+              <a href="browse-jobs" class="dash-card-link">Browse All <i class="fas fa-arrow-right" style="font-size:0.75rem;"></i></a>
+            </div>
+            <div class="dash-card-body">
+              <div class="rec-job">
+                <div class="rec-job-emoji">🚀</div>
+                <div class="rec-job-body">
+                  <div class="rec-job-title">Executive VA – Tech Startup</div>
+                  <div class="rec-job-co">Carter Digital · Full-Time · <span class="badge badge-new" style="font-size:0.65rem;">New</span></div>
+                </div>
+                <div class="rec-job-rate">$10/hr</div>
+              </div>
+              <div class="rec-job">
+                <div class="rec-job-emoji">📱</div>
+                <div class="rec-job-body">
+                  <div class="rec-job-title">Social Media Manager</div>
+                  <div class="rec-job-co">ViralBrand PH · Part-Time</div>
+                </div>
+                <div class="rec-job-rate">$7/hr</div>
+              </div>
+              <div class="rec-job">
+                <div class="rec-job-emoji">📧</div>
+                <div class="rec-job-body">
+                  <div class="rec-job-title">Email &amp; Calendar Manager</div>
+                  <div class="rec-job-co">Bright Ideas Co. · Full-Time</div>
+                </div>
+                <div class="rec-job-rate">$9/hr</div>
+              </div>
+              <div class="rec-job">
+                <div class="rec-job-emoji">🛍️</div>
+                <div class="rec-job-body">
+                  <div class="rec-job-title">Shopify VA – Product Listings</div>
+                  <div class="rec-job-co">CleanEarth Store · Project-Based</div>
+                </div>
+                <div class="rec-job-rate">$8/hr</div>
+              </div>
+              <div class="rec-job">
+                <div class="rec-job-emoji">📊</div>
+                <div class="rec-job-body">
+                  <div class="rec-job-title">Data Entry &amp; Research VA</div>
+                  <div class="rec-job-co">Alpha Analytics · Part-Time</div>
+                </div>
+                <div class="rec-job-rate">$6/hr</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: Profile + Messages -->
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+
+          <!-- Profile Completion -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">Profile Strength</span>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--primary);">75%</span>
+            </div>
+            <div class="dash-card-body">
+              <p style="font-size:0.8125rem; color:var(--text-light); margin-bottom:0.25rem;">Complete your profile to get 3× more views</p>
+              <div class="profile-complete-bar">
+                <div class="profile-complete-fill" style="width:75%;"></div>
+              </div>
+
+              <div class="profile-step done">
+                <div class="profile-step-check"><i class="fas fa-check"></i></div>
+                <span class="profile-step-label">Basic Info &amp; Photo</span>
+                <span class="profile-step-pts">+20</span>
+              </div>
+              <div class="profile-step done">
+                <div class="profile-step-check"><i class="fas fa-check"></i></div>
+                <span class="profile-step-label">Skills Added</span>
+                <span class="profile-step-pts">+15</span>
+              </div>
+              <div class="profile-step done">
+                <div class="profile-step-check"><i class="fas fa-check"></i></div>
+                <span class="profile-step-label">Work Experience</span>
+                <span class="profile-step-pts">+20</span>
+              </div>
+              <div class="profile-step done">
+                <div class="profile-step-check"><i class="fas fa-check"></i></div>
+                <span class="profile-step-label">Hourly Rate Set</span>
+                <span class="profile-step-pts">+10</span>
+              </div>
+              <div class="profile-step">
+                <div class="profile-step-check"><i class="fas fa-plus"></i></div>
+                <span class="profile-step-label">Add Portfolio</span>
+                <span class="profile-step-pts">+15</span>
+              </div>
+              <div class="profile-step">
+                <div class="profile-step-check"><i class="fas fa-plus"></i></div>
+                <span class="profile-step-label">Take Skill Test</span>
+                <span class="profile-step-pts">+20</span>
+              </div>
+
+              <a href="va-profile" class="btn btn-primary btn-sm" style="width:100%; margin-top:1rem; text-align:center;">
+                <i class="fas fa-edit"></i> Complete Profile
+              </a>
+            </div>
+          </div>
+
+          <!-- Messages -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">Messages</span>
+              <a href="messages" class="dash-card-link">View All</a>
+            </div>
+            <div class="dash-card-body">
+
+              <div class="msg-item unread">
+                <img src="https://i.pravatar.cc/150?img=12" alt="" class="msg-avatar" />
+                <div class="msg-body">
+                  <div class="msg-name">James Carter</div>
+                  <div class="msg-text">Hi Maria! I reviewed your application and...</div>
+                </div>
+                <span class="msg-time">2m</span>
+              </div>
+
+              <div class="msg-item unread">
+                <img src="https://i.pravatar.cc/150?img=22" alt="" class="msg-avatar" />
+                <div class="msg-body">
+                  <div class="msg-name">Sarah Liu</div>
+                  <div class="msg-text">Can you start on Monday? The job is...</div>
+                </div>
+                <span class="msg-time">1h</span>
+              </div>
+
+              <div class="msg-item">
+                <img src="https://i.pravatar.cc/150?img=33" alt="" class="msg-avatar" />
+                <div class="msg-body">
+                  <div class="msg-name">Robert Kim</div>
+                  <div class="msg-text">Thanks for applying. We'll get back to you.</div>
+                </div>
+                <span class="msg-time">3h</span>
+              </div>
+
+              <div class="msg-item">
+                <img src="https://i.pravatar.cc/150?img=44" alt="" class="msg-avatar" />
+                <div class="msg-body">
+                  <div class="msg-name">Ana Reyes</div>
+                  <div class="msg-text">Your profile looks great! Let's schedule...</div>
+                </div>
+                <span class="msg-time">Yesterday</span>
+              </div>
+
+              <div class="msg-item">
+                <img src="https://i.pravatar.cc/150?img=55" alt="" class="msg-avatar" />
+                <div class="msg-body">
+                  <div class="msg-name">Mark Johnson</div>
+                  <div class="msg-text">We've decided to move forward with another...</div>
+                </div>
+                <span class="msg-time">Oct 20</span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Earnings Summary -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">Earnings</span>
+              <a href="work-tools" class="dash-card-link">Details</a>
+            </div>
+            <div class="dash-card-body">
+              <div style="text-align:center; padding:0.75rem 0 1rem;">
+                <div style="font-size:0.8rem; color:var(--text-light); margin-bottom:0.25rem;">This Month</div>
+                <div style="font-family:'Poppins',sans-serif; font-size:2.25rem; font-weight:900; color:var(--dark);">$320</div>
+                <div style="font-size:0.8rem; color:#059669; font-weight:600;"><i class="fas fa-arrow-up"></i> +$80 vs last month</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:0.625rem; border-top:1px solid var(--border); padding-top:1rem;">
+                <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
+                  <span style="color:var(--text-light);">Oct Week 1</span>
+                  <span style="font-weight:600; color:var(--dark);">$80.00</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
+                  <span style="color:var(--text-light);">Oct Week 2</span>
+                  <span style="font-weight:600; color:var(--dark);">$80.00</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
+                  <span style="color:var(--text-light);">Oct Week 3</span>
+                  <span style="font-weight:600; color:var(--dark);">$80.00</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
+                  <span style="color:var(--text-light);">Oct Week 4 (current)</span>
+                  <span style="font-weight:600; color:var(--primary);">$80.00</span>
+                </div>
+              </div>
+              <a href="#" class="btn btn-outline-primary btn-sm" style="width:100%; margin-top:1rem; text-align:center;">
+                <i class="fas fa-download"></i> Download Invoice
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const dashSidebar   = document.getElementById('dashSidebar');
+  const dashOverlay   = document.getElementById('dashOverlay');
+
+  function openSidebar() {
+    dashSidebar.classList.add('open');
+    dashOverlay.classList.add('visible');
+  }
+
+  function closeSidebar() {
+    dashSidebar.classList.remove('open');
+    dashOverlay.classList.remove('visible');
+  }
+
+  sidebarToggle.addEventListener('click', () => {
+    dashSidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+
+  dashOverlay.addEventListener('click', closeSidebar);
+</script>
+</body>
+</html>

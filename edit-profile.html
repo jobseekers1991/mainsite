@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Profile — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="dash-sidebar" id="dashSidebar">
+    <a href="/" class="dash-brand">
+      <div class="dash-brand-icon"><i class="fas fa-briefcase"></i></div>
+      <span class="dash-brand-name">Jobseekers<span>.ph</span></span>
+    </a>
+
+    <div class="dash-user-card">
+      <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" class="dash-user-avatar" id="sidebarAvatar" />
+      <div>
+        <div class="dash-user-name">Maria Santos</div>
+        <div class="dash-user-role">Virtual Assistant</div>
+      </div>
+      <div class="dash-online-dot"></div>
+    </div>
+
+    <nav class="dash-nav">
+      <div class="dash-nav-section">Main</div>
+      <a href="dashboard-va" class="dash-nav-item"><i class="fas fa-th-large"></i> Overview</a>
+      <a href="my-applications" class="dash-nav-item"><i class="fas fa-file-alt"></i> My Applications <span class="dash-nav-badge">3</span></a>
+      <a href="browse-jobs" class="dash-nav-item"><i class="fas fa-search"></i> Browse Jobs</a>
+      <a href="messages" class="dash-nav-item"><i class="fas fa-comments"></i> Messages <span class="dash-nav-badge">5</span></a>
+
+      <div class="dash-nav-section">My Account</div>
+      <a href="edit-profile" class="dash-nav-item active"><i class="fas fa-user-circle"></i> My Profile</a>
+      <a href="#" class="dash-nav-item"><i class="fas fa-images"></i> Portfolio</a>
+      <a href="work-tools" class="dash-nav-item"><i class="fas fa-wallet"></i> Earnings</a>
+      <a href="#" class="dash-nav-item"><i class="fas fa-star"></i> Reviews</a>
+
+      <div class="dash-nav-section">Grow &amp; Tools</div>
+      <a href="work-tools" class="dash-nav-item"><i class="fas fa-stopwatch"></i> Work Tools</a>
+      <a href="academy" class="dash-nav-item"><i class="fas fa-graduation-cap"></i> VA Academy</a>
+      <a href="setup-check" class="dash-nav-item"><i class="fas fa-bolt"></i> Setup Check</a>
+      <a href="compliance" class="dash-nav-item"><i class="fas fa-file-signature"></i> Contracts &amp; Taxes</a>
+      <a href="community" class="dash-nav-item"><i class="fas fa-users"></i> Community</a>
+
+      <div class="dash-nav-divider"></div>
+      <a href="#" class="dash-nav-item"><i class="fas fa-cog"></i> Settings</a>
+      <a href="auth" class="dash-nav-item" style="color:rgba(239,68,68,0.7);"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+    </nav>
+  </aside>
+
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <!-- ===================== MAIN ===================== -->
+  <div class="dash-main">
+
+    <header class="dash-topbar">
+      <button class="dash-topbar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+      <div class="dash-search-wrap">
+        <i class="fas fa-search" style="color:var(--text-light);font-size:0.8125rem;flex-shrink:0;"></i>
+        <input type="text" placeholder="Search jobs, companies…" />
+      </div>
+      <div class="dash-topbar-right">
+        <button class="dash-icon-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></button>
+        <button class="dash-avatar-btn">
+          <img src="https://i.pravatar.cc/150?img=47" alt="" id="topbarAvatar" />
+          <span>Maria</span>
+          <i class="fas fa-chevron-down" style="font-size:0.625rem;color:var(--text-light);"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="dash-content">
+
+      <!-- Page header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+        <div>
+          <h1 style="font-family:'Poppins',sans-serif;font-size:1.4375rem;font-weight:700;color:var(--dark);margin-bottom:0.2rem;">Edit Profile</h1>
+          <p style="color:var(--text-light);font-size:0.875rem;">Keep your profile up to date — complete profiles get 3× more views.</p>
+        </div>
+        <div style="display:flex;gap:0.625rem;flex-shrink:0;flex-wrap:wrap;">
+          <a href="va-profile" target="_blank" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i> Preview</a>
+          <a href="ats-resume" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt"></i> ATS Resume</a>
+          <button class="btn btn-primary btn-sm" id="saveBtn"><i class="fas fa-check"></i> Save Changes</button>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Cover & Avatar ── -->
+      <div class="edit-section">
+        <div style="position:relative;">
+          <!-- Cover photo -->
+          <div class="cover-upload-wrap" id="coverWrap" title="Click to change cover photo">
+            <img id="coverPreview" alt="" />
+            <div class="cover-upload-overlay"><i class="fas fa-camera"></i> Change Cover Photo</div>
+          </div>
+          <input type="file" id="coverInput" accept="image/*" style="display:none;" />
+
+          <!-- Avatar + name strip -->
+          <div class="photo-strip">
+            <div class="avatar-upload-wrap" id="avatarWrap" title="Click to change profile photo">
+              <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" id="avatarPreview" />
+              <div class="avatar-upload-overlay"><i class="fas fa-camera"></i></div>
+            </div>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none;" />
+            <div class="photo-strip-info">
+              <div class="photo-strip-name">Maria Santos</div>
+              <div class="photo-strip-title">Executive Virtual Assistant</div>
+            </div>
+            <div style="margin-left:auto;">
+              <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('avatarInput').click()">
+                <i class="fas fa-upload"></i> Upload Photo
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Basic Info ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span class="edit-section-title i" style="background:rgba(79,70,229,0.1);color:var(--primary);width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-id-card"></i></span>
+            Basic Information
+          </span>
+        </div>
+        <div class="edit-section-body">
+          <div class="form-row-2" style="margin-bottom:1rem;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">First Name <span class="form-required">*</span></label>
+              <input type="text" class="form-control" value="Maria" />
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Last Name <span class="form-required">*</span></label>
+              <input type="text" class="form-control" value="Santos" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Professional Title <span class="form-required">*</span></label>
+            <input type="text" class="form-control" value="Executive Virtual Assistant · Administrative Support Expert" placeholder="e.g., Executive Virtual Assistant" />
+            <p class="form-hint">Shown directly below your name on your public profile.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tagline</label>
+            <input type="text" class="form-control" value="I help busy executives reclaim 15–20 hrs/week through organized, efficient workflows." placeholder="One-sentence pitch about what you do" maxlength="120" id="taglineInput" />
+            <div class="char-counter"><span id="taglineCount">73</span>/120</div>
+          </div>
+
+          <div class="form-row-2" style="margin-bottom:1rem;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">City / Province <span class="form-required">*</span></label>
+              <div class="input-icon-wrap"><i class="fas fa-map-marker-alt"></i>
+                <input type="text" class="form-control" value="Cebu City" placeholder="e.g., Cebu City" />
+              </div>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Timezone</label>
+              <select class="form-control">
+                <option selected>UTC+8 (Philippine Standard Time)</option>
+                <option>UTC+7</option>
+                <option>UTC+9</option>
+                <option>UTC+0</option>
+                <option>UTC-5 (Eastern)</option>
+                <option>UTC-8 (Pacific)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Years of Experience</label>
+              <select class="form-control">
+                <option>Less than 1 year</option>
+                <option>1–2 years</option>
+                <option>3–5 years</option>
+                <option selected>6–10 years</option>
+                <option>10+ years</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Response Time</label>
+              <select class="form-control">
+                <option selected>Within 1 hour</option>
+                <option>Within a few hours</option>
+                <option>Within 24 hours</option>
+                <option>A few days</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Profile URL ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(16,185,129,0.1);color:#059669;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-at"></i></span>
+            Profile URL
+          </span>
+          <span style="font-size:0.78rem;padding:0.25rem 0.625rem;border-radius:99px;background:rgba(16,185,129,0.1);color:#059669;font-weight:700;">
+            <i class="fas fa-check-circle"></i> Active
+          </span>
+        </div>
+        <div class="edit-section-body">
+          <p style="font-size:0.875rem;color:var(--text-light);margin-bottom:1rem;">Set a custom URL for your public profile. Use your real name so clients can find you easily.</p>
+
+          <label class="form-label">Your Profile URL <span class="form-required">*</span></label>
+          <div class="profile-url-input-wrap">
+            <span class="profile-url-prefix"><i class="fas fa-link" style="font-size:0.75rem;margin-right:0.375rem;color:var(--primary);"></i>jobseekers.ph/</span>
+            <input type="text" id="profileUrlInput" value="maria-santos" placeholder="your-name" maxlength="40"
+              pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, and hyphens only" />
+            <button onclick="copyFullUrl()" style="padding:0 0.875rem;background:transparent;border:none;border-left:1.5px solid var(--border);color:var(--primary);font-size:0.875rem;cursor:pointer;white-space:nowrap;font-weight:600;" title="Copy full URL">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+
+          <div class="profile-url-status available" id="urlStatus">
+            <i class="fas fa-check-circle"></i> Available — this URL is yours
+          </div>
+
+          <p class="form-hint" style="margin-top:0.625rem;">Only lowercase letters, numbers, and hyphens. No spaces. Example: <code style="background:var(--bg);padding:0.1rem 0.375rem;border-radius:4px;font-size:0.8rem;">juan-dela-cruz</code></p>
+        </div>
+      </div>
+
+      <!-- ── SECTION: About Me ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(14,165,233,0.1);color:#0284C7;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-align-left"></i></span>
+            About Me
+          </span>
+        </div>
+        <div class="edit-section-body">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Bio <span class="form-required">*</span></label>
+            <textarea class="form-control form-textarea" style="min-height:180px;" maxlength="2000" id="bioInput" placeholder="Describe your background, expertise, and what makes you stand out. Be specific about industries you've worked in and tools you're proficient with."
+>I'm a seasoned Executive Virtual Assistant with over 6 years of experience supporting C-suite executives, entrepreneurs, and small business owners across the US, UK, and Australia.
+
+My expertise lies in transforming administrative chaos into organized, efficient workflows. I've helped my clients reclaim 15–20 hours per week by managing their inboxes, coordinating complex schedules, and handling day-to-day operational tasks.
+
+I'm highly tech-savvy, proactive, and take pride in anticipating my clients' needs before they even ask. Let's discuss how I can make your workday smoother and more productive!</textarea>
+            <div class="char-counter"><span id="bioCount">494</span>/2000</div>
+            <p class="form-hint" style="margin-top:0.25rem;">Tip: Mention specific industries, tools, and measurable results (e.g. "saved 15 hrs/week").</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Preferences ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(16,185,129,0.1);color:#059669;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-sliders-h"></i></span>
+            Work Preferences &amp; Rate
+          </span>
+        </div>
+        <div class="edit-section-body">
+          <div class="form-row-2" style="margin-bottom:1rem;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Hourly Rate (USD) <span class="form-required">*</span></label>
+              <div class="input-icon-wrap"><i class="fas fa-dollar-sign"></i>
+                <input type="number" class="form-control" value="8" min="1" max="100" placeholder="e.g. 8" />
+              </div>
+              <p class="form-hint">Your displayed rate. You can negotiate per contract.</p>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Hours Available Per Week</label>
+              <select class="form-control">
+                <option>Less than 10 hrs</option>
+                <option>10–20 hrs</option>
+                <option>20–30 hrs</option>
+                <option selected>30–40 hrs (Full-Time)</option>
+                <option>40+ hrs</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label class="form-label">Availability Type <span class="form-required">*</span></label>
+            <div class="form-row-2">
+              <label class="type-option" style="display:flex;align-items:center;gap:0.75rem;border:1.5px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;cursor:pointer;">
+                <input type="radio" name="avail" value="fulltime" checked style="accent-color:var(--primary);" />
+                <div><div style="font-weight:600;font-size:0.875rem;color:var(--dark);">Full-Time</div><div style="font-size:0.75rem;color:var(--text-light);">40 hrs/week</div></div>
+              </label>
+              <label class="type-option" style="display:flex;align-items:center;gap:0.75rem;border:1.5px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;cursor:pointer;">
+                <input type="radio" name="avail" value="parttime" style="accent-color:var(--primary);" />
+                <div><div style="font-weight:600;font-size:0.875rem;color:var(--dark);">Part-Time</div><div style="font-size:0.75rem;color:var(--text-light);">Less than 40 hrs</div></div>
+              </label>
+              <label class="type-option" style="display:flex;align-items:center;gap:0.75rem;border:1.5px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;cursor:pointer;">
+                <input type="radio" name="avail" value="project" style="accent-color:var(--primary);" />
+                <div><div style="font-weight:600;font-size:0.875rem;color:var(--dark);">Project-Based</div><div style="font-size:0.75rem;color:var(--text-light);">Fixed scope work</div></div>
+              </label>
+              <label class="type-option" style="display:flex;align-items:center;gap:0.75rem;border:1.5px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;cursor:pointer;">
+                <input type="radio" name="avail" value="any" style="accent-color:var(--primary);" />
+                <div><div style="font-weight:600;font-size:0.875rem;color:var(--dark);">Open to Any</div><div style="font-size:0.75rem;color:var(--text-light);">Flexible</div></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Work Schedule Preference</label>
+            <select class="form-control">
+              <option>Any schedule (flexible)</option>
+              <option selected>US Business Hours (EST/PST)</option>
+              <option>AU Business Hours</option>
+              <option>UK Business Hours</option>
+              <option>Philippine daytime only</option>
+              <option>Overnight / Graveyard shift</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Skills ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(245,158,11,0.1);color:#D97706;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-tags"></i></span>
+            Skills
+          </span>
+          <span style="font-size:0.8rem;color:var(--text-light);">Up to 20 skills</span>
+        </div>
+        <div class="edit-section-body">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Your Skills <span class="form-required">*</span></label>
+            <div class="tag-input-wrap">
+              <span class="input-tag">Admin Support <button type="button">×</button></span>
+              <span class="input-tag">Calendar Management <button type="button">×</button></span>
+              <span class="input-tag">Email Management <button type="button">×</button></span>
+              <span class="input-tag">CRM (HubSpot) <button type="button">×</button></span>
+              <span class="input-tag">Data Entry <button type="button">×</button></span>
+              <span class="input-tag">Travel Coordination <button type="button">×</button></span>
+              <span class="input-tag">Research <button type="button">×</button></span>
+              <span class="input-tag">Slack <button type="button">×</button></span>
+              <span class="input-tag">Asana <button type="button">×</button></span>
+              <input type="text" placeholder="Type a skill and press Enter…" />
+            </div>
+            <p class="form-hint">Press Enter or comma to add. These appear on your public profile and help clients find you.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Work Experience ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(99,102,241,0.1);color:#4F46E5;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-briefcase"></i></span>
+            Work Experience
+          </span>
+        </div>
+        <div class="edit-section-body" id="expContainer">
+
+          <!-- Entry 1 -->
+          <div class="entry-card" data-entry="exp">
+            <div class="entry-card-head">
+              <span class="entry-card-label">Experience #1</span>
+              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Job Title <span class="form-required">*</span></label>
+                <input type="text" class="form-control" value="Executive Virtual Assistant" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Employment Type</label>
+                <select class="form-control">
+                  <option selected>Full-Time</option>
+                  <option>Part-Time</option>
+                  <option>Contract</option>
+                  <option>Freelance</option>
+                  <option>Project-Based</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Company / Client <span class="form-required">*</span></label>
+                <input type="text" class="form-control" value="Carter Digital Agency" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Location / Mode</label>
+                <input type="text" class="form-control" value="Remote (US Client)" placeholder="e.g., Remote (US) or Manila" />
+              </div>
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Start Date</label>
+                <input type="month" class="form-control" value="2021-03" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">End Date</label>
+                <input type="month" class="form-control" placeholder="Leave blank if current" />
+                <label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:var(--text-light);margin-top:0.375rem;cursor:pointer;">
+                  <input type="checkbox" checked style="accent-color:var(--primary);" /> I currently work here
+                </label>
+              </div>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Description</label>
+              <textarea class="form-control form-textarea" style="min-height:90px;" placeholder="Describe your responsibilities and key achievements…">Managed executive calendar, coordinated 50+ client meetings per week, handled inbox zero strategy, and produced weekly reports for C-suite review.</textarea>
+            </div>
+          </div>
+
+          <!-- Entry 2 -->
+          <div class="entry-card" data-entry="exp">
+            <div class="entry-card-head">
+              <span class="entry-card-label">Experience #2</span>
+              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Job Title <span class="form-required">*</span></label>
+                <input type="text" class="form-control" value="Administrative Assistant" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Employment Type</label>
+                <select class="form-control"><option selected>Full-Time</option><option>Part-Time</option><option>Contract</option><option>Freelance</option></select>
+              </div>
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Company / Client <span class="form-required">*</span></label>
+                <input type="text" class="form-control" value="BrightMind Solutions" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Location / Mode</label>
+                <input type="text" class="form-control" value="Remote (AU Client)" />
+              </div>
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Start Date</label>
+                <input type="month" class="form-control" value="2018-06" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">End Date</label>
+                <input type="month" class="form-control" value="2021-02" />
+                <label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:var(--text-light);margin-top:0.375rem;cursor:pointer;">
+                  <input type="checkbox" style="accent-color:var(--primary);" /> I currently work here
+                </label>
+              </div>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Description</label>
+              <textarea class="form-control form-textarea" style="min-height:90px;">Provided comprehensive administrative support, managed client databases in Salesforce, and handled scheduling for a team of 12.</textarea>
+            </div>
+          </div>
+
+          <button class="add-entry-btn" id="addExpBtn">
+            <i class="fas fa-plus-circle"></i> Add Work Experience
+          </button>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Education ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(139,92,246,0.1);color:#7C3AED;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-graduation-cap"></i></span>
+            Education
+          </span>
+        </div>
+        <div class="edit-section-body" id="eduContainer">
+
+          <div class="entry-card" data-entry="edu">
+            <div class="entry-card-head">
+              <span class="entry-card-label">Education #1</span>
+              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">School / University <span class="form-required">*</span></label>
+                <input type="text" class="form-control" value="University of San Carlos" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Degree / Course</label>
+                <input type="text" class="form-control" value="BS Business Administration" placeholder="e.g., BS Computer Science" />
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Field of Study</label>
+                <input type="text" class="form-control" value="Business Management" placeholder="e.g., Marketing" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Year Graduated</label>
+                <input type="number" class="form-control" value="2018" placeholder="e.g., 2020" min="1990" max="2030" />
+              </div>
+            </div>
+          </div>
+
+          <button class="add-entry-btn" id="addEduBtn">
+            <i class="fas fa-plus-circle"></i> Add Education
+          </button>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Certifications ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(245,158,11,0.1);color:#D97706;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-certificate"></i></span>
+            Certifications &amp; Training
+          </span>
+        </div>
+        <div class="edit-section-body" id="certContainer">
+
+          <div class="entry-card" data-entry="cert">
+            <div class="entry-card-head">
+              <span class="entry-card-label">Certification #1</span>
+              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Certification Name <span class="form-required">*</span></label>
+                <input type="text" class="form-control" value="HubSpot CRM Certification" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Issuing Organization</label>
+                <input type="text" class="form-control" value="HubSpot Academy" />
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Issue Date</label>
+                <input type="month" class="form-control" value="2022-11" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Credential URL</label>
+                <input type="url" class="form-control" value="" placeholder="https://credential.link/..." />
+              </div>
+            </div>
+          </div>
+
+          <button class="add-entry-btn" id="addCertBtn">
+            <i class="fas fa-plus-circle"></i> Add Certification
+          </button>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Languages ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(20,184,166,0.1);color:#0D9488;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-language"></i></span>
+            Languages
+          </span>
+        </div>
+        <div class="edit-section-body">
+          <div id="langRows">
+
+            <div class="lang-row" data-lang>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.78rem;">Language</label>
+                <input type="text" class="form-control" value="Filipino (Tagalog)" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.78rem;">Proficiency</label>
+                <select class="form-control">
+                  <option>Basic</option>
+                  <option>Conversational</option>
+                  <option>Professional</option>
+                  <option>Fluent</option>
+                  <option selected>Native</option>
+                </select>
+              </div>
+              <button class="entry-remove-btn" style="align-self:flex-end;margin-bottom:0.125rem;" onclick="removeLang(this)"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="lang-row" data-lang>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.78rem;">Language</label>
+                <input type="text" class="form-control" value="English" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.78rem;">Proficiency</label>
+                <select class="form-control">
+                  <option>Basic</option>
+                  <option>Conversational</option>
+                  <option>Professional</option>
+                  <option selected>Fluent</option>
+                  <option>Native</option>
+                </select>
+              </div>
+              <button class="entry-remove-btn" style="align-self:flex-end;margin-bottom:0.125rem;" onclick="removeLang(this)"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="lang-row" data-lang>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.78rem;">Language</label>
+                <input type="text" class="form-control" value="Cebuano" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.78rem;">Proficiency</label>
+                <select class="form-control">
+                  <option>Basic</option>
+                  <option>Conversational</option>
+                  <option>Professional</option>
+                  <option>Fluent</option>
+                  <option selected>Native</option>
+                </select>
+              </div>
+              <button class="entry-remove-btn" style="align-self:flex-end;margin-bottom:0.125rem;" onclick="removeLang(this)"><i class="fas fa-times"></i></button>
+            </div>
+
+          </div>
+          <button class="add-entry-btn" id="addLangBtn">
+            <i class="fas fa-plus-circle"></i> Add Language
+          </button>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Tools & Software ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(79,70,229,0.1);color:var(--primary);width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-tools"></i></span>
+            Tools &amp; Software
+          </span>
+          <span style="font-size:0.8rem;color:var(--text-light);">Select all that apply</span>
+        </div>
+        <div class="edit-section-body">
+          <p style="font-size:0.8125rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;font-size:0.72rem;">Communication</p>
+          <div class="tools-grid" style="margin-bottom:1.25rem;">
+            <label class="tool-check"><input type="checkbox" checked /> Slack</label>
+            <label class="tool-check"><input type="checkbox" checked /> Zoom</label>
+            <label class="tool-check"><input type="checkbox" checked /> Google Meet</label>
+            <label class="tool-check"><input type="checkbox" /> Microsoft Teams</label>
+            <label class="tool-check"><input type="checkbox" /> Skype</label>
+            <label class="tool-check"><input type="checkbox" /> Discord</label>
+          </div>
+
+          <p style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;">Project Management</p>
+          <div class="tools-grid" style="margin-bottom:1.25rem;">
+            <label class="tool-check"><input type="checkbox" checked /> Asana</label>
+            <label class="tool-check"><input type="checkbox" checked /> Trello</label>
+            <label class="tool-check"><input type="checkbox" /> Monday.com</label>
+            <label class="tool-check"><input type="checkbox" /> ClickUp</label>
+            <label class="tool-check"><input type="checkbox" /> Notion</label>
+            <label class="tool-check"><input type="checkbox" /> Basecamp</label>
+          </div>
+
+          <p style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;">CRM &amp; Sales</p>
+          <div class="tools-grid" style="margin-bottom:1.25rem;">
+            <label class="tool-check"><input type="checkbox" checked /> HubSpot</label>
+            <label class="tool-check"><input type="checkbox" /> Salesforce</label>
+            <label class="tool-check"><input type="checkbox" /> Zoho CRM</label>
+            <label class="tool-check"><input type="checkbox" /> Pipedrive</label>
+            <label class="tool-check"><input type="checkbox" /> Close.io</label>
+            <label class="tool-check"><input type="checkbox" /> ActiveCampaign</label>
+          </div>
+
+          <p style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;">Google &amp; Productivity</p>
+          <div class="tools-grid" style="margin-bottom:1.25rem;">
+            <label class="tool-check"><input type="checkbox" checked /> Google Workspace</label>
+            <label class="tool-check"><input type="checkbox" checked /> Microsoft Office</label>
+            <label class="tool-check"><input type="checkbox" /> Dropbox</label>
+            <label class="tool-check"><input type="checkbox" /> Airtable</label>
+            <label class="tool-check"><input type="checkbox" /> Calendly</label>
+            <label class="tool-check"><input type="checkbox" /> Loom</label>
+          </div>
+
+          <p style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;">eCommerce &amp; Design</p>
+          <div class="tools-grid">
+            <label class="tool-check"><input type="checkbox" /> Shopify</label>
+            <label class="tool-check"><input type="checkbox" /> WordPress</label>
+            <label class="tool-check"><input type="checkbox" /> Canva</label>
+            <label class="tool-check"><input type="checkbox" /> Adobe Photoshop</label>
+            <label class="tool-check"><input type="checkbox" /> QuickBooks</label>
+            <label class="tool-check"><input type="checkbox" /> Xero</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Portfolio ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(239,68,68,0.1);color:#DC2626;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-folder-open"></i></span>
+            Portfolio &amp; Work Samples
+          </span>
+        </div>
+        <div class="edit-section-body" id="portfolioContainer">
+
+          <div class="portfolio-item" data-entry="portfolio">
+            <div class="entry-card-head">
+              <span class="entry-card-label">Sample #1</span>
+              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+            </div>
+            <div class="form-group" style="margin-bottom:0.75rem;">
+              <label class="form-label">Title <span class="form-required">*</span></label>
+              <input type="text" class="form-control" value="Executive Inbox Management SOP" placeholder="e.g., Social Media Content Calendar" />
+            </div>
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Category</label>
+                <select class="form-control">
+                  <option selected>Admin / Operations</option>
+                  <option>Social Media</option>
+                  <option>Content Writing</option>
+                  <option>Design</option>
+                  <option>Data / Research</option>
+                  <option>eCommerce</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Link (optional)</label>
+                <input type="url" class="form-control" placeholder="https://drive.google.com/..." />
+              </div>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Description</label>
+              <textarea class="form-control form-textarea" style="min-height:70px;" placeholder="Briefly describe what you did and the result…">Created a comprehensive SOP for managing a C-suite executive's inbox, reducing response time by 60%.</textarea>
+            </div>
+          </div>
+
+          <button class="add-entry-btn" id="addPortfolioBtn">
+            <i class="fas fa-plus-circle"></i> Add Work Sample
+          </button>
+        </div>
+      </div>
+
+      <!-- ── SECTION: English Test Score ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(79,70,229,0.1);color:var(--primary);width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-spell-check"></i></span>
+            English Test Score (ETS)
+          </span>
+          <span style="font-size:0.78rem;padding:0.25rem 0.625rem;border-radius:99px;background:rgba(16,185,129,0.1);color:#059669;font-weight:700;">
+            <i class="fas fa-shield-alt"></i> Verified
+          </span>
+        </div>
+        <div class="edit-section-body">
+          <p style="font-size:0.875rem;color:var(--text-light);margin-bottom:1.125rem;">Your English proficiency score is displayed on your public profile and helps clients assess your communication skills.</p>
+
+          <!-- Current score display -->
+          <div class="ets-manage-card">
+            <div class="ets-manage-score">
+              <div class="ets-big-score" style="width:64px;height:64px;">
+                <span style="font-size:1.5rem;">95</span>
+                <span>/ 100</span>
+              </div>
+              <div style="flex:1;">
+                <div class="ets-level excellent" style="margin-bottom:0.375rem;"><i class="fas fa-circle" style="font-size:0.45rem;"></i> Excellent</div>
+                <div style="font-size:0.8125rem;color:var(--text);font-weight:600;">Top 8% of all VAs on Jobseekers.ph</div>
+                <div style="font-size:0.78rem;color:var(--text-light);margin-top:0.125rem;">Taken: October 15, 2026 · Valid for 12 months</div>
+              </div>
+            </div>
+
+            <div style="padding:0.875rem 1.125rem;border-bottom:1px solid var(--border);">
+              <div style="font-size:0.75rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.625rem;">Score Breakdown</div>
+              <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                <div>
+                  <div class="ets-bar-label"><span>Grammar</span><span style="font-weight:700;color:var(--dark);">93/100</span></div>
+                  <div class="ets-bar-wrap" style="height:6px;"><div class="ets-bar-fill" style="width:93%;"></div></div>
+                </div>
+                <div>
+                  <div class="ets-bar-label"><span>Vocabulary</span><span style="font-weight:700;color:var(--dark);">97/100</span></div>
+                  <div class="ets-bar-wrap" style="height:6px;"><div class="ets-bar-fill" style="width:97%;"></div></div>
+                </div>
+                <div>
+                  <div class="ets-bar-label"><span>Reading Comprehension</span><span style="font-weight:700;color:var(--dark);">95/100</span></div>
+                  <div class="ets-bar-wrap" style="height:6px;"><div class="ets-bar-fill" style="width:95%;"></div></div>
+                </div>
+                <div>
+                  <div class="ets-bar-label"><span>Written Expression</span><span style="font-weight:700;color:var(--dark);">91/100</span></div>
+                  <div class="ets-bar-wrap" style="height:6px;"><div class="ets-bar-fill" style="width:91%;"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ets-manage-actions">
+              <div style="font-size:0.8125rem;color:var(--text-light);">
+                <i class="fas fa-redo" style="color:var(--primary);"></i> Retake available in <strong style="color:var(--dark);">320 days</strong>
+              </div>
+              <div style="display:flex;gap:0.625rem;flex-wrap:wrap;">
+                <button class="btn btn-ghost btn-sm"><i class="fas fa-eye-slash"></i> Hide from Profile</button>
+                <a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-external-link-alt"></i> View on Profile</a>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:rgba(79,70,229,0.04);border:1.5px dashed rgba(79,70,229,0.25);border-radius:var(--radius-lg);padding:1rem 1.125rem;margin-top:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div style="font-size:0.875rem;font-weight:700;color:var(--dark);margin-bottom:0.25rem;"><i class="fas fa-info-circle" style="color:var(--primary);"></i> Want to improve your score?</div>
+              <div style="font-size:0.8125rem;color:var(--text-light);">VAs with 90+ scores get 2× more interview invites. You can retake the test once every 12 months.</div>
+            </div>
+            <button class="btn btn-primary btn-sm" style="flex-shrink:0;">
+              <i class="fas fa-play-circle"></i> Retake Test
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION: Online Presence ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(14,165,233,0.1);color:#0284C7;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fas fa-globe"></i></span>
+            Online Presence &amp; Links
+          </span>
+        </div>
+        <div class="edit-section-body">
+
+          <div class="social-row">
+            <div class="social-row-icon" style="background:rgba(14,118,232,0.08);color:#0A66C2;border-color:rgba(10,102,194,0.2);">
+              <i class="fab fa-linkedin-in"></i>
+            </div>
+            <div style="flex:1;">
+              <label class="form-label" style="margin-bottom:0.375rem;">LinkedIn</label>
+              <input type="url" class="form-control" value="https://linkedin.com/in/mariasantos-va" placeholder="https://linkedin.com/in/your-profile" />
+            </div>
+          </div>
+
+          <div class="social-row">
+            <div class="social-row-icon" style="background:rgba(30,136,229,0.08);color:#1e88e5;border-color:rgba(30,136,229,0.2);">
+              <i class="fas fa-briefcase"></i>
+            </div>
+            <div style="flex:1;">
+              <label class="form-label" style="margin-bottom:0.375rem;">OnlineJobs.ph Profile</label>
+              <input type="url" class="form-control" value="" placeholder="https://onlinejobs.ph/jobseekers/info/..." />
+            </div>
+          </div>
+
+          <div class="social-row">
+            <div class="social-row-icon" style="background:rgba(36,41,47,0.08);color:#24292F;border-color:rgba(36,41,47,0.2);">
+              <i class="fab fa-github"></i>
+            </div>
+            <div style="flex:1;">
+              <label class="form-label" style="margin-bottom:0.375rem;">GitHub</label>
+              <input type="url" class="form-control" value="" placeholder="https://github.com/yourusername" />
+            </div>
+          </div>
+
+          <div class="social-row">
+            <div class="social-row-icon" style="background:rgba(79,70,229,0.08);color:var(--primary);border-color:rgba(79,70,229,0.2);">
+              <i class="fas fa-globe"></i>
+            </div>
+            <div style="flex:1;">
+              <label class="form-label" style="margin-bottom:0.375rem;">Personal Website / Portfolio</label>
+              <input type="url" class="form-control" value="https://mariasantos.notion.site" placeholder="https://yourwebsite.com" />
+            </div>
+          </div>
+
+          <div class="social-row">
+            <div class="social-row-icon" style="background:rgba(37,211,102,0.08);color:#25D366;border-color:rgba(37,211,102,0.25);">
+              <i class="fab fa-whatsapp"></i>
+            </div>
+            <div style="flex:1;">
+              <label class="form-label" style="margin-bottom:0.375rem;">WhatsApp Number <span style="font-size:0.75rem;color:var(--text-light);font-weight:400;">(optional, visible to clients)</span></label>
+              <input type="tel" class="form-control" value="" placeholder="+63 9XX XXX XXXX" />
+            </div>
+          </div>
+
+          <div class="social-row" style="margin:0;">
+            <div class="social-row-icon" style="background:rgba(225,48,108,0.08);color:#E1306C;border-color:rgba(225,48,108,0.2);">
+              <i class="fab fa-instagram"></i>
+            </div>
+            <div style="flex:1;">
+              <label class="form-label" style="margin-bottom:0.375rem;">Instagram <span style="font-size:0.75rem;color:var(--text-light);font-weight:400;">(optional)</span></label>
+              <input type="url" class="form-control" value="" placeholder="https://instagram.com/yourusername" />
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── SECTION: Video Introduction ── -->
+      <div class="edit-section">
+        <div class="edit-section-header">
+          <span class="edit-section-title">
+            <span style="background:rgba(239,68,68,0.1);color:#DC2626;width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;"><i class="fab fa-youtube"></i></span>
+            Video Introduction
+          </span>
+          <span style="font-size:0.78rem;color:var(--text-light);">Optional but highly recommended</span>
+        </div>
+        <div class="edit-section-body">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">YouTube / Loom Video URL</label>
+            <input type="url" class="form-control" value="" placeholder="https://youtube.com/watch?v=... or https://loom.com/share/..." />
+            <p class="form-hint">A 1–2 minute video introduction can increase your hire rate by up to 40%.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom save bar -->
+      <div style="display:flex;justify-content:flex-end;gap:0.75rem;padding:1rem 0;border-top:1px solid var(--border);margin-top:0.5rem;flex-wrap:wrap;">
+        <a href="va-profile" target="_blank" class="btn btn-ghost"><i class="fas fa-eye"></i> Preview Profile</a>
+        <a href="ats-resume" target="_blank" class="btn btn-outline-primary"><i class="fas fa-file-alt"></i> Generate ATS Resume</a>
+        <button class="btn btn-primary" id="saveBtnBottom"><i class="fas fa-check"></i> Save All Changes</button>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Save toast -->
+<div class="save-toast" id="saveToast">
+  <i class="fas fa-check-circle"></i> Profile saved successfully!
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  /* ── Sidebar toggle ── */
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const dashSidebar   = document.getElementById('dashSidebar');
+  const dashOverlay   = document.getElementById('dashOverlay');
+
+  sidebarToggle.addEventListener('click', () => {
+    const open = dashSidebar.classList.toggle('open');
+    dashOverlay.classList.toggle('visible', open);
+  });
+  dashOverlay.addEventListener('click', () => {
+    dashSidebar.classList.remove('open');
+    dashOverlay.classList.remove('visible');
+  });
+
+  /* ── Photo upload — Avatar ── */
+  const avatarInput   = document.getElementById('avatarInput');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const sidebarAvatar = document.getElementById('sidebarAvatar');
+  const topbarAvatar  = document.getElementById('topbarAvatar');
+
+  document.getElementById('avatarWrap').addEventListener('click', () => avatarInput.click());
+
+  avatarInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    avatarPreview.src = url;
+    sidebarAvatar.src = url;
+    topbarAvatar.src  = url;
+  });
+
+  /* ── Photo upload — Cover ── */
+  const coverInput   = document.getElementById('coverInput');
+  const coverPreview = document.getElementById('coverPreview');
+  const coverWrap    = document.getElementById('coverWrap');
+
+  coverWrap.addEventListener('click', () => coverInput.click());
+
+  coverInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    coverPreview.src = url;
+    coverPreview.classList.add('loaded');
+  });
+
+  /* ── Char counters ── */
+  function wireCounter(inputId, counterId, max) {
+    const el = document.getElementById(inputId);
+    const ct = document.getElementById(counterId);
+    if (!el || !ct) return;
+    const update = () => {
+      const len = el.value.length;
+      ct.textContent = len;
+      ct.parentElement.className = 'char-counter' + (len > max * 0.9 ? (len >= max ? ' over' : ' warn') : '');
+    };
+    el.addEventListener('input', update);
+    update();
+  }
+  wireCounter('taglineInput', 'taglineCount', 120);
+  wireCounter('bioInput', 'bioCount', 2000);
+
+  /* ── Remove entry card ── */
+  function removeEntry(btn) {
+    const card = btn.closest('[data-entry]');
+    if (!card) return;
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.97)';
+    card.style.transition = 'opacity 0.2s, transform 0.2s';
+    setTimeout(() => {
+      card.remove();
+      renumberEntries();
+    }, 200);
+  }
+
+  function renumberEntries() {
+    ['exp', 'edu', 'cert', 'portfolio'].forEach(type => {
+      const labels = ['Experience', 'Education', 'Certification', 'Sample'];
+      const idx = ['exp','edu','cert','portfolio'].indexOf(type);
+      document.querySelectorAll(`[data-entry="${type}"]`).forEach((card, i) => {
+        const lbl = card.querySelector('.entry-card-label');
+        if (lbl) lbl.textContent = `${labels[idx]} #${i + 1}`;
+      });
+    });
+  }
+
+  /* ── Add Experience ── */
+  let expCount = 2;
+  document.getElementById('addExpBtn').addEventListener('click', () => {
+    expCount++;
+    const div = document.createElement('div');
+    div.className = 'entry-card';
+    div.dataset.entry = 'exp';
+    div.innerHTML = `
+      <div class="entry-card-head">
+        <span class="entry-card-label">Experience #${expCount}</span>
+        <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+      </div>
+      <div class="form-row-2" style="margin-bottom:0.75rem;">
+        <div class="form-group" style="margin:0;"><label class="form-label">Job Title <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., Virtual Assistant" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Employment Type</label><select class="form-control"><option>Full-Time</option><option>Part-Time</option><option>Contract</option><option>Freelance</option><option>Project-Based</option></select></div>
+      </div>
+      <div class="form-row-2" style="margin-bottom:0.75rem;">
+        <div class="form-group" style="margin:0;"><label class="form-label">Company / Client <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., ABC Corp" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Location / Mode</label><input type="text" class="form-control" placeholder="e.g., Remote (US)" /></div>
+      </div>
+      <div class="form-row-2" style="margin-bottom:0.75rem;">
+        <div class="form-group" style="margin:0;"><label class="form-label">Start Date</label><input type="month" class="form-control" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">End Date</label><input type="month" class="form-control" /><label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:var(--text-light);margin-top:0.375rem;cursor:pointer;"><input type="checkbox" style="accent-color:var(--primary);" /> I currently work here</label></div>
+      </div>
+      <div class="form-group" style="margin:0;"><label class="form-label">Description</label><textarea class="form-control form-textarea" style="min-height:90px;" placeholder="Describe your responsibilities and key achievements…"></textarea></div>`;
+    document.getElementById('expContainer').insertBefore(div, document.getElementById('addExpBtn'));
+  });
+
+  /* ── Add Education ── */
+  let eduCount = 1;
+  document.getElementById('addEduBtn').addEventListener('click', () => {
+    eduCount++;
+    const div = document.createElement('div');
+    div.className = 'entry-card';
+    div.dataset.entry = 'edu';
+    div.innerHTML = `
+      <div class="entry-card-head">
+        <span class="entry-card-label">Education #${eduCount}</span>
+        <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+      </div>
+      <div class="form-row-2" style="margin-bottom:0.75rem;">
+        <div class="form-group" style="margin:0;"><label class="form-label">School / University <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., Ateneo de Manila" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Degree / Course</label><input type="text" class="form-control" placeholder="e.g., BS Computer Science" /></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group" style="margin:0;"><label class="form-label">Field of Study</label><input type="text" class="form-control" placeholder="e.g., Marketing" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Year Graduated</label><input type="number" class="form-control" placeholder="e.g., 2020" min="1990" max="2030" /></div>
+      </div>`;
+    document.getElementById('eduContainer').insertBefore(div, document.getElementById('addEduBtn'));
+  });
+
+  /* ── Add Certification ── */
+  let certCount = 1;
+  document.getElementById('addCertBtn').addEventListener('click', () => {
+    certCount++;
+    const div = document.createElement('div');
+    div.className = 'entry-card';
+    div.dataset.entry = 'cert';
+    div.innerHTML = `
+      <div class="entry-card-head">
+        <span class="entry-card-label">Certification #${certCount}</span>
+        <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+      </div>
+      <div class="form-row-2" style="margin-bottom:0.75rem;">
+        <div class="form-group" style="margin:0;"><label class="form-label">Certification Name <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., Google Analytics Certification" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Issuing Organization</label><input type="text" class="form-control" placeholder="e.g., Google" /></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group" style="margin:0;"><label class="form-label">Issue Date</label><input type="month" class="form-control" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Credential URL</label><input type="url" class="form-control" placeholder="https://credential.link/..." /></div>
+      </div>`;
+    document.getElementById('certContainer').insertBefore(div, document.getElementById('addCertBtn'));
+  });
+
+  /* ── Add Portfolio item ── */
+  let portfolioCount = 1;
+  document.getElementById('addPortfolioBtn').addEventListener('click', () => {
+    portfolioCount++;
+    const div = document.createElement('div');
+    div.className = 'portfolio-item';
+    div.dataset.entry = 'portfolio';
+    div.innerHTML = `
+      <div class="entry-card-head">
+        <span class="entry-card-label">Sample #${portfolioCount}</span>
+        <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+      </div>
+      <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label">Title <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., Social Media Content Calendar" /></div>
+      <div class="form-row-2" style="margin-bottom:0.75rem;">
+        <div class="form-group" style="margin:0;"><label class="form-label">Category</label><select class="form-control"><option>Admin / Operations</option><option>Social Media</option><option>Content Writing</option><option>Design</option><option>Data / Research</option><option>eCommerce</option><option>Other</option></select></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Link (optional)</label><input type="url" class="form-control" placeholder="https://drive.google.com/..." /></div>
+      </div>
+      <div class="form-group" style="margin:0;"><label class="form-label">Description</label><textarea class="form-control form-textarea" style="min-height:70px;" placeholder="Briefly describe what you did and the result…"></textarea></div>`;
+    document.getElementById('portfolioContainer').insertBefore(div, document.getElementById('addPortfolioBtn'));
+  });
+
+  /* ── Add Language ── */
+  document.getElementById('addLangBtn').addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'lang-row';
+    row.dataset.lang = '';
+    row.innerHTML = `
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:0.78rem;">Language</label>
+        <input type="text" class="form-control" placeholder="e.g., Japanese" />
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:0.78rem;">Proficiency</label>
+        <select class="form-control"><option>Basic</option><option>Conversational</option><option selected>Professional</option><option>Fluent</option><option>Native</option></select>
+      </div>
+      <button class="entry-remove-btn" style="align-self:flex-end;margin-bottom:0.125rem;" onclick="removeLang(this)"><i class="fas fa-times"></i></button>`;
+    document.getElementById('langRows').appendChild(row);
+  });
+
+  function removeLang(btn) {
+    const row = btn.closest('[data-lang]');
+    if (row) row.remove();
+  }
+
+  /* ── Save toast ── */
+  function showSaveToast() {
+    const toast = document.getElementById('saveToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', showSaveToast);
+  document.getElementById('saveBtnBottom').addEventListener('click', showSaveToast);
+
+  /* ── Profile URL live validation ── */
+  const urlInput  = document.getElementById('profileUrlInput');
+  const urlStatus = document.getElementById('urlStatus');
+  const takenSlugs = ['admin', 'dashboard', 'login', 'register', 'jobs', 'find-vas', 'api', 'support', 'help'];
+  let urlTimer;
+
+  urlInput.addEventListener('input', () => {
+    clearTimeout(urlTimer);
+    let val = urlInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (val !== urlInput.value) urlInput.value = val;
+
+    if (!val) {
+      urlStatus.className = 'profile-url-status checking';
+      urlStatus.innerHTML = '<i class="fas fa-circle"></i> Enter a username';
+      return;
+    }
+    if (val.length < 3) {
+      urlStatus.className = 'profile-url-status taken';
+      urlStatus.innerHTML = '<i class="fas fa-times-circle"></i> Too short — minimum 3 characters';
+      return;
+    }
+
+    urlStatus.className = 'profile-url-status checking';
+    urlStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking availability…';
+
+    urlTimer = setTimeout(() => {
+      if (takenSlugs.includes(val)) {
+        urlStatus.className = 'profile-url-status taken';
+        urlStatus.innerHTML = '<i class="fas fa-times-circle"></i> "' + val + '" is already taken — try another';
+      } else {
+        urlStatus.className = 'profile-url-status available';
+        urlStatus.innerHTML = '<i class="fas fa-check-circle"></i> Available — jobseekers.ph/' + val;
+      }
+    }, 600);
+  });
+
+  /* ── Copy full profile URL ── */
+  function copyFullUrl() {
+    const slug = urlInput.value || 'maria-santos';
+    navigator.clipboard.writeText('https://jobseekers.ph/' + slug).then(() => {
+      const btn = event.target.closest('button');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i>';
+      btn.style.color = '#059669';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

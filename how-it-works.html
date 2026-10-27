@@ -1,0 +1,381 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How It Works — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works" class="active">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>How It Works</span></div>
+    <h1>Simple. Fast. Effective.</h1>
+    <p>Whether you're a business owner looking for support or a talented VA ready to work, Jobseekers.ph makes the process effortless.</p>
+  </div>
+</section>
+
+<!-- TABS INTRO -->
+<section style="background:#fff; padding:4rem 1.5rem;">
+  <div class="container">
+    <div class="how-tabs-wrap" style="margin-bottom:4rem;">
+      <div class="how-tabs">
+        <button class="how-tab active" data-target="client-flow">I'm a Client</button>
+        <button class="how-tab" data-target="va-flow">I'm a VA</button>
+      </div>
+    </div>
+
+    <!-- CLIENT FLOW -->
+    <div id="client-flow" class="tab-panel active">
+      <div class="section-header" style="margin-bottom:3rem;">
+        <span class="section-badge"><i class="fas fa-building"></i> For Clients</span>
+        <h2 class="section-title">Hire your perfect VA in 3 steps</h2>
+        <p class="section-sub">No guesswork, no middlemen. Find, vet, and hire — all in one place.</p>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="two-col gap-xl on-scroll">
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:0.75rem; background:rgba(79,70,229,0.08); border-radius:var(--radius-full); padding:0.5rem 1.25rem; margin-bottom:1.5rem;">
+            <div style="width:28px; height:28px; background:var(--grad-primary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.8125rem; font-weight:700;">1</div>
+            <span style="font-weight:600; color:var(--primary); font-size:0.875rem; text-transform:uppercase; letter-spacing:0.05em;">Step One</span>
+          </div>
+          <h3 style="font-size:2rem; font-weight:800; color:var(--dark); margin-bottom:1rem;">Post your job or browse directly</h3>
+          <p style="color:var(--text-light); line-height:1.85; margin-bottom:1.5rem; font-size:1rem;">Describe exactly what you need in our simple job posting form. Takes less than 5 minutes. Or skip straight to browsing our curated directory of verified VAs.</p>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:0.75rem;">
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem; color:var(--text);">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              Post a job in under 5 minutes, completely free
+            </li>
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem; color:var(--text);">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              Filter by skills, rate, availability, and experience
+            </li>
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem; color:var(--text);">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              Get matched with qualified VAs within hours
+            </li>
+          </ul>
+          <a href="post-job" class="btn btn-primary" style="margin-top:2rem;"><i class="fas fa-plus"></i> Post a Job Free</a>
+        </div>
+        <div style="background:var(--bg); border-radius:var(--radius-2xl); padding:2rem; border:1px solid var(--border);">
+          <div style="background:#fff; border-radius:var(--radius-xl); padding:1.5rem; box-shadow:var(--shadow-md); margin-bottom:1rem;">
+            <p style="font-size:0.8125rem; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">Active Job Posting</p>
+            <h4 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:0.5rem;">Executive Virtual Assistant</h4>
+            <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+              <span class="badge badge-new">Live</span>
+              <span style="font-size:0.8rem; color:var(--text-light);"><i class="fas fa-clock"></i> Posted 2 hours ago</span>
+            </div>
+            <div style="background:rgba(79,70,229,0.06); border-radius:var(--radius-md); padding:0.875rem; font-size:0.875rem; color:var(--text-light);">
+              <strong style="color:var(--primary);">24 applicants</strong> have applied · <strong style="color:var(--primary);">3 shortlisted</strong>
+            </div>
+          </div>
+          <div style="display:flex; gap:0.75rem; align-items:center; background:#fff; border-radius:var(--radius-xl); padding:1rem 1.25rem; box-shadow:var(--shadow-sm); border:1px solid var(--border);">
+            <img src="https://i.pravatar.cc/150?img=47" style="width:40px; height:40px; border-radius:50%; object-fit:cover;" alt="" />
+            <div style="flex:1;">
+              <div style="font-size:0.875rem; font-weight:700; color:var(--dark);">New Application from Maria S.</div>
+              <div style="font-size:0.75rem; color:var(--text-light);">5.0 ★ · $8/hr · Available Now</div>
+            </div>
+            <button class="btn btn-primary btn-xs">View</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="two-col gap-xl on-scroll">
+        <div style="background:var(--bg); border-radius:var(--radius-2xl); padding:2rem; border:1px solid var(--border); order:-1;">
+          <p style="font-size:0.8125rem; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1.25rem;">VA Profile Preview</p>
+          <div class="va-card" style="box-shadow:var(--shadow-md);">
+            <div class="va-card-head">
+              <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=47" alt="Maria" /><div class="va-status online"></div></div>
+              <div class="va-info">
+                <div class="va-name">Maria Santos <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+                <div class="va-title">Executive Virtual Assistant</div>
+                <div class="va-rating"><span class="stars">★★★★★</span> <strong>5.0</strong> (84)</div>
+              </div>
+              <div class="va-rate">$8/hr</div>
+            </div>
+            <div class="va-skills"><span class="skill-tag">Admin</span><span class="skill-tag">Email</span><span class="skill-tag">CRM</span></div>
+            <div class="va-card-foot">
+              <div class="va-location"><i class="fas fa-map-marker-alt"></i> Cebu, PH</div>
+              <a href="va-profile" class="btn btn-primary btn-sm">Full Profile</a>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:0.75rem; background:rgba(79,70,229,0.08); border-radius:var(--radius-full); padding:0.5rem 1.25rem; margin-bottom:1.5rem;">
+            <div style="width:28px; height:28px; background:var(--grad-primary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.8125rem; font-weight:700;">2</div>
+            <span style="font-weight:600; color:var(--primary); font-size:0.875rem; text-transform:uppercase; letter-spacing:0.05em;">Step Two</span>
+          </div>
+          <h3 style="font-size:2rem; font-weight:800; color:var(--dark); margin-bottom:1rem;">Review profiles &amp; shortlist candidates</h3>
+          <p style="color:var(--text-light); line-height:1.85; margin-bottom:1.5rem; font-size:1rem;">Browse detailed profiles with work history, portfolio samples, verified reviews, and skill assessments. Message candidates directly before committing to anything.</p>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:0.75rem;">
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem;">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              Read 100% genuine, verified client reviews
+            </li>
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem;">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              Message candidates for free, no commitment required
+            </li>
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem;">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              View portfolio and skill assessment scores
+            </li>
+          </ul>
+          <a href="find-vas" class="btn btn-outline-primary" style="margin-top:2rem;"><i class="fas fa-users"></i> Browse VAs</a>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="two-col gap-xl on-scroll">
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:0.75rem; background:rgba(79,70,229,0.08); border-radius:var(--radius-full); padding:0.5rem 1.25rem; margin-bottom:1.5rem;">
+            <div style="width:28px; height:28px; background:var(--grad-primary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.8125rem; font-weight:700;">3</div>
+            <span style="font-weight:600; color:var(--primary); font-size:0.875rem; text-transform:uppercase; letter-spacing:0.05em;">Step Three</span>
+          </div>
+          <h3 style="font-size:2rem; font-weight:800; color:var(--dark); margin-bottom:1rem;">Hire, collaborate &amp; grow together</h3>
+          <p style="color:var(--text-light); line-height:1.85; margin-bottom:1.5rem; font-size:1rem;">Send a contract, agree on terms, and start working. Our platform handles time tracking, secure payments, and dispute resolution so you can focus on growth.</p>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:0.75rem;">
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem;">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              Secure escrow payment — pay only when satisfied
+            </li>
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem;">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              Built-in time tracking and weekly reports
+            </li>
+            <li style="display:flex; align-items:center; gap:0.75rem; font-size:0.9375rem;">
+              <span style="width:22px; height:22px; background:rgba(16,185,129,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--success); font-size:0.75rem; flex-shrink:0;"><i class="fas fa-check"></i></span>
+              30-day satisfaction guarantee or your money back
+            </li>
+          </ul>
+          <a href="auth" class="btn btn-primary" style="margin-top:2rem;"><i class="fas fa-rocket"></i> Get Started Free</a>
+        </div>
+        <div style="background:var(--bg); border-radius:var(--radius-2xl); padding:2rem; border:1px solid var(--border);">
+          <p style="font-size:0.8125rem; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1.25rem;">Payment Dashboard</p>
+          <div style="background:#fff; border-radius:var(--radius-xl); padding:1.5rem; box-shadow:var(--shadow-md); margin-bottom:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+              <div><div style="font-size:0.875rem; font-weight:600; color:var(--dark);">Maria Santos</div><div style="font-size:0.75rem; color:var(--text-light);">Weekly Payment · Oct 2026</div></div>
+              <span class="badge badge-new">Processed</span>
+            </div>
+            <div style="font-size:2rem; font-weight:800; color:var(--dark); font-family:'Poppins',sans-serif; margin-bottom:0.25rem;">$320.00</div>
+            <div style="font-size:0.8125rem; color:var(--text-light);">40 hrs × $8/hr · Secured ✓</div>
+          </div>
+          <div class="form-row-2">
+            <div style="background:#fff; border-radius:var(--radius-lg); padding:1rem; border:1px solid var(--border); text-align:center;">
+              <div style="font-size:1.25rem; font-weight:800; color:var(--success); font-family:'Poppins',sans-serif;">100%</div>
+              <div style="font-size:0.75rem; color:var(--text-light);">On-Time Rate</div>
+            </div>
+            <div style="background:#fff; border-radius:var(--radius-lg); padding:1rem; border:1px solid var(--border); text-align:center;">
+              <div style="font-size:1.25rem; font-weight:800; color:var(--primary); font-family:'Poppins',sans-serif;">5.0★</div>
+              <div style="font-size:0.75rem; color:var(--text-light);">Satisfaction</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VA FLOW -->
+    <div id="va-flow" class="tab-panel">
+      <div class="section-header" style="margin-bottom:3rem;">
+        <span class="section-badge"><i class="fas fa-user-tie"></i> For Virtual Assistants</span>
+        <h2 class="section-title">Launch your remote career in 3 easy steps</h2>
+        <p class="section-sub">Join 12,000+ Filipino VAs earning great income from the comfort of their homes.</p>
+      </div>
+
+      <div class="how-steps" style="gap:3rem;">
+        <div class="how-step on-scroll" style="background:#fff; border-radius:var(--radius-xl); border:1px solid var(--border); padding:2.5rem;">
+          <div class="how-step-icon"><i class="fas fa-id-card"></i><span class="how-step-num">1</span></div>
+          <h3>Build Your Profile</h3>
+          <p>Create a professional profile showcasing your skills, portfolio, certifications, and work history. Our profile builder guides you through every step.</p>
+          <ul style="list-style:none; margin-top:1.25rem; display:flex; flex-direction:column; gap:0.5rem; text-align:left;">
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>100% free to create</li>
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>Add portfolio & samples</li>
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>Get ID-verified for trust badge</li>
+          </ul>
+        </div>
+
+        <div class="how-step on-scroll" style="background:#fff; border-radius:var(--radius-xl); border:1px solid var(--border); padding:2.5rem; transition-delay:0.15s;">
+          <div class="how-step-icon"><i class="fas fa-paper-plane"></i><span class="how-step-num">2</span></div>
+          <h3>Apply to Jobs</h3>
+          <p>Browse hundreds of remote job listings and send personalized proposals. Our matching algorithm also surfaces you to relevant clients automatically.</p>
+          <ul style="list-style:none; margin-top:1.25rem; display:flex; flex-direction:column; gap:0.5rem; text-align:left;">
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>Daily new job postings</li>
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>Proposal templates included</li>
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>Get matched automatically</li>
+          </ul>
+        </div>
+
+        <div class="how-step on-scroll" style="background:#fff; border-radius:var(--radius-xl); border:1px solid var(--border); padding:2.5rem; transition-delay:0.3s;">
+          <div class="how-step-icon"><i class="fas fa-coins"></i><span class="how-step-num">3</span></div>
+          <h3>Work &amp; Get Paid</h3>
+          <p>Work on your own schedule, track time with our built-in tools, and receive secure weekly payments. Build your reputation and command higher rates over time.</p>
+          <ul style="list-style:none; margin-top:1.25rem; display:flex; flex-direction:column; gap:0.5rem; text-align:left;">
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>Secure weekly payments</li>
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>Build long-term client relationships</li>
+            <li style="font-size:0.875rem; color:var(--text-light);"><i class="fas fa-check-circle" style="color:var(--success); margin-right:0.5rem;"></i>Earn more as you grow</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:3rem;">
+        <a href="auth" class="btn btn-primary btn-lg"><i class="fas fa-user-plus"></i> Create Free VA Profile</a>
+        <p style="color:var(--text-light); font-size:0.875rem; margin-top:1rem;">Join 12,000+ VAs already on the platform</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" style="background:var(--bg);">
+  <div class="container" style="max-width:800px;">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-question-circle"></i> FAQ</span>
+      <h2 class="section-title">Frequently Asked Questions</h2>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <!-- FAQ items -->
+      <div style="background:#fff; border-radius:var(--radius-lg); border:1px solid var(--border); overflow:hidden;">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'; this.querySelector('i').classList.toggle('fa-chevron-up'); this.querySelector('i').classList.toggle('fa-chevron-down');" style="width:100%; padding:1.25rem 1.5rem; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; font-size:0.9375rem; font-weight:600; color:var(--dark); font-family:'Poppins',sans-serif; text-align:left;">
+          Is it really free to post a job?
+          <i class="fas fa-chevron-down" style="color:var(--primary); font-size:0.875rem; flex-shrink:0;"></i>
+        </button>
+        <div style="display:none; padding:0 1.5rem 1.25rem; color:var(--text-light); font-size:0.9375rem; line-height:1.75; border-top:1px solid var(--border);">
+          Yes! Posting a job on Jobseekers.ph is 100% free. You only pay a small platform fee (10%) when a VA starts working with you. There are no upfront costs, no monthly subscriptions required to post basic jobs.
+        </div>
+      </div>
+
+      <div style="background:#fff; border-radius:var(--radius-lg); border:1px solid var(--border); overflow:hidden;">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'; this.querySelector('i').classList.toggle('fa-chevron-up'); this.querySelector('i').classList.toggle('fa-chevron-down');" style="width:100%; padding:1.25rem 1.5rem; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; font-size:0.9375rem; font-weight:600; color:var(--dark); font-family:'Poppins',sans-serif; text-align:left;">
+          How are VAs verified on the platform?
+          <i class="fas fa-chevron-down" style="color:var(--primary); font-size:0.875rem; flex-shrink:0;"></i>
+        </button>
+        <div style="display:none; padding:0 1.5rem 1.25rem; color:var(--text-light); font-size:0.9375rem; line-height:1.75; border-top:1px solid var(--border);">
+          All VAs go through a multi-step verification process including ID verification (government-issued ID), English proficiency assessment, and skill-based tests. Premium VAs also complete a background check. Verified profiles display a blue shield badge.
+        </div>
+      </div>
+
+      <div style="background:#fff; border-radius:var(--radius-lg); border:1px solid var(--border); overflow:hidden;">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'; this.querySelector('i').classList.toggle('fa-chevron-up'); this.querySelector('i').classList.toggle('fa-chevron-down');" style="width:100%; padding:1.25rem 1.5rem; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; font-size:0.9375rem; font-weight:600; color:var(--dark); font-family:'Poppins',sans-serif; text-align:left;">
+          What if I'm not satisfied with my VA?
+          <i class="fas fa-chevron-down" style="color:var(--primary); font-size:0.875rem; flex-shrink:0;"></i>
+        </button>
+        <div style="display:none; padding:0 1.5rem 1.25rem; color:var(--text-light); font-size:0.9375rem; line-height:1.75; border-top:1px solid var(--border);">
+          We offer a 30-day satisfaction guarantee. If you're not happy with your VA within the first 30 days, we'll help you find a replacement at no extra cost, or issue a full refund. Your payment is always held in escrow until you approve the work.
+        </div>
+      </div>
+
+      <div style="background:#fff; border-radius:var(--radius-lg); border:1px solid var(--border); overflow:hidden;">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'; this.querySelector('i').classList.toggle('fa-chevron-up'); this.querySelector('i').classList.toggle('fa-chevron-down');" style="width:100%; padding:1.25rem 1.5rem; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; font-size:0.9375rem; font-weight:600; color:var(--dark); font-family:'Poppins',sans-serif; text-align:left;">
+          How do payments work?
+          <i class="fas fa-chevron-down" style="color:var(--primary); font-size:0.875rem; flex-shrink:0;"></i>
+        </button>
+        <div style="display:none; padding:0 1.5rem 1.25rem; color:var(--text-light); font-size:0.9375rem; line-height:1.75; border-top:1px solid var(--border);">
+          Payments are processed weekly via our secure escrow system. As a client, you fund your account weekly in advance. The VA tracks hours worked, you review and approve, and funds are released. VAs are paid via PayPal, bank transfer, or GCash.
+        </div>
+      </div>
+
+      <div style="background:#fff; border-radius:var(--radius-lg); border:1px solid var(--border); overflow:hidden;">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'; this.querySelector('i').classList.toggle('fa-chevron-up'); this.querySelector('i').classList.toggle('fa-chevron-down');" style="width:100%; padding:1.25rem 1.5rem; display:flex; justify-content:space-between; align-items:center; background:none; border:none; cursor:pointer; font-size:0.9375rem; font-weight:600; color:var(--dark); font-family:'Poppins',sans-serif; text-align:left;">
+          I'm a VA — is the platform free for me?
+          <i class="fas fa-chevron-down" style="color:var(--primary); font-size:0.875rem; flex-shrink:0;"></i>
+        </button>
+        <div style="display:none; padding:0 1.5rem 1.25rem; color:var(--text-light); font-size:0.9375rem; line-height:1.75; border-top:1px solid var(--border);">
+          Yes! Creating a VA profile and applying to jobs is free on our Basic plan. We take a 10% service fee from your earnings. If you upgrade to our Pro plan ($9.99/month), you get priority listing, unlimited proposals, and our service fee drops to 5%.
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:2.5rem;">
+      <p style="color:var(--text-light); margin-bottom:1rem;">Still have questions?</p>
+      <a href="contact" class="btn btn-outline-primary"><i class="fas fa-envelope"></i> Contact Support</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="hero-grid" style="position:absolute;inset:0;opacity:0.5;"></div>
+  <div class="cta-content" style="position:relative; z-index:1;">
+    <span class="section-badge" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:#C7D2FE;"><i class="fas fa-rocket"></i> Ready?</span>
+    <h2 class="cta-title">Start your journey today</h2>
+    <p class="cta-sub">Whether you're looking to hire or looking to work, your next chapter begins here.</p>
+    <div class="cta-ctas">
+      <a href="find-vas" class="btn btn-white btn-lg"><i class="fas fa-users"></i> Hire a VA</a>
+      <a href="auth" class="btn btn-outline-white btn-lg"><i class="fas fa-briefcase"></i> Find Work</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social"><a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a><a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a></div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li><li><a href="#">Blog</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

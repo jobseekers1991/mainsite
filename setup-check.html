@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Setup Check — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>Setup Check</span></div>
+    <h1 data-tl="Brownout? <span class='gradient-text'>Ready ka.</span>">Brownout? <span class="gradient-text">You're ready.</span></h1>
+    <p data-tl="I-test ang internet mo, ilista ang backup power at internet, at makuha ang ⚡ Brownout-ready badge na hinahanap ng clients.">Test your internet, list your backup power and internet, and earn the ⚡ Brownout-ready badge clients look for.</p>
+  </div>
+</section>
+
+<section class="section" style="background:var(--bg); padding-top:3rem;">
+  <div class="container" style="max-width:1100px;">
+    <div class="grid-2" style="align-items:start;">
+
+      <!-- STEP 1: SPEED TEST -->
+      <div class="sidebar-card" style="padding:2rem;">
+        <h2 style="font-size:1.125rem; color:var(--dark); margin-bottom:0.25rem;">1. Internet speed test</h2>
+        <p style="font-size:0.8125rem; color:var(--text-light); margin-bottom:1.5rem;">Run it on your main work connection. Close other downloads first.</p>
+
+        <div class="speed-gauge" id="gauge" style="--pct:0">
+          <div class="speed-gauge-inner"><strong id="gaugeNum">0</strong><span id="gaugeLabel">Mbps</span></div>
+        </div>
+
+        <div class="speed-results">
+          <div><strong id="rDown">—</strong><small>Download Mbps</small></div>
+          <div><strong id="rUp">—</strong><small>Upload Mbps</small></div>
+          <div><strong id="rPing">—</strong><small>Ping ms</small></div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" id="runTest" style="width:100%;"><i class="fas fa-tachometer-alt"></i> Start Test</button>
+        <p class="form-hint" id="testNote" style="text-align:center; margin-top:0.75rem;">Badge needs 25+ Mbps down, 5+ Mbps up, and under 100 ms ping.</p>
+      </div>
+
+      <!-- STEP 2: BACKUP SETUP -->
+      <div class="sidebar-card" style="padding:2rem;">
+        <h2 style="font-size:1.125rem; color:var(--dark); margin-bottom:0.25rem;">2. Your backup setup</h2>
+        <p style="font-size:0.8125rem; color:var(--text-light); margin-bottom:1.5rem;">What keeps you online when Meralco (or your local coop) cuts the power?</p>
+
+        <div class="form-group">
+          <label class="form-label" for="isp">Main internet provider</label>
+          <select id="isp" class="form-control setup-input">
+            <option>PLDT Fiber</option><option>Globe At Home Fiber</option><option>Converge FiberX</option><option>Sky Fiber</option><option>DITO Home</option><option>Starlink</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="power">Backup power</label>
+          <select id="power" class="form-control setup-input">
+            <option value="">None</option>
+            <option value="ups-modem">UPS for modem/router only</option>
+            <option value="ups-full">UPS for computer + modem</option>
+            <option value="laptop">Laptop battery + powerbank for modem</option>
+            <option value="station">Portable power station (e.g. EcoFlow, Bluetti)</option>
+            <option value="generator">Generator</option>
+            <option value="solar">Solar + battery</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="runtime">How long can you keep working on backup power?</label>
+          <select id="runtime" class="form-control setup-input">
+            <option value="0">Less than 30 minutes</option>
+            <option value="1" selected>1–2 hours</option>
+            <option value="4">4+ hours</option>
+            <option value="8">A full shift (8+ hours)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="backupNet">Backup internet</label>
+          <select id="backupNet" class="form-control setup-input">
+            <option value="">None</option>
+            <option value="mobile">Mobile data hotspot (Globe / Smart / DITO)</option>
+            <option value="pocket">Pocket WiFi / LTE modem</option>
+            <option value="isp2">Second fiber provider</option>
+            <option value="starlink">Starlink</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="proof">Photo of your setup <span style="font-weight:400; color:var(--text-light);">(optional, speeds up verification)</span></label>
+          <input id="proof" type="file" accept="image/*" class="form-control" />
+          <img id="proofPreview" alt="" style="margin-top:0.75rem; border-radius:var(--radius-md); max-height:160px;" hidden />
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: RESULT -->
+    <div class="sidebar-card" style="padding:2rem; margin-top:1.5rem;">
+      <h2 style="font-size:1.125rem; color:var(--dark); margin-bottom:1.25rem;">3. Your badge</h2>
+      <div class="grid-2" style="align-items:center;">
+        <ul class="check-list" id="checks">
+          <li data-check="down"><i class="fas fa-circle"></i> Download speed 25+ Mbps</li>
+          <li data-check="up"><i class="fas fa-circle"></i> Upload speed 5+ Mbps (for video calls &amp; screen share)</li>
+          <li data-check="ping"><i class="fas fa-circle"></i> Ping under 100 ms</li>
+          <li data-check="power"><i class="fas fa-circle"></i> Backup power for 1+ hour</li>
+          <li data-check="net"><i class="fas fa-circle"></i> Backup internet connection</li>
+        </ul>
+        <div>
+          <div class="setup-badge-preview" id="badgePreview">
+            <div class="big-icon">⚡</div>
+            <div>
+              <strong style="display:block; color:var(--dark); font-size:1.0625rem;" id="badgeTitle">Brownout-ready: not yet</strong>
+              <span style="font-size:0.8125rem; color:var(--text-light);" id="badgeSub">Complete all 5 checks to earn the badge.</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="claimBadge" style="width:100%; margin-top:1rem;" disabled><i class="fas fa-award"></i> Add badge to my profile</button>
+        </div>
+      </div>
+      <p style="font-size:0.78rem; color:var(--text-light); margin-top:1.25rem;"><i class="fas fa-shield-alt"></i> Badges stay valid for 90 days. Re-test anytime; we may ask for a quick re-check during typhoon season. Misrepresenting your setup removes the badge.</p>
+    </div>
+
+    <!-- WHY -->
+    <div class="grid-3" style="margin-top:2.5rem;">
+      <div class="value-card"><div class="value-icon" style="background:rgba(245,158,11,0.1);color:var(--accent)"><i class="fas fa-plug"></i></div><h3>Clients ask about it first</h3><p>"What happens during a brownout?" is the #1 question foreign clients ask Filipino VAs in interviews. Now your profile answers it.</p></div>
+      <div class="value-card"><div class="value-icon" style="background:rgba(79,70,229,0.1);color:var(--primary)"><i class="fas fa-filter"></i></div><h3>Searchable filter</h3><p>Clients can filter for Brownout-ready VAs in search and AI Match, so you show up where it counts.</p></div>
+      <div class="value-card"><div class="value-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-cloud-showers-heavy"></i></div><h3>Typhoon-season proof</h3><p>Paired with Brownout auto-pause in Work Tools, your client is never billed for downtime and always knows your status.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const results = { down: null, up: null, ping: null };
+  const GAUGE_MAX = 100; // Mbps shown as a full circle
+
+  function setGauge(value, label) {
+    $('gauge').style.setProperty('--pct', Math.min(100, value / GAUGE_MAX * 100));
+    $('gaugeNum').textContent = value >= 100 ? Math.round(value) : value.toFixed(1);
+    $('gaugeLabel').textContent = label;
+  }
+
+  async function measurePing() {
+    const times = [];
+    for (let i = 0; i < 6; i++) {
+      const t0 = performance.now();
+      await fetch('/api/ping?r=' + Math.random(), { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('ping failed'); return r.text(); });
+      times.push(performance.now() - t0);
+    }
+    times.sort((a, b) => a - b);
+    return times[Math.floor(times.length / 2)];
+  }
+
+  // Downloads in rounds of increasing size until a round takes long enough to be meaningful
+  async function measureDownload() {
+    let size = 1 << 20, mbps = 0;
+    for (let round = 0; round < 5; round++) {
+      const t0 = performance.now();
+      const res = await fetch(`/api/speedtest/download?bytes=${size}&r=${Math.random()}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('download failed');
+      const reader = res.body.getReader();
+      let received = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+        const secs = (performance.now() - t0) / 1000;
+        if (secs > 0.05) setGauge((received * 8) / secs / 1e6, 'Mbps down');
+      }
+      const secs = (performance.now() - t0) / 1000;
+      mbps = (received * 8) / secs / 1e6;
+      if (secs > 2) break;
+      size = Math.min(size * 4, 40 << 20);
+    }
+    return mbps;
+  }
+
+  async function measureUpload() {
+    let size = 512 << 10, mbps = 0;
+    for (let round = 0; round < 4; round++) {
+      const data = new Uint8Array(size);
+      for (let i = 0; i < size; i += 65536) crypto.getRandomValues(data.subarray(i, Math.min(i + 65536, size)));
+      const t0 = performance.now();
+      const res = await fetch('/api/speedtest/upload?r=' + Math.random(), { method: 'POST', body: data, cache: 'no-store' });
+      if (!res.ok) throw new Error('upload failed');
+      await res.json();
+      const secs = (performance.now() - t0) / 1000;
+      mbps = (size * 8) / secs / 1e6;
+      setGauge(mbps, 'Mbps up');
+      if (secs > 2) break;
+      size = Math.min(size * 4, 20 << 20);
+    }
+    return mbps;
+  }
+
+  $('runTest').addEventListener('click', async () => {
+    const btn = $('runTest');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Testing…';
+    ['rDown', 'rUp', 'rPing'].forEach(id => { $(id).textContent = '…'; });
+    try {
+      results.ping = await measurePing();
+      $('rPing').textContent = Math.round(results.ping);
+      results.down = await measureDownload();
+      $('rDown').textContent = results.down.toFixed(1);
+      results.up = await measureUpload();
+      $('rUp').textContent = results.up.toFixed(1);
+      setGauge(results.down, 'Mbps down');
+      $('testNote').textContent = 'Test complete. Run it again anytime.';
+    } catch (err) {
+      // No test server (e.g. page opened as a file): fall back to the browser's own estimate if it has one
+      const conn = navigator.connection;
+      if (conn && conn.downlink) {
+        results.down = conn.downlink; results.ping = conn.rtt || null; results.up = null;
+        $('rDown').textContent = conn.downlink.toFixed(1);
+        $('rPing').textContent = conn.rtt || '—';
+        $('rUp').textContent = '—';
+        setGauge(conn.downlink, 'Mbps (estimate)');
+        $('testNote').textContent = 'Couldn\'t reach the test server, so this is your browser\'s rough estimate. Upload needs the full test.';
+      } else {
+        ['rDown', 'rUp', 'rPing'].forEach(id => { $(id).textContent = '—'; });
+        $('testNote').textContent = 'Couldn\'t reach the test server. Start the site with "node server.js" and try again.';
+      }
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-redo"></i> Run Again';
+    evaluate();
+  });
+
+  function evaluate() {
+    const power = $('power').value;
+    const checks = {
+      down: results.down !== null && results.down >= 25,
+      up: results.up !== null && results.up >= 5,
+      ping: results.ping !== null && results.ping < 100,
+      power: !!power && Number($('runtime').value) >= 1,
+      net: !!$('backupNet').value,
+    };
+    Object.entries(checks).forEach(([key, ok]) => {
+      const li = document.querySelector(`[data-check="${key}"]`);
+      li.classList.toggle('ok', ok);
+      li.querySelector('i').className = ok ? 'fas fa-check-circle' : 'fas fa-circle';
+    });
+    const passed = Object.values(checks).filter(Boolean).length;
+    const earned = passed === 5;
+    $('badgePreview').classList.toggle('earned', earned);
+    $('badgeTitle').textContent = earned ? 'Brownout-ready ⚡' : 'Brownout-ready: not yet';
+    $('badgeSub').textContent = earned
+      ? `${$('isp').value} · ${$('power').selectedOptions[0].text} · ${$('backupNet').selectedOptions[0].text}`
+      : `${passed} of 5 checks done.`;
+    $('claimBadge').disabled = !earned;
+  }
+
+  document.querySelectorAll('.setup-input').forEach(el => el.addEventListener('input', evaluate));
+
+  $('proof').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    $('proofPreview').src = URL.createObjectURL(file);
+    $('proofPreview').hidden = false;
+  });
+
+  $('claimBadge').addEventListener('click', () => {
+    try {
+      localStorage.setItem('jsph-setup-badge', JSON.stringify({
+        down: results.down, up: results.up, ping: results.ping,
+        isp: $('isp').value, power: $('power').value, backupNet: $('backupNet').value, date: Date.now(),
+      }));
+    } catch (e) {}
+    showToast('⚡ Brownout-ready badge added to your profile');
+  });
+
+  evaluate();
+</script>
+</body>
+</html>

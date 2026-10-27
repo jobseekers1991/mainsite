@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Messages — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="va" data-active="messages"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script>if (new URLSearchParams(location.search).get('as') === 'client') { const s = document.getElementById('dashSidebar'); s.dataset.role = 'client'; }</script>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Messages</h1>
+    <p>Keep conversations on Jobseekers.ph so your payments and agreements stay protected.</p>
+  </div>
+</div>
+
+<div class="inbox" id="inbox">
+  <div class="inbox-list">
+    <div class="inbox-search">
+      <div class="search-field" style="margin:0;"><i class="fas fa-search"></i><input type="text" id="threadSearch" placeholder="Search conversations" /></div>
+    </div>
+    <div id="threadList"></div>
+  </div>
+
+  <div class="chat" id="chat">
+    <div class="chat-empty" id="chatEmpty"><i class="fas fa-comments"></i><p>Select a conversation</p></div>
+    <div class="chat-head" id="chatHead" hidden></div>
+    <div class="chat-body" id="chatBody" hidden></div>
+    <div class="chat-compose" id="chatCompose" hidden>
+      <div class="alert alert-warn" id="offPlatformWarn" hidden style="margin-bottom:0.625rem; font-size:0.8125rem;">
+        <i class="fas fa-shield-alt" style="margin-top:0.15rem;"></i>
+        <div><strong>Heads up:</strong> moving chats or payments off Jobseekers.ph (Telegram, WhatsApp, direct GCash…) removes payment protection, dispute help, and the Replacement Guarantee.</div>
+      </div>
+      <div class="chat-quick" id="quickReplies"></div>
+      <form id="composeForm">
+        <textarea id="composeText" class="form-control" rows="1" placeholder="Write a message…  (Enter to send, Shift+Enter for a new line)"></textarea>
+        <button class="btn btn-primary" type="submit" aria-label="Send"><i class="fas fa-paper-plane"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const role = params.get('as') === 'client' ? 'client' : 'va';
+  const KEY = 'jsph-threads-' + role;
+  let threads = Store.get(KEY, () => seedThreads(role));
+  let activeId = null;
+  const $ = id => document.getElementById(id);
+
+  const QUICK = role === 'client'
+    ? ['Could you do a 3-day paid trial?', 'Can we schedule a quick video call?', 'Please send today\'s EOD report.']
+    : ['Thank you! I\'m available for a call.', 'I\'ve sent my EOD report.', 'Could you share the trial scope?'];
+
+  const timeLabel = t => {
+    const diff = Date.now() - t;
+    if (diff < 60000) return 'now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
+    if (diff < DAY_MS) return Math.floor(diff / 3600000) + 'h';
+    return new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+  const clock = t => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const save = () => { Store.set(KEY, threads); renderDashNav(); };
+
+  // Start a conversation from a profile or applicant card: messages?to=maria-santos
+  const to = params.get('to');
+  if (to && !threads.find(t => t.id === to)) {
+    if (role === 'client') {
+      const va = vaById(to);
+      threads.unshift({ id: to, name: va.name, img: va.img, sub: va.title || 'Virtual Assistant', unread: 0, messages: [] });
+    } else {
+      // VAs message clients by slug of the client's name (from My Applications)
+      const job = JOBS.find(j => j.client.name.toLowerCase().replace(/[^a-z]+/g, '-') === to);
+      if (job) threads.unshift({ id: to, name: job.client.name, img: 12, sub: `${job.company} · ${job.title}`, unread: 0, messages: [] });
+    }
+    save();
+  }
+
+  function renderList() {
+    const q = $('threadSearch').value.trim().toLowerCase();
+    const sorted = threads.slice().sort((a, b) => (b.messages.at(-1)?.t || Date.now()) - (a.messages.at(-1)?.t || Date.now()));
+    $('threadList').innerHTML = sorted.filter(t => !q || t.name.toLowerCase().includes(q) || t.messages.some(m => m.text.toLowerCase().includes(q))).map(t => {
+      const last = t.messages.at(-1);
+      return `
+        <button type="button" class="inbox-thread${t.id === activeId ? ' active' : ''}${t.unread ? ' unread' : ''}" data-id="${esc(t.id)}">
+          <img src="https://i.pravatar.cc/80?img=${t.img}" alt="" />
+          <div class="meta">
+            <div class="who"><span>${esc(t.name)}${t.suspended ? ' <span class="feat-badge danger" style="font-size:0.62rem;">Suspended</span>' : ''}</span><time>${last ? timeLabel(last.t) : ''}</time></div>
+            <div class="sub">${esc(t.sub)}</div>
+            <div class="preview">${last ? (last.me ? 'You: ' : '') + esc(last.text) : 'Say hello 👋'}</div>
+          </div>
+          ${t.unread ? '<span class="unread-dot"></span>' : ''}
+        </button>`;
+    }).join('') || '<p style="padding:1.5rem; text-align:center; color:var(--text-light); font-size:0.875rem;">No conversations found</p>';
+  }
+
+  function openThread(id) {
+    const t = threads.find(x => x.id === id);
+    if (!t) return;
+    activeId = id;
+    t.unread = 0;
+    save();
+    $('inbox').classList.add('chat-open');
+    $('chatEmpty').hidden = true;
+    ['chatHead', 'chatBody'].forEach(x => { $(x).hidden = false; });
+    $('chatCompose').hidden = !!t.suspended;
+
+    const profileLink = role === 'client' ? `<a href="va-profile" class="btn btn-ghost btn-sm"><i class="fas fa-user"></i> Profile</a>` : '';
+    const trialLink = role === 'client' && !t.suspended ? `<a href="applicants" class="btn btn-outline-primary btn-sm"><i class="fas fa-flask"></i> Offer trial</a>` : '';
+    $('chatHead').innerHTML = `
+      <button class="chat-back" id="chatBack" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+      <img src="https://i.pravatar.cc/80?img=${t.img}" alt="" />
+      <div class="grow"><strong>${esc(t.name)}</strong><small>${esc(t.sub)}</small></div>
+      ${trialLink}${profileLink}
+      <button class="btn btn-ghost btn-sm" id="reportUser" title="Report"><i class="fas fa-flag"></i></button>`;
+    $('chatBack').addEventListener('click', () => { $('inbox').classList.remove('chat-open'); activeId = null; renderList(); });
+    $('reportUser').addEventListener('click', () => showToast('Reported. Trust & Safety will review this conversation.'));
+
+    renderMessages(t);
+    $('quickReplies').innerHTML = QUICK.map(q => `<button type="button">${esc(q)}</button>`).join('');
+    renderList();
+    if (!t.suspended) $('composeText').focus();
+  }
+
+  function renderMessages(t) {
+    const body = $('chatBody');
+    body.innerHTML = `<div class="chat-system"><i class="fas fa-lock"></i> Messages and payments here are protected by Jobseekers.ph</div>` +
+      t.messages.map(m => `<div class="bubble ${m.me ? 'me' : 'them'}">${esc(m.text)}<time>${clock(m.t)}</time></div>`).join('') +
+      (t.suspended ? `<div class="chat-system" style="color:var(--danger); border-color:rgba(239,68,68,0.3);"><i class="fas fa-ban"></i> This account was suspended for asking VAs to pay fees and move to Telegram. Never send money to get a job.</div>` : '') +
+      (t.messages.some(m => !m.me && OFF_PLATFORM_RE.test(m.text)) && !t.suspended ? `<div class="chat-system" style="color:#92400E;"><i class="fas fa-exclamation-triangle"></i> This conversation mentions going off-platform. Stay protected by keeping it here.</div>` : '');
+    body.scrollTop = body.scrollHeight;
+  }
+
+  $('threadList').addEventListener('click', e => {
+    const btn = e.target.closest('.inbox-thread');
+    if (btn) openThread(btn.dataset.id);
+  });
+  $('threadSearch').addEventListener('input', renderList);
+  $('quickReplies').addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON') { $('composeText').value = e.target.textContent; $('composeText').focus(); checkCompose(); }
+  });
+
+  function checkCompose() {
+    const ta = $('composeText');
+    $('offPlatformWarn').hidden = !OFF_PLATFORM_RE.test(ta.value);
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+  }
+  $('composeText').addEventListener('input', checkCompose);
+  $('composeText').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('composeForm').requestSubmit(); }
+  });
+
+  $('composeForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const text = $('composeText').value.trim();
+    const t = threads.find(x => x.id === activeId);
+    if (!text || !t) return;
+    t.messages.push({ me: true, text, t: Date.now() });
+    $('composeText').value = '';
+    checkCompose();
+    save();
+    renderMessages(t);
+    renderList();
+  });
+
+  renderList();
+  if (to) openThread(to);
+  else if (window.innerWidth > 900 && threads.length) openThread(threads.find(t => t.unread)?.id || threads[0].id);
+</script>
+</body>
+</html>

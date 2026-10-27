@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VA Academy — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>VA Academy</span></div>
+    <h1 data-tl="Libreng training. Totoong certificate. <span class='gradient-text'>Unang client mo.</span>">Free training. Real certificates. <span class="gradient-text">Your first client.</span></h1>
+    <p data-tl="Pumasa sa assessment, makakuha ng badge sa profile mo, at mapasama sa Rising Talent — kahit wala ka pang reviews.">Pass an assessment, earn a badge on your profile, and get featured in Rising Talent, even before your first review.</p>
+    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:2rem;">
+      <a href="#courses" class="btn btn-white btn-lg"><i class="fas fa-play-circle"></i> Browse Courses</a>
+      <a href="#rising" class="btn btn-outline-white btn-lg"><i class="fas fa-seedling"></i> Hire Rising Talent</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS STRIP -->
+<div style="background:#fff; border-bottom:1px solid var(--border); padding:1.25rem 1.5rem;">
+  <div class="container" style="display:flex; justify-content:center; gap:3rem; flex-wrap:wrap; text-align:center;">
+    <div><strong style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">12</strong><div style="font-size:0.8rem; color:var(--text-light);">Free Courses</div></div>
+    <div><strong style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">₱0</strong><div style="font-size:0.8rem; color:var(--text-light);">Cost, Forever</div></div>
+    <div><strong style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">3,200+</strong><div style="font-size:0.8rem; color:var(--text-light);">Certified VAs</div></div>
+    <div><strong style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">2.4×</strong><div style="font-size:0.8rem; color:var(--text-light);">More Interviews with a Badge</div></div>
+  </div>
+</div>
+
+<!-- HOW CERTIFICATES WORK -->
+<section class="section" style="background:var(--bg); padding-bottom:3rem;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-route"></i> Your path</span>
+      <h2 class="section-title" data-tl="Mula baguhan hanggang hired">From newbie to hired</h2>
+    </div>
+    <div class="grid-4">
+      <div class="value-card on-scroll">
+        <div class="value-icon" style="background:rgba(79,70,229,0.1);color:var(--primary)"><i class="fas fa-book-open"></i></div>
+        <h3>1. Learn</h3>
+        <p>Short video lessons taught by top-earning Filipino VAs. Watch on mobile data, offline downloads included.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.1s">
+        <div class="value-icon" style="background:rgba(245,158,11,0.1);color:var(--accent)"><i class="fas fa-clipboard-check"></i></div>
+        <h3>2. Pass the assessment</h3>
+        <p>A timed, practical test with real client scenarios. Pass with 80% or more. You can retake it after 7 days.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.2s">
+        <div class="value-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-certificate"></i></div>
+        <h3>3. Earn the badge</h3>
+        <p>Your certificate appears on your profile and in search filters. Clients can verify it with one click.</p>
+      </div>
+      <div class="value-card on-scroll" style="transition-delay:0.3s">
+        <div class="value-icon" style="background:rgba(236,72,153,0.1);color:#EC4899"><i class="fas fa-seedling"></i></div>
+        <h3>4. Get featured</h3>
+        <p>New VAs with 2+ certificates join <strong>Rising Talent</strong>, a section clients browse when they want vetted newcomers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COURSES -->
+<section class="section" id="courses" style="background:#fff;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge"><i class="fas fa-graduation-cap"></i> Courses</span>
+      <h2 class="section-title" data-tl="Pumili ng course">Pick a course</h2>
+      <p class="section-sub">Every course ends in a certificate that becomes a badge on your profile.</p>
+    </div>
+
+    <div class="grid-3" id="courseGrid">
+      <div class="course-card" data-course="foundations">
+        <div class="course-cover" style="background:var(--grad-primary);"><i class="fas fa-rocket"></i><span class="feat-badge cert">Start here</span></div>
+        <div class="course-body">
+          <h3>VA Foundations</h3>
+          <p>Time zones, client communication, EOD reports, account security, and spotting scams. Required for Rising Talent.</p>
+          <div class="course-meta"><span><i class="fas fa-play"></i>8 lessons</span><span><i class="fas fa-clock"></i>2.5 hrs</span><span><i class="fas fa-signal"></i>Beginner</span></div>
+          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-primary btn-sm enroll-btn" style="flex:1;">Enroll Free</button>
+            <button class="btn btn-outline-primary btn-sm" id="openQuiz"><i class="fas fa-clipboard-check"></i> Start Test</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="course-card" data-course="exec">
+        <div class="course-cover" style="background:linear-gradient(135deg,#0F172A,#312E81);"><i class="fas fa-user-tie"></i></div>
+        <div class="course-body">
+          <h3>Executive Assistant Pro</h3>
+          <p>Inbox zero, calendar triage, travel booking, and managing a CEO's priorities across time zones.</p>
+          <div class="course-meta"><span><i class="fas fa-play"></i>12 lessons</span><span><i class="fas fa-clock"></i>4 hrs</span><span><i class="fas fa-signal"></i>Intermediate</span></div>
+          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
+        </div>
+      </div>
+
+      <div class="course-card" data-course="shopify">
+        <div class="course-cover" style="background:linear-gradient(135deg,#059669,#10B981);"><i class="fab fa-shopify"></i></div>
+        <div class="course-body">
+          <h3>Shopify Store Ops</h3>
+          <p>Product listings, inventory, order processing, returns, and Gorgias support for e-commerce brands.</p>
+          <div class="course-meta"><span><i class="fas fa-play"></i>10 lessons</span><span><i class="fas fa-clock"></i>3.5 hrs</span><span><i class="fas fa-signal"></i>Beginner</span></div>
+          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
+        </div>
+      </div>
+
+      <div class="course-card" data-course="qbo">
+        <div class="course-cover" style="background:linear-gradient(135deg,#0EA5E9,#2563EB);"><i class="fas fa-calculator"></i></div>
+        <div class="course-body">
+          <h3>QuickBooks Bookkeeping</h3>
+          <p>Bank reconciliation, AP/AR, month-end close, and the reports US small businesses actually ask for.</p>
+          <div class="course-meta"><span><i class="fas fa-play"></i>14 lessons</span><span><i class="fas fa-clock"></i>6 hrs</span><span><i class="fas fa-signal"></i>Intermediate</span></div>
+          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
+        </div>
+      </div>
+
+      <div class="course-card" data-course="smm">
+        <div class="course-cover" style="background:linear-gradient(135deg,#EC4899,#F59E0B);"><i class="fas fa-hashtag"></i></div>
+        <div class="course-body">
+          <h3>Social Media Manager</h3>
+          <p>Content calendars, Canva design systems, short-form video, and monthly reports clients love.</p>
+          <div class="course-meta"><span><i class="fas fa-play"></i>11 lessons</span><span><i class="fas fa-clock"></i>4 hrs</span><span><i class="fas fa-signal"></i>Beginner</span></div>
+          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
+        </div>
+      </div>
+
+      <div class="course-card" data-course="support">
+        <div class="course-cover" style="background:linear-gradient(135deg,#7C3AED,#A855F7);"><i class="fas fa-headset"></i></div>
+        <div class="course-body">
+          <h3>Customer Support Excellence</h3>
+          <p>Ticket etiquette, de-escalation, macros, and CSAT habits for Zendesk, Freshdesk and live chat.</p>
+          <div class="course-meta"><span><i class="fas fa-play"></i>9 lessons</span><span><i class="fas fa-clock"></i>3 hrs</span><span><i class="fas fa-signal"></i>Beginner</span></div>
+          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
+          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ASSESSMENT -->
+<section class="section" id="assessment" style="background:var(--bg);" hidden>
+  <div class="container" style="max-width:760px;">
+    <div class="section-header" style="margin-bottom:2rem;">
+      <span class="section-badge"><i class="fas fa-clipboard-check"></i> VA Foundations assessment</span>
+      <h2 class="section-title" style="font-size:1.75rem;">5 questions · pass with 4 correct</h2>
+    </div>
+    <form id="quizForm" class="sidebar-card" style="padding:2rem;">
+      <div class="form-group">
+        <label class="form-label" for="quizName">Name for your certificate <span class="form-required">*</span></label>
+        <input id="quizName" class="form-control" placeholder="e.g. Juan Dela Cruz" required />
+      </div>
+      <div id="quizQuestions"></div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;"><i class="fas fa-check"></i> Submit Answers</button>
+    </form>
+    <div id="quizResult" style="margin-top:1.5rem;"></div>
+  </div>
+</section>
+
+<!-- RISING TALENT -->
+<section class="section" id="rising" style="background:#fff;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge" style="background:rgba(236,72,153,0.08); color:#BE185D; border-color:rgba(236,72,153,0.2);"><i class="fas fa-seedling"></i> Rising Talent</span>
+      <h2 class="section-title">New to the platform. Already proven.</h2>
+      <p class="section-sub">These VAs don't have many reviews yet, but they've passed our assessments, verified their setup, and are ready at entry-level rates. Great for a first hire or a paid trial.</p>
+    </div>
+    <div class="grid-4">
+      <div class="va-card">
+        <div class="va-card-head">
+          <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=44" alt="Kim Navarro" /><div class="va-status online"></div></div>
+          <div class="va-info"><div class="va-name">Kim Navarro</div><div class="va-title">Admin &amp; Data Entry</div><div class="va-rating"><span class="stars">★★★★★</span> <strong>4.9</strong> (6)</div></div>
+        </div>
+        <div class="va-badges"><span class="feat-badge cert"><i class="fas fa-certificate"></i> VA Foundations</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> Google Workspace</span><span class="feat-badge brownout">⚡ Brownout-ready</span></div>
+        <div class="va-card-foot"><div class="va-rate">$5/hr</div><a href="va-profile" class="btn btn-primary btn-sm">View Profile</a></div>
+      </div>
+      <div class="va-card">
+        <div class="va-card-head">
+          <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=38" alt="Bea Ocampo" /><div class="va-status online"></div></div>
+          <div class="va-info"><div class="va-name">Bea Ocampo</div><div class="va-title">Medical VA</div><div class="va-rating"><span class="stars">★★★★★</span> <strong>5.0</strong> (18)</div></div>
+        </div>
+        <div class="va-badges"><span class="feat-badge cert"><i class="fas fa-certificate"></i> HIPAA Basics</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> VA Foundations</span><span class="feat-badge brownout">⚡ Brownout-ready</span></div>
+        <div class="va-card-foot"><div class="va-rate">$9/hr</div><a href="va-profile" class="btn btn-primary btn-sm">View Profile</a></div>
+      </div>
+      <div class="va-card">
+        <div class="va-card-head">
+          <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=68" alt="Mark Tolentino" /><div class="va-status away"></div></div>
+          <div class="va-info"><div class="va-name">Mark Tolentino</div><div class="va-title">Shopify Assistant</div><div class="va-rating"><span class="stars">★★★★★</span> <strong>5.0</strong> (3)</div></div>
+        </div>
+        <div class="va-badges"><span class="feat-badge cert"><i class="fas fa-certificate"></i> Shopify Store Ops</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> VA Foundations</span></div>
+        <div class="va-card-foot"><div class="va-rate">$6/hr</div><a href="va-profile" class="btn btn-primary btn-sm">View Profile</a></div>
+      </div>
+      <div class="va-card">
+        <div class="va-card-head">
+          <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=29" alt="Lyka Ramos" /><div class="va-status online"></div></div>
+          <div class="va-info"><div class="va-name">Lyka Ramos</div><div class="va-title">Social Media Assistant</div><div class="va-rating"><span style="font-size:0.75rem; color:var(--text-light);">New: no reviews yet</span></div></div>
+        </div>
+        <div class="va-badges"><span class="feat-badge cert"><i class="fas fa-certificate"></i> Social Media Manager</span><span class="feat-badge cert"><i class="fas fa-certificate"></i> VA Foundations</span><span class="feat-badge brownout">⚡ Brownout-ready</span></div>
+        <div class="va-card-foot"><div class="va-rate">$5/hr</div><a href="va-profile" class="btn btn-primary btn-sm">View Profile</a></div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:2rem;">
+      <a href="find-vas?rising=1" class="btn btn-outline-primary"><i class="fas fa-seedling"></i> See all Rising Talent</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  // Enrollment progress is remembered in this browser until accounts are wired to a backend
+  const STORE_KEY = 'jsph-academy';
+  let progress = {};
+  try { progress = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) {}
+  const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(progress)); } catch (e) {} };
+
+  function renderCourse(card) {
+    const id = card.dataset.course;
+    const pct = progress[id];
+    const bar = card.querySelector('.course-progress');
+    const btn = card.querySelector('.enroll-btn');
+    if (pct === undefined) return;
+    bar.hidden = false;
+    bar.querySelector('.pct').textContent = pct + '%';
+    bar.querySelector('.progress-fill').style.width = pct + '%';
+    btn.innerHTML = pct >= 100 ? '<i class="fas fa-check"></i> Lessons done' : '<i class="fas fa-play"></i> Continue';
+  }
+
+  document.querySelectorAll('.course-card').forEach(card => {
+    renderCourse(card);
+    card.querySelector('.enroll-btn').addEventListener('click', () => {
+      const id = card.dataset.course;
+      if (progress[id] === undefined) { progress[id] = 0; showToast('Enrolled! Your first lesson is ready.'); }
+      else if (progress[id] < 100) { progress[id] = Math.min(100, progress[id] + 25); showToast('Lesson complete. Keep going!'); }
+      save();
+      renderCourse(card);
+    });
+  });
+
+  // VA Foundations assessment
+  const QUESTIONS = [
+    { q: 'During US daylight saving time (EDT), your New York client books a 9:00 AM call. What time is that in Manila?',
+      a: ['9:00 AM', '9:00 PM', '11:00 PM', '6:00 AM'], correct: 1 },
+    { q: 'You realize you won\'t finish a task by the deadline. What\'s the best move?',
+      a: ['Say nothing and submit late', 'Tell the client early, explain why, and give a new ETA', 'Submit it unfinished', 'Ask another VA to do it secretly'], correct: 1 },
+    { q: 'A "client" asks you to pay a ₱1,500 training fee and continue the chat on Telegram. What should you do?',
+      a: ['Pay it, since it\'s refundable', 'Move to Telegram first to learn more', 'Treat it as a scam: don\'t pay, and report the post', 'Pay half to be safe'], correct: 2 },
+    { q: 'Which belongs in an End-of-Day (EOD) report?',
+      a: ['Only the hours you worked', 'Done today, in progress, blockers, and plan for tomorrow', 'Your personal to-do list', 'Screenshots of every email'], correct: 1 },
+    { q: 'Your client needs to give you access to their bank and email accounts. What\'s the safest way?',
+      a: ['Send the passwords over chat', 'Write them in a shared Google Doc', 'Use a password manager share (e.g. 1Password, Bitwarden) with 2FA', 'Use the same password for all accounts'], correct: 2 },
+  ];
+
+  const quizSection = document.getElementById('assessment');
+  document.getElementById('quizQuestions').innerHTML = QUESTIONS.map((item, i) => `
+    <div class="form-group">
+      <label class="form-label">${i + 1}. ${item.q}</label>
+      <div style="display:flex; flex-direction:column; gap:0.5rem;">
+        ${item.a.map((ans, j) => `<label class="option-tile"><input type="radio" name="q${i}" value="${j}" required /><span>${ans}</span></label>`).join('')}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('openQuiz').addEventListener('click', () => {
+    quizSection.hidden = false;
+    quizSection.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  document.getElementById('quizForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const score = QUESTIONS.reduce((n, item, i) => n + (Number(form[`q${i}`].value) === item.correct ? 1 : 0), 0);
+    const result = document.getElementById('quizResult');
+    const name = document.getElementById('quizName').value.trim().replace(/[<>&"]/g, '');
+    const date = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    if (score >= 4) {
+      progress.foundations = 100;
+      progress.foundationsCert = { name, date };
+      save();
+      renderCourse(document.querySelector('[data-course="foundations"]'));
+      result.innerHTML = `
+        <div class="cert-preview print-area">
+          <div class="seal"><i class="fas fa-award"></i></div>
+          <p style="font-size:0.8rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-light);">Certificate of Completion</p>
+          <h3 style="font-size:1.75rem; color:var(--dark); margin:0.5rem 0;">${name}</h3>
+          <p style="color:var(--text-light);">has passed the <strong style="color:var(--primary);">VA Foundations</strong> assessment with ${score}/5</p>
+          <p style="font-size:0.8rem; color:var(--text-light); margin-top:1rem;">Jobseekers.ph VA Academy · ${date}</p>
+          <div class="va-badges" style="justify-content:center; margin-top:1rem;"><span class="feat-badge cert"><i class="fas fa-certificate"></i> VA Foundations</span></div>
+        </div>
+        <div class="alert alert-success" style="margin-top:1rem;"><i class="fas fa-check-circle"></i>
+          <div>Passed! The <strong>VA Foundations</strong> badge has been added to your profile. Earn one more certificate to join <strong>Rising Talent</strong>.</div>
+        </div>
+        <div class="no-print" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <button class="btn btn-outline-primary" onclick="window.print()"><i class="fas fa-print"></i> Print / Save as PDF</button>
+          <a href="edit-profile" class="btn btn-primary"><i class="fas fa-user-circle"></i> View on my profile</a>
+        </div>`;
+    } else {
+      result.innerHTML = `<div class="alert alert-warn"><i class="fas fa-redo"></i>
+        <div>You got <strong>${score}/5</strong>. You need 4 to pass. Review the lessons and try again in 7 days. (For this demo, you can retry right away.)</div></div>`;
+    }
+    result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,422 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post a Job — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="index" class="navbar-logo">
+      <div class="logo-icon"><i class="fas fa-briefcase"></i></div>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+    <ul class="navbar-nav">
+      <li><a href="index">Home</a></li>
+      <li><a href="find-vas">Find VAs</a></li>
+      <li><a href="browse-jobs">Browse Jobs</a></li>
+      <li><a href="ai-match"><i class="fas fa-magic" style="color:var(--secondary);font-size:0.8em;"></i> AI Match</a></li>
+      <li><a href="how-it-works">How It Works</a></li>
+      <li><a href="pricing">Pricing</a></li>
+      <li class="nav-dropdown">
+        <button type="button">More <i class="fas fa-chevron-down"></i></button>
+        <div class="nav-dropdown-menu">
+          <a href="academy"><i class="fas fa-graduation-cap"></i><span><strong>VA Academy</strong><small>Free courses &amp; certificates</small></span></a>
+          <a href="community"><i class="fas fa-users"></i><span><strong>Community</strong><small>Forum, salary benchmarks, stories</small></span></a>
+          <a href="work-tools"><i class="fas fa-stopwatch"></i><span><strong>Work Tools</strong><small>Time tracker, EOD reports, invoices</small></span></a>
+          <a href="compliance"><i class="fas fa-file-signature"></i><span><strong>Contracts &amp; Taxes</strong><small>NDA, contracts, BIR summary</small></span></a>
+          <a href="setup-check"><i class="fas fa-bolt"></i><span><strong>Setup Check</strong><small>Speed test &amp; Brownout-ready badge</small></span></a>
+          <a href="about"><i class="fas fa-info-circle"></i><span><strong>About</strong><small>Our mission &amp; team</small></span></a>
+        </div>
+      </li>
+    </ul>
+    <div class="navbar-actions">
+      <a href="auth" class="btn btn-outline-primary btn-sm">Login</a>
+      <a href="post-job" class="btn btn-primary btn-sm active"><i class="fas fa-plus"></i> Post a Job</a>
+    </div>
+    <button class="navbar-toggle" id="navToggle"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index">Home</a><a href="find-vas">Find VAs</a><a href="browse-jobs">Browse Jobs</a>
+  <a href="how-it-works">How It Works</a><a href="pricing">Pricing</a><a href="about">About</a><a href="contact">Contact</a>
+  <div class="mobile-menu-label">Tools &amp; Resources</div>
+  <a href="ai-match">AI Match</a><a href="academy">VA Academy</a><a href="community">Community</a>
+  <a href="work-tools">Work Tools</a><a href="compliance">Contracts &amp; Taxes</a><a href="setup-check">Setup Check</a>
+  <div class="mobile-actions"><a href="auth" class="btn btn-outline-primary">Login</a><a href="post-job" class="btn btn-primary">Post a Job</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero" style="padding-bottom:3rem;">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-content">
+    <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>Post a Job</span></div>
+    <h1>Post a Job &amp; Find Your Perfect VA</h1>
+    <p>Reach 12,000+ verified Filipino VAs. Free to post — only pay when you hire.</p>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<section style="padding:3rem 1.5rem; background:var(--bg); margin-top:-2rem;">
+  <div class="container" style="max-width:900px;">
+    <div class="layout-aside-md">
+
+      <!-- FORM -->
+      <div class="post-job-card">
+        <!-- Progress -->
+        <div class="progress-steps" style="margin-bottom:2rem;">
+          <div class="progress-step active">
+            <div class="step-circle">1</div>
+            <span class="step-label">Job Details</span>
+          </div>
+          <div class="progress-step">
+            <div class="step-circle">2</div>
+            <span class="step-label">Requirements</span>
+          </div>
+          <div class="progress-step">
+            <div class="step-circle">3</div>
+            <span class="step-label">Budget</span>
+          </div>
+          <div class="progress-step">
+            <div class="step-circle">4</div>
+            <span class="step-label">Review</span>
+          </div>
+        </div>
+
+        <h2 style="font-size:1.375rem; font-weight:700; color:var(--dark); margin-bottom:0.375rem;">Job Details</h2>
+        <p style="color:var(--text-light); font-size:0.9rem; margin-bottom:2rem;">Tell us about the position you're looking to fill.</p>
+
+        <form data-validate>
+          <div class="form-group">
+            <label class="form-label">Job Title <span class="form-required">*</span></label>
+            <input type="text" class="form-control" placeholder="e.g., Executive Virtual Assistant" required />
+            <p class="form-hint">Be specific — "Executive VA for Tech Startup" gets more qualified applicants than "VA Needed"</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Job Category <span class="form-required">*</span></label>
+            <select class="form-control" required>
+              <option value="">Select a category</option>
+              <option>Virtual Assistant / Admin Support</option>
+              <option>Social Media Management</option>
+              <option>Bookkeeping / Accounting</option>
+              <option>Content Writing / Copywriting</option>
+              <option>Graphic Design</option>
+              <option>Customer Support</option>
+              <option>Web Development</option>
+              <option>Video Editing</option>
+              <option>Digital Marketing / SEO</option>
+              <option>Data Entry / Research</option>
+              <option>eCommerce / Shopify / Amazon</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Job Type <span class="form-required">*</span></label>
+            <div class="form-row-2">
+              <label style="display:flex; align-items:center; gap:0.75rem; border:1.5px solid var(--border); border-radius:var(--radius-md); padding:0.875rem; cursor:pointer; transition:var(--transition-fast);" class="type-option">
+                <input type="radio" name="jobType" value="fulltime" style="accent-color:var(--primary);" />
+                <div><div style="font-weight:600; font-size:0.9rem; color:var(--dark);">Full-Time</div><div style="font-size:0.75rem; color:var(--text-light);">40 hrs/week</div></div>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.75rem; border:1.5px solid var(--border); border-radius:var(--radius-md); padding:0.875rem; cursor:pointer;" class="type-option">
+                <input type="radio" name="jobType" value="parttime" style="accent-color:var(--primary);" />
+                <div><div style="font-weight:600; font-size:0.9rem; color:var(--dark);">Part-Time</div><div style="font-size:0.75rem; color:var(--text-light);">Less than 40 hrs</div></div>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.75rem; border:1.5px solid var(--border); border-radius:var(--radius-md); padding:0.875rem; cursor:pointer;" class="type-option">
+                <input type="radio" name="jobType" value="project" style="accent-color:var(--primary);" />
+                <div><div style="font-weight:600; font-size:0.9rem; color:var(--dark);">Project-Based</div><div style="font-size:0.75rem; color:var(--text-light);">Fixed scope</div></div>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.75rem; border:1.5px solid var(--border); border-radius:var(--radius-md); padding:0.875rem; cursor:pointer;" class="type-option">
+                <input type="radio" name="jobType" value="contract" style="accent-color:var(--primary);" />
+                <div><div style="font-weight:600; font-size:0.9rem; color:var(--dark);">Contract</div><div style="font-size:0.75rem; color:var(--text-light);">Fixed duration</div></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Working Hours <span class="form-required">*</span></label>
+            <div class="option-grid">
+              <label class="option-tile"><input type="radio" name="shift" value="us-east" required /><span><strong>US Eastern (EST)</strong><small>VA works PH night shift, 9PM–5AM</small></span></label>
+              <label class="option-tile"><input type="radio" name="shift" value="us-west" /><span><strong>US Pacific (PST)</strong><small>VA works PH graveyard, 12AM–8AM</small></span></label>
+              <label class="option-tile"><input type="radio" name="shift" value="uk" /><span><strong>UK business hours</strong><small>VA works PH evening, 4PM–1AM</small></span></label>
+              <label class="option-tile"><input type="radio" name="shift" value="au" /><span><strong>AU business hours</strong><small>VA works PH morning, 6AM–2PM</small></span></label>
+              <label class="option-tile"><input type="radio" name="shift" value="ph" /><span><strong>PH / Asia daytime</strong><small>Standard 8AM–5PM</small></span></label>
+              <label class="option-tile"><input type="radio" name="shift" value="flex" /><span><strong>Flexible / async</strong><small>Any hours, as long as work gets done</small></span></label>
+            </div>
+            <p class="form-hint">We only show your job to VAs who already work these hours, and night-shift VAs see it first.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="jobDesc">Job Description <span class="form-required">*</span></label>
+            <textarea id="jobDesc" class="form-control form-textarea" placeholder="Describe the role, daily responsibilities, what success looks like, and your company culture..." required style="min-height:160px;"></textarea>
+            <p class="form-hint">Detailed descriptions get 3x more qualified applicants. Include tools, hours, and communication style.</p>
+            <div class="alert alert-error scam-flags" id="scamFlags">
+              <i class="fas fa-exclamation-triangle" style="margin-top:0.2rem;"></i>
+              <div><strong>This post may break our safety rules.</strong> Posts like this get held for review:
+                <ul id="scamList"></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Required Skills <span class="form-required">*</span></label>
+            <div class="tag-input-wrap">
+              <span class="input-tag">Calendar Management <button type="button">×</button></span>
+              <span class="input-tag">Email Management <button type="button">×</button></span>
+              <span class="input-tag">CRM <button type="button">×</button></span>
+              <input type="text" placeholder="Type skill and press Enter..." />
+            </div>
+            <p class="form-hint">Press Enter or comma to add a skill</p>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="expLevel">Experience Level <span class="form-required">*</span></label>
+              <select id="expLevel" class="form-control" required>
+                <option value="">Select level</option>
+                <option>Entry Level (0–2 years)</option>
+                <option>Mid-Level (2–5 years)</option>
+                <option>Senior (5+ years)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">English Proficiency</label>
+              <select class="form-control">
+                <option>Any Level</option>
+                <option>Basic</option>
+                <option>Conversational</option>
+                <option>Professional</option>
+                <option>Fluent / Native</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Pay Rate <span class="form-required">*</span></label>
+            <div class="form-row-3">
+              <div class="input-icon-wrap"><i class="fas fa-dollar-sign"></i><input type="number" id="payMin" class="form-control" placeholder="Min (e.g. 5)" required /></div>
+              <span style="color:var(--text-light); font-weight:500;">to</span>
+              <div class="input-icon-wrap"><i class="fas fa-dollar-sign"></i><input type="number" id="payMax" class="form-control" placeholder="Max (e.g. 10)" /></div>
+            </div>
+            <p class="form-hint">Per hour rate. Not sure? See <a href="community#salaries" style="color:var(--primary); font-weight:600;">salary benchmarks</a>.</p>
+          </div>
+
+          <!-- Paid trial -->
+          <div class="feature-panel" id="trial">
+            <div class="feature-panel-title"><i class="fas fa-flask" style="color:var(--success);"></i> How do you want to start? <span class="feat-badge trial">Recommended</span></div>
+            <p style="font-size:0.8125rem; color:var(--text-light); margin-bottom:1rem;">A short paid trial with a fixed scope lowers your risk, and the VA gets paid for their time either way.</p>
+            <div class="option-grid" style="margin-bottom:1rem;">
+              <label class="option-tile"><input type="radio" name="startMode" value="trial" checked /><span><strong>Paid trial first</strong><small>1–3 days, fixed scope, then decide</small></span></label>
+              <label class="option-tile"><input type="radio" name="startMode" value="direct" /><span><strong>Hire directly</strong><small>Start the full engagement right away</small></span></label>
+            </div>
+            <div id="trialFields">
+              <div class="form-row-2">
+                <div class="form-group" style="margin-bottom:0.75rem;">
+                  <label class="form-label" for="trialDays">Trial length</label>
+                  <select id="trialDays" class="form-control"><option value="1">1 day</option><option value="2">2 days</option><option value="3" selected>3 days</option></select>
+                </div>
+                <div class="form-group" style="margin-bottom:0.75rem;">
+                  <label class="form-label" for="trialHours">Hours per day</label>
+                  <select id="trialHours" class="form-control"><option value="2">2 hours</option><option value="4" selected>4 hours</option><option value="8">8 hours</option></select>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:0.75rem;">
+                <label class="form-label" for="trialScope">Trial tasks (fixed scope)</label>
+                <textarea id="trialScope" class="form-control form-textarea" style="min-height:80px;" placeholder="e.g. Clean up my inbox (≈300 emails), set up labels, and book 3 meetings from my waiting list."></textarea>
+              </div>
+              <div class="calc-line"><span>Trial hours</span><strong id="trialTotalHours">12 hrs</strong></div>
+              <div class="calc-line"><span>At your max rate</span><strong id="trialRate">$—/hr</strong></div>
+              <div class="calc-line total"><span>Trial cost (held in escrow until you approve)</span><strong id="trialCost">$—</strong></div>
+            </div>
+          </div>
+
+          <!-- Client verification -->
+          <div class="feature-panel" style="background:rgba(16,185,129,0.03); border-color:rgba(16,185,129,0.25);">
+            <div class="feature-panel-title"><i class="fas fa-shield-alt" style="color:var(--success);"></i> Get the Verified Client badge</div>
+            <p style="font-size:0.8125rem; color:var(--text-light); margin-bottom:1rem;">Verified clients get up to 3× more applicants, because VAs know you're real. Your Trust Score starts here.</p>
+            <div class="option-grid cols-3">
+              <label class="option-tile"><input type="radio" name="verify" value="card" checked /><span><strong>Card check</strong><small>$1 temporary hold, refunded instantly</small></span></label>
+              <label class="option-tile"><input type="radio" name="verify" value="business" /><span><strong>Business docs</strong><small>Registration or EIN / ABN / UK company no.</small></span></label>
+              <label class="option-tile"><input type="radio" name="verify" value="later" /><span><strong>Later</strong><small>Post as unverified (lower Trust Score)</small></span></label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Application Deadline</label>
+            <input type="date" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Company / Your Name <span class="form-required">*</span></label>
+            <input type="text" class="form-control" placeholder="Company name or your name" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Your Email <span class="form-required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="fas fa-envelope"></i>
+              <input type="email" class="form-control" placeholder="you@company.com" required />
+            </div>
+          </div>
+
+          <div style="background:rgba(79,70,229,0.04); border:1px solid rgba(79,70,229,0.12); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1.5rem;">
+            <label style="display:flex; align-items:flex-start; gap:0.75rem; cursor:pointer;">
+              <input type="checkbox" style="accent-color:var(--primary); margin-top:0.125rem; width:16px; height:16px; flex-shrink:0;" />
+              <span style="font-size:0.875rem; color:var(--text);">I agree to the <a href="terms" style="color:var(--primary); font-weight:600;">Terms of Service</a> and confirm that this is a legitimate remote work opportunity for Filipino virtual assistants.</span>
+            </label>
+          </div>
+
+          <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <button type="submit" class="btn btn-primary btn-lg" style="flex:1;">
+              <i class="fas fa-rocket"></i> Post Job for Free
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-lg">Save Draft</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- SIDEBAR INFO -->
+      <aside style="position:sticky; top:90px;">
+        <div class="sidebar-card" style="background:var(--grad-primary); border:none; color:#fff;">
+          <h3 style="color:#fff; margin-bottom:0.75rem; font-size:1.0625rem;"><i class="fas fa-bolt"></i> Free to Post</h3>
+          <p style="font-size:0.875rem; color:rgba(255,255,255,0.8); line-height:1.7;">Posting a job is completely free. You only pay a small commission when you hire and the VA starts working.</p>
+        </div>
+
+        <div class="sidebar-card" style="border:1.5px solid rgba(16,185,129,0.3);">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:0.5rem;"><i class="fas fa-sync-alt" style="color:var(--success);"></i> 30-Day Replacement Guarantee</h3>
+          <p style="font-size:0.8125rem; color:var(--text-light); line-height:1.7;">If your VA quits within 30 days, we send you a hand-picked shortlist of replacements within 48 hours, free. No new job post, no re-paying fees.</p>
+          <a href="pricing#guarantee" style="font-size:0.8125rem; color:var(--primary); font-weight:600;">How it works →</a>
+        </div>
+
+        <div class="sidebar-card">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Why Jobseekers.ph?</h3>
+          <div style="display:flex; flex-direction:column; gap:0.875rem;">
+            <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+              <div style="width:32px; height:32px; background:rgba(79,70,229,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--primary); font-size:0.875rem;"><i class="fas fa-check"></i></div>
+              <div><div style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.125rem;">12,000+ Verified VAs</div><div style="font-size:0.8rem; color:var(--text-light);">All ID-verified and skill-tested</div></div>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+              <div style="width:32px; height:32px; background:rgba(16,185,129,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--success); font-size:0.875rem;"><i class="fas fa-check"></i></div>
+              <div><div style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.125rem;">Average 48-hr Hire</div><div style="font-size:0.8rem; color:var(--text-light);">Fast turnaround with quality candidates</div></div>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+              <div style="width:32px; height:32px; background:rgba(245,158,11,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--accent); font-size:0.875rem;"><i class="fas fa-check"></i></div>
+              <div><div style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.125rem;">Secure Payment Escrow</div><div style="font-size:0.8rem; color:var(--text-light);">Pay only when work is approved</div></div>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+              <div style="width:32px; height:32px; background:rgba(236,72,153,0.08); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#EC4899; font-size:0.875rem;"><i class="fas fa-check"></i></div>
+              <div><div style="font-size:0.875rem; font-weight:600; color:var(--dark); margin-bottom:0.125rem;">24/7 Platform Support</div><div style="font-size:0.8rem; color:var(--text-light);">We're here whenever you need us</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card" style="text-align:center; background:rgba(245,158,11,0.04); border:1.5px solid rgba(245,158,11,0.2);">
+          <div style="font-size:2rem; margin-bottom:0.5rem;">⚡</div>
+          <h3 style="font-size:0.9375rem; font-weight:700; color:var(--dark); margin-bottom:0.5rem;">Want faster results?</h3>
+          <p style="font-size:0.8125rem; color:var(--text-light); line-height:1.6; margin-bottom:1rem;">Upgrade to a Featured Job and get 5x more visibility and top placement in search results.</p>
+          <a href="pricing" class="btn btn-accent btn-sm" style="width:100%;"><i class="fas fa-star"></i> See Pricing Plans</a>
+        </div>
+
+        <div class="sidebar-card">
+          <h3 style="font-size:0.9375rem; font-weight:700; color:var(--dark); margin-bottom:0.75rem;"><i class="fas fa-lightbulb" style="color:var(--accent);"></i> Writing Tips</h3>
+          <ul style="font-size:0.8125rem; color:var(--text-light); line-height:1.8; padding-left:1rem;">
+            <li>Use a specific, descriptive job title</li>
+            <li>List the tools they'll use daily</li>
+            <li>Mention your timezone and working hours</li>
+            <li>Include information about your company culture</li>
+            <li>State if there's a growth path or long-term opportunity</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index" class="navbar-logo"><div class="logo-icon"><i class="fas fa-briefcase"></i></div>Jobseekers<span class="dot">.ph</span></a>
+      <p class="footer-desc">Philippines' leading platform connecting world-class virtual assistants with global businesses.</p>
+      <div class="footer-social">
+        <a href="#"><i class="fab fa-facebook-f"></i></a><a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col"><h4>For Clients</h4><ul class="footer-links"><li><a href="find-vas">Find VAs</a></li><li><a href="post-job">Post a Job</a></li><li><a href="ai-match">AI Match</a></li><li><a href="work-tools">Work Tools</a></li><li><a href="dashboard-client">Client Dashboard</a></li><li><a href="pricing">Pricing</a></li></ul></div>
+    <div class="footer-col"><h4>For VAs</h4><ul class="footer-links"><li><a href="browse-jobs">Browse Jobs</a></li><li><a href="auth">Create Profile</a></li><li><a href="academy">VA Academy</a></li><li><a href="community">Community</a></li><li><a href="compliance">Contracts &amp; Taxes</a></li></ul></div>
+    <div class="footer-col"><h4>Company</h4><ul class="footer-links"><li><a href="about">About</a></li><li><a href="contact">Contact</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Jobseekers.ph · Made with ❤️ in the Philippines</p>
+    <div class="footer-bottom-links"><a href="privacy">Privacy</a><a href="terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  /* ---------- Scam detector: checks the description as the client types ---------- */
+  const SCAM_RULES = [
+    { re: /\b(registration|training|processing|application|membership|starter kit|reservation)\s*fee\b|\bpay\s+(a|an|the)?\s*(fee|deposit)\b|\b(laptop|equipment|security|refundable)\s+deposit\b/i, msg: 'Asks applicants to pay a fee or deposit' },
+    { re: /\b(telegram|whatsapp|signal|viber|wechat)\b/i, msg: 'Moves the conversation off-platform (Telegram, WhatsApp, etc.)' },
+    { re: /\b(send|transfer)\b.{0,20}\b(money|gcash|maya|payment)\b|\bgcash me\b/i, msg: 'Asks applicants to send money' },
+    { re: /\b(crypto|bitcoin|usdt|forex|investment opportunity)\b/i, msg: 'Mentions crypto or investments' },
+    { re: /\b(bank account|card number|otp|one[- ]time pin|password)\b.{0,30}\b(send|share|provide|give)\b|\b(send|share|provide|give)\b.{0,30}\b(bank account|card number|otp|password)\b/i, msg: 'Asks for bank details, OTPs or passwords' },
+    { re: /\b(buy|purchase)\b.{0,25}\b(laptop|equipment|software|kit)\b.{0,25}\b(from us|reimburse)/i, msg: 'Asks applicants to buy equipment from you' },
+    { re: /\bno experience\b.{0,40}\$\s?\d{2,}/i, msg: 'Promises high pay for no experience' },
+  ];
+
+  const desc = document.getElementById('jobDesc');
+  const flagsBox = document.getElementById('scamFlags');
+  const payMax = document.getElementById('payMax');
+  const payMin = document.getElementById('payMin');
+  const expSelect = document.getElementById('expLevel');
+
+  function scanPost() {
+    const hits = SCAM_RULES.filter(r => r.re.test(desc.value)).map(r => r.msg);
+    const max = parseFloat(payMax.value) || parseFloat(payMin.value) || 0;
+    if (max > 40 && /entry/i.test(expSelect.value)) hits.push(`$${max}/hr is unusually high for an entry-level role`);
+    document.getElementById('scamList').innerHTML = hits.map(h => `<li>${h}</li>`).join('');
+    flagsBox.classList.toggle('show', hits.length > 0);
+    return hits;
+  }
+  [desc, payMax, payMin, expSelect].forEach(el => el.addEventListener('input', scanPost));
+
+  /* ---------- Paid trial calculator ---------- */
+  const trialFields = document.getElementById('trialFields');
+  function updateTrial() {
+    const trial = document.querySelector('input[name="startMode"]:checked').value === 'trial';
+    trialFields.hidden = !trial;
+    const hours = Number(document.getElementById('trialDays').value) * Number(document.getElementById('trialHours').value);
+    const rate = parseFloat(payMax.value) || parseFloat(payMin.value);
+    document.getElementById('trialTotalHours').textContent = hours + ' hrs';
+    document.getElementById('trialRate').textContent = rate ? `$${rate}/hr` : 'Enter a pay rate above';
+    document.getElementById('trialCost').textContent = rate ? `$${(hours * rate).toFixed(2)}` : '$—';
+  }
+  document.querySelectorAll('input[name="startMode"], #trialDays, #trialHours, #payMin, #payMax').forEach(el => el.addEventListener('input', updateTrial));
+  updateTrial();
+
+  /* ---------- Submit ---------- */
+  document.querySelector('form[data-validate]').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!validateForm(e.target)) return;
+    if (scanPost().length) {
+      flagsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast('Held for review: please remove the flagged items');
+      return;
+    }
+    showToast('Job posted! Matching VAs who work your hours are being notified.');
+  });
+</script>
+</body>
+</html>

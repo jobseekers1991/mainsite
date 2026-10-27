@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATS Resume — Maria Santos | Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    /* ── Toolbar ── */
+    .resume-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #0F172A;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-back {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding-right: 0.875rem;
+      border-right: 1px solid rgba(255,255,255,0.15);
+      transition: color 0.15s;
+    }
+    .toolbar-back:hover { color: #fff; }
+
+    .fmt-tabs {
+      display: flex;
+      gap: 0.25rem;
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .fmt-btn {
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.3125rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .fmt-btn.active, .fmt-btn:hover {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+    }
+    .fmt-btn.active { background: rgba(79,70,229,0.7); color: #fff; }
+
+    .ats-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: 0.5rem;
+    }
+
+    .ats-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.65);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* iOS-style toggle */
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.2);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-track::before {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      left: 3px; bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    input:checked + .toggle-track { background: #10B981; }
+    input:checked + .toggle-track::before { transform: translateX(16px); }
+
+    .toolbar-actions { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; }
+
+    .toolbar-badge {
+      display: none;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #10B981;
+      background: rgba(16,185,129,0.15);
+      padding: 0.25rem 0.625rem;
+      border-radius: 99px;
+    }
+    .toolbar-badge.visible { display: flex; }
+
+    /* ── Page wrapper ── */
+    .resume-page-wrapper {
+      background: #E2E8F0;
+      min-height: calc(100vh - 54px);
+      padding: 2.5rem 1.5rem 4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .resume-hint {
+      background: #fff;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 10px;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8125rem;
+      color: #475569;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      max-width: 794px;
+      width: 100%;
+    }
+    .resume-hint i { color: #4F46E5; flex-shrink: 0; }
+
+    /* ── The paper ── */
+    .resume-paper {
+      width: 794px;
+      min-height: 1123px;
+      background: #fff;
+      box-shadow: 0 4px 40px rgba(0,0,0,0.15);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      font-family: 'Inter', Arial, sans-serif;
+      color: #1A1A2E;
+      line-height: 1.5;
+    }
+
+    /* ══════════════════════════════
+       FORMAT: MODERN (default)
+    ══════════════════════════════ */
+    .resume-paper.fmt-modern .r-accent-bar {
+      height: 6px;
+      background: linear-gradient(90deg, #4F46E5, #7C3AED);
+    }
+
+    .resume-paper.fmt-modern .r-body { padding: 40px 52px 52px; }
+
+    .resume-paper.fmt-modern .r-name {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 0.25rem;
+    }
+
+    .resume-paper.fmt-modern .r-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #4F46E5;
+      margin-bottom: 1rem;
+    }
+
+    .resume-paper.fmt-modern .r-contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+      font-size: 0.8rem;
+      color: #475569;
+      padding-bottom: 1.25rem;
+      border-bottom: 2px solid #E2E8F0;
+      margin-bottom: 1.25rem;
+    }
+
+    .resume-paper.fmt-modern .r-contact span {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .resume-paper.fmt-modern .r-contact i { color: #4F46E5; font-size: 0.75rem; }
+
+    .resume-paper.fmt-modern .r-section-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #4F46E5;
+      border-bottom: 2px solid #E2E8F0;
+      padding-bottom: 0.375rem;
+      margin: 1.5rem 0 0.875rem;
+    }
+
+    .resume-paper.fmt-modern .r-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .resume-paper.fmt-modern .r-skill {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6875rem;
+      border-radius: 99px;
+      background: rgba(79,70,229,0.07);
+      color: #4338CA;
+      border: 1px solid rgba(79,70,229,0.15);
+    }
+
+    .resume-paper.fmt-modern .r-exp-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.125rem;
+    }
+
+    .resume-paper.fmt-modern .r-exp-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    .resume-paper.fmt-modern .r-exp-dates {
+      font-size: 0.8rem;
+      color: #64748B;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .resume-paper.fmt-modern .r-exp-company {
+      font-size: 0.875rem;
+      color: #4F46E5;
+      font-weight: 600;
+      margin-bottom: 0.375rem;
+    }
+
+    .resume-paper.fmt-modern .r-exp-desc {
+      font-size: 0.8375rem;
+      color: #374151;
+      line-height: 1.75;
+    }
+
+    .resume-paper.fmt-modern .r-exp-item { margin-bottom: 1.25rem; }
+    .resume-paper.fmt-modern .r-exp-item:last-child { margin-bottom: 0; }
+
+    .resume-paper.fmt-modern .r-edu-item { margin-bottom: 0.875rem; }
+
+    .resume-paper.fmt-modern .r-edu-school {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    .resume-paper.fmt-modern .r-edu-degree {
+      font-size: 0.875rem;
+      color: #4F46E5;
+      font-weight: 600;
+    }
+
+    .resume-paper.fmt-modern .r-edu-date {
+      font-size: 0.8rem;
+      color: #64748B;
+    }
+
+    .resume-paper.fmt-modern .r-cert-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #F1F5F9;
+      font-size: 0.875rem;
+    }
+    .resume-paper.fmt-modern .r-cert-item:last-child { border-bottom: none; }
+    .resume-paper.fmt-modern .r-cert-name { font-weight: 600; color: #0F172A; }
+    .resume-paper.fmt-modern .r-cert-issuer { color: #64748B; font-size: 0.8rem; }
+    .resume-paper.fmt-modern .r-cert-date { color: #64748B; font-size: 0.8rem; white-space: nowrap; }
+
+    .resume-paper.fmt-modern .r-lang-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      padding: 0.3125rem 0;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .resume-paper.fmt-modern .r-lang-row:last-child { border-bottom: none; }
+
+    .resume-paper.fmt-modern .r-ets-box {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      background: rgba(79,70,229,0.04);
+      border: 1px solid rgba(79,70,229,0.12);
+      border-radius: 8px;
+      padding: 0.875rem 1.125rem;
+    }
+
+    .resume-paper.fmt-modern .r-ets-score {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2rem;
+      font-weight: 900;
+      color: #4F46E5;
+      line-height: 1;
+    }
+
+    .resume-paper.fmt-modern .r-ets-label {
+      font-size: 0.8rem;
+      color: #64748B;
+    }
+
+    /* ══════════════════════════════
+       FORMAT: CLASSIC
+    ══════════════════════════════ */
+    .resume-paper.fmt-classic .r-accent-bar { display: none; }
+
+    .resume-paper.fmt-classic .r-body { padding: 52px 60px; }
+
+    .resume-paper.fmt-classic .r-name {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.875rem;
+      font-weight: 800;
+      color: #111;
+      text-align: center;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .resume-paper.fmt-classic .r-title {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: #333;
+      text-align: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .resume-paper.fmt-classic .r-contact {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.375rem 1rem;
+      font-size: 0.8rem;
+      color: #444;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #111;
+      margin-bottom: 1.25rem;
+    }
+
+    .resume-paper.fmt-classic .r-contact i { display: none; }
+
+    .resume-paper.fmt-classic .r-section-title {
+      font-size: 0.875rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #111;
+      border-bottom: 1.5px solid #111;
+      padding-bottom: 0.25rem;
+      margin: 1.375rem 0 0.75rem;
+    }
+
+    .resume-paper.fmt-classic .r-skills {
+      font-size: 0.875rem;
+      color: #333;
+      line-height: 1.8;
+    }
+
+    .resume-paper.fmt-classic .r-skill { display: inline; }
+    .resume-paper.fmt-classic .r-skill::after { content: ' · '; color: #999; }
+    .resume-paper.fmt-classic .r-skill:last-child::after { content: ''; }
+
+    .resume-paper.fmt-classic .r-exp-head {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.125rem;
+    }
+
+    .resume-paper.fmt-classic .r-exp-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .resume-paper.fmt-classic .r-exp-dates {
+      font-size: 0.8125rem;
+      color: #444;
+      font-weight: 500;
+    }
+
+    .resume-paper.fmt-classic .r-exp-company {
+      font-size: 0.875rem;
+      color: #444;
+      font-style: italic;
+      margin-bottom: 0.375rem;
+    }
+
+    .resume-paper.fmt-classic .r-exp-desc {
+      font-size: 0.8375rem;
+      color: #333;
+      line-height: 1.75;
+    }
+
+    .resume-paper.fmt-classic .r-exp-item { margin-bottom: 1.125rem; }
+
+    .resume-paper.fmt-classic .r-edu-school { font-size: 0.9375rem; font-weight: 700; color: #111; }
+    .resume-paper.fmt-classic .r-edu-degree { font-size: 0.875rem; color: #333; font-style: italic; }
+    .resume-paper.fmt-classic .r-edu-date { font-size: 0.8rem; color: #555; }
+    .resume-paper.fmt-classic .r-edu-item { margin-bottom: 0.875rem; }
+
+    .resume-paper.fmt-classic .r-cert-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      padding: 0.3125rem 0;
+    }
+    .resume-paper.fmt-classic .r-cert-name { font-weight: 600; color: #111; }
+    .resume-paper.fmt-classic .r-cert-issuer { color: #555; font-style: italic; }
+    .resume-paper.fmt-classic .r-cert-date { color: #555; }
+
+    .resume-paper.fmt-classic .r-lang-row {
+      display: inline;
+      font-size: 0.875rem;
+      color: #333;
+    }
+    .resume-paper.fmt-classic .r-lang-row::after { content: ' · '; color: #999; }
+    .resume-paper.fmt-classic .r-lang-row:last-child::after { content: ''; }
+
+    .resume-paper.fmt-classic .r-ets-box {
+      font-size: 0.875rem;
+      color: #333;
+    }
+    .resume-paper.fmt-classic .r-ets-score {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #111;
+    }
+    .resume-paper.fmt-classic .r-ets-label { color: #555; font-size: 0.8rem; }
+
+    /* ══════════════════════════════
+       FORMAT: MINIMAL
+    ══════════════════════════════ */
+    .resume-paper.fmt-minimal .r-accent-bar { display: none; }
+
+    .resume-paper.fmt-minimal .r-body { padding: 56px 64px; }
+
+    .resume-paper.fmt-minimal .r-name {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.125rem;
+    }
+
+    .resume-paper.fmt-minimal .r-title {
+      font-size: 1rem;
+      color: #64748B;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+
+    .resume-paper.fmt-minimal .r-contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.5rem;
+      font-size: 0.8rem;
+      color: #64748B;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid #E2E8F0;
+      margin-bottom: 1.5rem;
+    }
+    .resume-paper.fmt-minimal .r-contact i { display: none; }
+
+    .resume-paper.fmt-minimal .r-section-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #94A3B8;
+      margin: 1.625rem 0 0.75rem;
+    }
+
+    .resume-paper.fmt-minimal .r-skills { display: flex; flex-wrap: wrap; gap: 0 1rem; }
+    .resume-paper.fmt-minimal .r-skill { font-size: 0.875rem; color: #334155; }
+    .resume-paper.fmt-minimal .r-skill::after { content: '·'; margin-left: 1rem; color: #CBD5E1; }
+    .resume-paper.fmt-minimal .r-skill:last-child::after { content: ''; }
+
+    .resume-paper.fmt-minimal .r-exp-head { display: flex; justify-content: space-between; }
+    .resume-paper.fmt-minimal .r-exp-title { font-size: 0.9375rem; font-weight: 700; color: #0F172A; }
+    .resume-paper.fmt-minimal .r-exp-dates { font-size: 0.8rem; color: #94A3B8; }
+    .resume-paper.fmt-minimal .r-exp-company { font-size: 0.875rem; color: #64748B; margin-bottom: 0.375rem; }
+    .resume-paper.fmt-minimal .r-exp-desc { font-size: 0.84rem; color: #475569; line-height: 1.75; }
+    .resume-paper.fmt-minimal .r-exp-item { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid #F1F5F9; }
+    .resume-paper.fmt-minimal .r-exp-item:last-child { border-bottom: none; }
+
+    .resume-paper.fmt-minimal .r-edu-school { font-size: 0.9375rem; font-weight: 700; color: #0F172A; }
+    .resume-paper.fmt-minimal .r-edu-degree { font-size: 0.875rem; color: #64748B; }
+    .resume-paper.fmt-minimal .r-edu-date { font-size: 0.8rem; color: #94A3B8; }
+    .resume-paper.fmt-minimal .r-edu-item { margin-bottom: 0.875rem; }
+
+    .resume-paper.fmt-minimal .r-cert-item { display: flex; justify-content: space-between; font-size: 0.875rem; padding: 0.375rem 0; }
+    .resume-paper.fmt-minimal .r-cert-name { font-weight: 600; color: #0F172A; }
+    .resume-paper.fmt-minimal .r-cert-issuer { color: #64748B; }
+    .resume-paper.fmt-minimal .r-cert-date { color: #94A3B8; }
+
+    .resume-paper.fmt-minimal .r-lang-row { display: flex; justify-content: space-between; font-size: 0.875rem; padding: 0.3125rem 0; }
+    .resume-paper.fmt-minimal .r-lang-name { color: #0F172A; font-weight: 500; }
+    .resume-paper.fmt-minimal .r-lang-level { color: #64748B; }
+
+    .resume-paper.fmt-minimal .r-ets-score { font-size: 1.5rem; font-weight: 800; color: #0F172A; }
+    .resume-paper.fmt-minimal .r-ets-label { font-size: 0.8rem; color: #64748B; }
+    .resume-paper.fmt-minimal .r-ets-box { display: flex; align-items: center; gap: 1rem; }
+
+    /* ══════════════════════════════
+       ATS MODE (overrides all formats)
+    ══════════════════════════════ */
+    .resume-paper.ats-mode .r-accent-bar { display: none; }
+    .resume-paper.ats-mode .r-body { padding: 40px 48px; }
+
+    .resume-paper.ats-mode * {
+      font-family: Arial, sans-serif !important;
+      color: #000 !important;
+      background: transparent !important;
+      border-color: #000 !important;
+      font-weight: normal !important;
+      letter-spacing: 0 !important;
+      border-radius: 0 !important;
+    }
+
+    .resume-paper.ats-mode .r-name {
+      font-size: 1.5rem !important;
+      font-weight: bold !important;
+      text-transform: uppercase !important;
+      text-align: left !important;
+    }
+
+    .resume-paper.ats-mode .r-title {
+      font-size: 1rem !important;
+      font-style: italic !important;
+    }
+
+    .resume-paper.ats-mode .r-contact {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: flex-start !important;
+      gap: 0.25rem 1rem !important;
+      border-bottom: 1px solid #000 !important;
+    }
+    .resume-paper.ats-mode .r-contact i { display: none !important; }
+
+    .resume-paper.ats-mode .r-section-title {
+      font-size: 0.9375rem !important;
+      font-weight: bold !important;
+      text-transform: uppercase !important;
+      border-bottom: 1px solid #000 !important;
+      letter-spacing: 0.05em !important;
+    }
+
+    .resume-paper.ats-mode .r-skills { display: block !important; }
+    .resume-paper.ats-mode .r-skill {
+      display: inline !important;
+      padding: 0 !important;
+      border: none !important;
+      font-size: 0.875rem !important;
+    }
+    .resume-paper.ats-mode .r-skill::after { content: ' | '; }
+    .resume-paper.ats-mode .r-skill:last-child::after { content: ''; }
+
+    .resume-paper.ats-mode .r-exp-head { display: flex !important; justify-content: space-between !important; }
+    .resume-paper.ats-mode .r-exp-title { font-weight: bold !important; font-size: 0.9375rem !important; }
+    .resume-paper.ats-mode .r-exp-company { font-style: italic !important; }
+    .resume-paper.ats-mode .r-ets-box { display: block !important; border: none !important; padding: 0 !important; }
+
+    .resume-paper.ats-mode .r-lang-row { display: inline !important; }
+    .resume-paper.ats-mode .r-lang-row::after { content: ' | '; }
+    .resume-paper.ats-mode .r-lang-row:last-child::after { content: ''; }
+
+    /* ── Print styles ── */
+    @media print {
+      .resume-toolbar { display: none !important; }
+      .resume-hint    { display: none !important; }
+      .resume-page-wrapper {
+        background: #fff !important;
+        padding: 0 !important;
+        min-height: unset !important;
+      }
+      .resume-paper {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        min-height: unset !important;
+      }
+      body { margin: 0; }
+      @page { margin: 0; size: A4; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 860px) {
+      .resume-page-wrapper { padding: 1.5rem 0.75rem 3rem; }
+      .resume-paper { width: 100%; }
+      .resume-paper.fmt-modern .r-body,
+      .resume-paper.fmt-classic .r-body,
+      .resume-paper.fmt-minimal .r-body,
+      .resume-paper.ats-mode .r-body { padding: 28px 24px; }
+      .resume-hint { max-width: 100%; }
+    }
+
+    @media (max-width: 600px) {
+      .resume-toolbar { gap: 0.5rem; padding: 0.625rem 1rem; }
+      .fmt-tabs { display: none; }
+      .ats-toggle-wrap { margin-left: 0; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#E2E8F0;">
+
+<!-- ===================== TOOLBAR ===================== -->
+<div class="resume-toolbar">
+  <a href="edit-profile" class="toolbar-back">
+    <i class="fas fa-arrow-left"></i> Back
+  </a>
+
+  <div class="fmt-tabs">
+    <button class="fmt-btn active" data-format="modern">Modern</button>
+    <button class="fmt-btn" data-format="classic">Classic</button>
+    <button class="fmt-btn" data-format="minimal">Minimal</button>
+  </div>
+
+  <div class="ats-toggle-wrap">
+    <label class="ats-label">
+      <label class="toggle-switch">
+        <input type="checkbox" id="atsToggle" />
+        <span class="toggle-track"></span>
+      </label>
+      ATS Mode
+    </label>
+    <span class="toolbar-badge" id="atsBadge">
+      <i class="fas fa-robot"></i> ATS Optimized
+    </span>
+  </div>
+
+  <div class="toolbar-actions">
+    <button class="btn btn-ghost btn-sm" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.2);" onclick="window.print()">
+      <i class="fas fa-print"></i> Print
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="window.print()">
+      <i class="fas fa-download"></i> Download PDF
+    </button>
+  </div>
+</div>
+
+<!-- ===================== PAGE WRAPPER ===================== -->
+<div class="resume-page-wrapper">
+
+  <div class="resume-hint" id="resumeHint">
+    <i class="fas fa-info-circle"></i>
+    <span><strong>To save as PDF:</strong> Click Download PDF → In the print dialog, set destination to "Save as PDF" → Save. ATS Mode strips all styling for maximum scanner compatibility.</span>
+  </div>
+
+  <!-- ===================== PAPER ===================== -->
+  <div class="resume-paper fmt-modern" id="resumePaper">
+
+    <!-- Accent bar (Modern only) -->
+    <div class="r-accent-bar"></div>
+
+    <div class="r-body">
+
+      <!-- HEADER -->
+      <div class="r-name">Maria Santos</div>
+      <div class="r-title">Executive Virtual Assistant &amp; Administrative Support Expert</div>
+
+      <div class="r-contact">
+        <span><i class="fas fa-map-marker-alt"></i> Cebu City, Philippines</span>
+        <span><i class="fas fa-clock"></i> UTC+8 (Philippine Standard Time)</span>
+        <span><i class="fas fa-globe"></i> jobseekers.ph/maria-santos</span>
+        <span><i class="fab fa-linkedin-in"></i> linkedin.com/in/mariasantos-va</span>
+        <span><i class="fas fa-globe"></i> mariasantos.notion.site</span>
+      </div>
+
+      <!-- PROFESSIONAL SUMMARY -->
+      <div class="r-section-title">Professional Summary</div>
+      <p style="font-size:0.875rem;line-height:1.8;color:inherit;margin:0;">
+        Seasoned Executive Virtual Assistant with 6+ years of experience supporting C-suite executives, entrepreneurs, and small business owners across the US, UK, and Australia. Specializes in transforming administrative operations into organized, efficient workflows — consistently helping clients reclaim 15–20 hours per week. Highly tech-savvy, proactive, and skilled at anticipating client needs. HubSpot CRM certified. Top 8% English Test Score on Jobseekers.ph.
+      </p>
+
+      <!-- CORE SKILLS -->
+      <div class="r-section-title">Core Skills</div>
+      <div class="r-skills">
+        <span class="r-skill">Admin Support</span>
+        <span class="r-skill">Calendar Management</span>
+        <span class="r-skill">Email Management</span>
+        <span class="r-skill">CRM (HubSpot)</span>
+        <span class="r-skill">Data Entry</span>
+        <span class="r-skill">Travel Coordination</span>
+        <span class="r-skill">Research &amp; Reporting</span>
+        <span class="r-skill">Project Management</span>
+        <span class="r-skill">Inbox Zero Strategy</span>
+        <span class="r-skill">Asana</span>
+        <span class="r-skill">Trello</span>
+        <span class="r-skill">Google Workspace</span>
+        <span class="r-skill">Slack</span>
+        <span class="r-skill">Zoom</span>
+        <span class="r-skill">Microsoft Office</span>
+      </div>
+
+      <!-- WORK EXPERIENCE -->
+      <div class="r-section-title">Work Experience</div>
+
+      <div class="r-exp-item">
+        <div class="r-exp-head">
+          <span class="r-exp-title">Executive Virtual Assistant</span>
+          <span class="r-exp-dates">March 2021 – Present</span>
+        </div>
+        <div class="r-exp-company">Carter Digital Agency · Remote (US Client)</div>
+        <div class="r-exp-desc">
+          Managed executive calendar and coordinated 50+ client meetings per week. Implemented inbox zero strategy reducing response time by 60%. Produced weekly reports for C-suite review and handled travel coordination for 3 senior executives. Maintained CRM database in HubSpot with 100% data accuracy.
+        </div>
+      </div>
+
+      <div class="r-exp-item">
+        <div class="r-exp-head">
+          <span class="r-exp-title">Administrative Assistant</span>
+          <span class="r-exp-dates">June 2018 – February 2021</span>
+        </div>
+        <div class="r-exp-company">BrightMind Solutions · Remote (AU Client)</div>
+        <div class="r-exp-desc">
+          Provided comprehensive administrative support to a team of 12. Managed client databases in Salesforce and handled scheduling, correspondence, and document management. Reduced onboarding time for new clients by 35% through process documentation.
+        </div>
+      </div>
+
+      <!-- EDUCATION -->
+      <div class="r-section-title">Education</div>
+
+      <div class="r-edu-item">
+        <div class="r-edu-school">University of San Carlos</div>
+        <div class="r-edu-degree">Bachelor of Science in Business Administration — Business Management</div>
+        <div class="r-edu-date">Graduated 2018 · Cebu City, Philippines</div>
+      </div>
+
+      <!-- CERTIFICATIONS -->
+      <div class="r-section-title">Certifications</div>
+
+      <div class="r-cert-item">
+        <div>
+          <div class="r-cert-name">HubSpot CRM Certification</div>
+          <div class="r-cert-issuer">HubSpot Academy</div>
+        </div>
+        <div class="r-cert-date">Issued November 2022</div>
+      </div>
+      <div class="r-cert-item">
+        <div>
+          <div class="r-cert-name">Google Workspace Administration</div>
+          <div class="r-cert-issuer">Google</div>
+        </div>
+        <div class="r-cert-date">Issued March 2021</div>
+      </div>
+
+      <!-- LANGUAGES -->
+      <div class="r-section-title">Languages</div>
+      <div class="r-lang-row"><span class="r-lang-name">English</span><span class="r-lang-level">Fluent / Professional</span></div>
+      <div class="r-lang-row"><span class="r-lang-name">Filipino (Tagalog)</span><span class="r-lang-level">Native</span></div>
+      <div class="r-lang-row"><span class="r-lang-name">Cebuano</span><span class="r-lang-level">Native</span></div>
+
+      <!-- ENGLISH TEST SCORE -->
+      <div class="r-section-title">English Proficiency Test</div>
+      <div class="r-ets-box">
+        <div>
+          <div class="r-ets-score">95<span style="font-size:1rem;font-weight:500;opacity:0.6;">/100</span></div>
+          <div class="r-ets-label">Excellent · Top 8% on Jobseekers.ph</div>
+        </div>
+        <div style="font-size:0.8125rem;line-height:1.8;color:inherit;opacity:0.85;">
+          Grammar: 93 &nbsp;·&nbsp; Vocabulary: 97 &nbsp;·&nbsp; Reading: 95 &nbsp;·&nbsp; Writing: 91<br>
+          <span style="font-size:0.75rem;opacity:0.65;">Verified by Jobseekers.ph · October 2026</span>
+        </div>
+      </div>
+
+    </div><!-- /.r-body -->
+  </div><!-- /.resume-paper -->
+
+</div><!-- /.resume-page-wrapper -->
+
+<script>
+  const paper    = document.getElementById('resumePaper');
+  const atsToggle = document.getElementById('atsToggle');
+  const atsBadge  = document.getElementById('atsBadge');
+  const hint      = document.getElementById('resumeHint');
+  let currentFmt  = 'modern';
+
+  /* Format switching */
+  document.querySelectorAll('.fmt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFmt = btn.dataset.format;
+
+      if (!atsToggle.checked) {
+        paper.className = 'resume-paper fmt-' + currentFmt;
+      }
+    });
+  });
+
+  /* ATS mode toggle */
+  atsToggle.addEventListener('change', () => {
+    if (atsToggle.checked) {
+      paper.className = 'resume-paper ats-mode';
+      atsBadge.classList.add('visible');
+      hint.querySelector('span').innerHTML =
+        '<strong>ATS Mode active:</strong> All styling has been stripped. This format is optimized for Applicant Tracking Systems. Download as PDF to submit to job applications.';
+    } else {
+      paper.className = 'resume-paper fmt-' + currentFmt;
+      atsBadge.classList.remove('visible');
+      hint.querySelector('span').innerHTML =
+        '<strong>To save as PDF:</strong> Click Download PDF → In the print dialog, set destination to "Save as PDF" → Save. ATS Mode strips all styling for maximum scanner compatibility.';
+    }
+  });
+</script>
+</body>
+</html>
