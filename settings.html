@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="settings"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header">
+  <h1>Settings</h1>
+  <p>Company profile, team members, and account preferences.</p>
+</div>
+
+<div class="how-tabs-wrap" style="justify-content:flex-start; margin:1rem 0 1.25rem;">
+  <div class="how-tabs" style="background:#fff; flex-wrap:wrap;">
+    <button class="how-tab active" data-tab="company"><i class="fas fa-building"></i> Company</button>
+    <button class="how-tab" data-tab="team"><i class="fas fa-user-shield"></i> Team Members</button>
+    <button class="how-tab" data-tab="verify"><i class="fas fa-shield-alt"></i> Verification</button>
+    <button class="how-tab" data-tab="prefs"><i class="fas fa-sliders-h"></i> Preferences</button>
+  </div>
+</div>
+
+<div id="companyPanel">
+  <div class="dash-card" style="padding:1.25rem;">
+    <h3 style="margin:0 0 1rem; color:var(--dark);">Company profile</h3>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Company name</label><input id="fCompany" class="form-control" /></div>
+      <div class="form-group"><label class="form-label">Industry</label><input id="fIndustry" class="form-control" /></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Size</label><select id="fSize" class="form-control"><option>1–10</option><option>11–50</option><option>51–200</option><option>201–1000</option><option>1000+</option></select></div>
+      <div class="form-group"><label class="form-label">Country</label><input id="fCountry" class="form-control" /></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label class="form-label">Timezone</label><select id="fTz" class="form-control"><option>America/New_York</option><option>America/Los_Angeles</option><option>Europe/London</option><option>Australia/Sydney</option><option>Asia/Manila</option></select></div>
+      <div class="form-group"><label class="form-label">Website</label><input id="fWebsite" class="form-control" placeholder="https://" /></div>
+    </div>
+    <div class="form-group"><label class="form-label">About</label><textarea id="fAbout" class="form-control form-textarea" style="min-height:90px;"></textarea></div>
+    <div class="form-group"><label class="form-label">Logo URL</label><input id="fLogo" class="form-control" placeholder="https://..." /></div>
+    <div style="margin-top:0.5rem;"><button class="btn btn-primary btn-sm" id="saveCompany"><i class="fas fa-check"></i> Save profile</button></div>
+  </div>
+</div>
+
+<div id="teamPanel" hidden>
+  <div class="dash-card" style="padding:1.25rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <h3 style="margin:0; color:var(--dark);">Team members</h3>
+      <button class="btn btn-primary btn-sm" id="inviteMember"><i class="fas fa-paper-plane"></i> Invite member</button>
+    </div>
+    <p style="font-size:0.8125rem; color:var(--text-light); margin:0 0 0.75rem;">Invite teammates and give them scoped access. Admins see everything.</p>
+    <div class="table-responsive"><table class="dash-table" style="width:100%;"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last active</th><th></th></tr></thead><tbody id="membersBody"></tbody></table></div>
+    <div style="font-size:0.78rem; color:var(--text-light); margin-top:1rem; padding:0.75rem; background:#F8FAFC; border-radius:0.5rem;">
+      <strong style="color:var(--dark);">Role permissions:</strong><br>
+      <strong>Admin</strong> — full access · <strong>Recruiter</strong> — jobs, applicants, interviews, messages · <strong>Billing</strong> — invoices, billing, reports (no hiring)
+    </div>
+  </div>
+</div>
+
+<div id="verifyPanel" hidden>
+  <div class="dash-card" style="padding:1.25rem;">
+    <h3 style="margin:0 0 1rem; color:var(--dark);">Verification badges</h3>
+    <div id="verifyList"></div>
+    <p style="font-size:0.78rem; color:var(--text-light); margin-top:1rem;"><i class="fas fa-lock"></i> Documents auto-delete 90 days after review.</p>
+  </div>
+</div>
+
+<div id="prefsPanel" hidden>
+  <div class="dash-card" style="padding:1.25rem;">
+    <h3 style="margin:0 0 1rem; color:var(--dark);">Email preferences</h3>
+    <div id="prefsList"></div>
+    <div style="margin-top:1rem;"><button class="btn btn-primary btn-sm" id="savePrefs"><i class="fas fa-check"></i> Save preferences</button></div>
+  </div>
+</div>
+
+<div id="memberModal" class="inline-panel" hidden style="position:fixed; inset:0; margin:auto; max-width:440px; height:fit-content; z-index:100; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <strong style="color:var(--dark);"><i class="fas fa-user-plus" style="color:var(--primary);"></i> Invite team member</strong>
+  <div class="form-group" style="margin:0.75rem 0 0.5rem;"><label class="form-label">Email</label><input id="mEmail" class="form-control" placeholder="name@company.com" /></div>
+  <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Full name</label><input id="mName" class="form-control" placeholder="e.g. Laura Reyes" /></div>
+  <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label">Role</label><select id="mRole" class="form-control"><option value="admin">Admin — everything</option><option value="recruiter" selected>Recruiter — jobs + applicants</option><option value="billing">Billing — invoices + reports</option></select></div>
+  <div style="display:flex; gap:0.5rem;"><button class="btn btn-primary btn-sm" id="mSave"><i class="fas fa-paper-plane"></i> Send invite</button><button class="btn btn-ghost btn-sm" id="mCancel">Cancel</button></div>
+</div>
+<div id="mBackdrop" hidden style="position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:99;"></div>
+
+<style>
+  .switch { position:relative; display:inline-block; width:48px; height:26px; }
+  .switch input { opacity:0; width:0; height:0; }
+  .slider { position:absolute; cursor:pointer; inset:0; background:#CBD5E1; border-radius:999px; transition:0.2s; }
+  .slider:before { position:absolute; content:""; height:20px; width:20px; left:3px; top:3px; background:white; border-radius:50%; transition:0.2s; }
+  .switch input:checked + .slider { background:var(--primary); }
+  .switch input:checked + .slider:before { transform:translateX(22px); }
+</style>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  if (!client.profile) client.profile = { company: '', industry: '', size: '11–50', country: '', timezone: 'America/New_York', website: '', about: '', logo: '', businessVerified: false, paymentVerified: false };
+  if (!client.members) client.members = [];
+  if (!client.emailPrefs) client.emailPrefs = { applicants: true, interviews: true, timesheets: true, invoices: true, trials: true, product: false };
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+
+  function fillCompany() {
+    const p = client.profile;
+    $('fCompany').value = p.company || '';
+    $('fIndustry').value = p.industry || '';
+    $('fSize').value = p.size || '11–50';
+    $('fCountry').value = p.country || '';
+    $('fTz').value = p.timezone || 'America/New_York';
+    $('fWebsite').value = p.website || '';
+    $('fAbout').value = p.about || '';
+    $('fLogo').value = p.logo || '';
+  }
+
+  function renderMembers() {
+    $('membersBody').innerHTML = client.members.map((m, i) => `
+      <tr>
+        <td>${esc(m.name || '—')}</td>
+        <td>${esc(m.email)}</td>
+        <td><select class="form-control form-control-sm" data-role="${i}" style="padding:0.25rem 0.5rem; font-size:0.8125rem;"><option value="admin"${m.role === 'admin' ? ' selected' : ''}>Admin</option><option value="recruiter"${m.role === 'recruiter' ? ' selected' : ''}>Recruiter</option><option value="billing"${m.role === 'billing' ? ' selected' : ''}>Billing</option></select></td>
+        <td><span class="status-pill ${m.status === 'active' ? 'hired' : 'pending'}">${m.status}</span></td>
+        <td style="color:var(--text-light); font-size:0.8125rem;">${m.lastActive ? fmtDay(m.lastActive) : 'Never'}</td>
+        <td style="text-align:right;">
+          ${m.status === 'invited' ? `<button class="btn btn-ghost btn-xs" data-mact="resend" data-i="${i}"><i class="fas fa-paper-plane"></i> Resend</button>` : ''}
+          <button class="btn btn-ghost btn-xs" data-mact="remove" data-i="${i}" style="color:var(--danger);"><i class="fas fa-times"></i> Remove</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--text-light); padding:1rem;">You\'re the only one here. Invite a teammate.</td></tr>';
+  }
+
+  function renderVerify() {
+    const items = [
+      { key: 'paymentVerified', label: 'Payment verified', icon: 'fa-credit-card', desc: 'Confirmed with a successful charge' },
+      { key: 'businessVerified', label: 'Business verified', icon: 'fa-building', desc: 'Registration certificate reviewed by Trust & Safety' },
+    ];
+    $('verifyList').innerHTML = items.map(it => {
+      const ok = !!client.profile[it.key];
+      return `
+        <div class="pay-card" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem; background:#fff; border:1px solid var(--border); border-radius:0.75rem; margin-bottom:0.5rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <i class="fas ${it.icon}" style="font-size:1.5rem; color:${ok ? 'var(--success)' : 'var(--text-light)'};"></i>
+            <div><strong style="color:var(--dark);">${it.label}</strong><div style="font-size:0.8125rem; color:var(--text-light);">${it.desc}</div></div>
+          </div>
+          ${ok ? '<span class="status-pill hired"><i class="fas fa-check"></i> Verified</span>' : `<button class="btn btn-primary btn-sm" data-vact="${it.key}"><i class="fas fa-upload"></i> Submit</button>`}
+        </div>`;
+    }).join('');
+  }
+
+  function renderPrefs() {
+    const prefs = [
+      ['applicants', 'New applicants', 'When a VA applies to one of your posts'],
+      ['interviews', 'Interview updates', 'Confirmations, reschedules, reminders'],
+      ['timesheets', 'Timesheet submissions', 'When a VA logs their hours'],
+      ['invoices', 'Invoices', 'Invoices created, flagged, or disputed'],
+      ['trials', 'Trial updates', 'Milestones in paid trials'],
+      ['product', 'Product news', 'Features and tips (max 1/month)'],
+    ];
+    $('prefsList').innerHTML = prefs.map(([k, label, desc]) => `
+      <div style="display:flex; justify-content:space-between; gap:1rem; align-items:center; padding:0.75rem 0; border-bottom:1px solid var(--border);">
+        <div><strong style="color:var(--dark); font-size:0.9375rem;">${label}</strong><div style="font-size:0.8125rem; color:var(--text-light);">${desc}</div></div>
+        <label class="switch"><input type="checkbox" data-pref="${k}" ${client.emailPrefs[k] ? 'checked' : ''} /><span class="slider"></span></label>
+      </div>`).join('');
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.how-tab').forEach(x => x.classList.remove('active'));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    ['company', 'team', 'verify', 'prefs'].forEach(t => $(t + 'Panel').hidden = t !== tab);
+    if (tab === 'team') renderMembers();
+    if (tab === 'verify') renderVerify();
+    if (tab === 'prefs') renderPrefs();
+  }
+
+  document.querySelectorAll('.how-tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+  $('saveCompany').addEventListener('click', () => {
+    Object.assign(client.profile, {
+      company: $('fCompany').value.trim(),
+      industry: $('fIndustry').value.trim(),
+      size: $('fSize').value,
+      country: $('fCountry').value.trim(),
+      timezone: $('fTz').value,
+      website: $('fWebsite').value.trim(),
+      about: $('fAbout').value.trim(),
+      logo: $('fLogo').value.trim(),
+    });
+    save(); showToast('Company profile saved');
+  });
+
+  // Members
+  $('inviteMember').addEventListener('click', () => {
+    $('mEmail').value = ''; $('mName').value = ''; $('mRole').value = 'recruiter';
+    $('memberModal').hidden = false; $('mBackdrop').hidden = false;
+  });
+  const closeMember = () => { $('memberModal').hidden = true; $('mBackdrop').hidden = true; };
+  $('mCancel').addEventListener('click', closeMember);
+  $('mBackdrop').addEventListener('click', closeMember);
+  $('mSave').addEventListener('click', () => {
+    const email = $('mEmail').value.trim();
+    if (!email.includes('@')) { $('mEmail').style.borderColor = 'var(--danger)'; return; }
+    client.members.push({ email, name: $('mName').value.trim(), role: $('mRole').value, status: 'invited', lastActive: null });
+    save(); renderMembers(); closeMember();
+    showToast(`Invite sent to ${email}`);
+  });
+
+  $('membersBody').addEventListener('click', e => {
+    const btn = e.target.closest('[data-mact]');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    if (btn.dataset.mact === 'resend') { showToast('Invite re-sent.'); return; }
+    if (btn.dataset.mact === 'remove') {
+      if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = 'Confirm?'; return; }
+      client.members.splice(i, 1);
+      save(); renderMembers();
+      showToast('Member removed');
+    }
+  });
+  $('membersBody').addEventListener('change', e => {
+    const sel = e.target.closest('[data-role]');
+    if (!sel) return;
+    client.members[Number(sel.dataset.role)].role = sel.value;
+    save(); showToast('Role updated');
+  });
+
+  // Verification
+  $('verifyList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-vact]');
+    if (!btn) return;
+    // Simulate submission by adding to the admin queue
+    const admin = Store.get('jsph-admin', seedAdmin);
+    admin.verifications.unshift({ id: 'v' + Date.now(), type: 'Business', name: client.profile.company || 'Your business', img: 33, detail: 'Company registration docs submitted', status: 'pending', date: Date.now() });
+    Store.set('jsph-admin', admin);
+    showToast('Submitted. Trust & Safety usually reviews within 24 hours.');
+  });
+
+  // Prefs
+  $('savePrefs').addEventListener('click', () => {
+    $('prefsList').querySelectorAll('[data-pref]').forEach(el => client.emailPrefs[el.dataset.pref] = el.checked);
+    save(); showToast('Preferences saved');
+  });
+
+  fillCompany();
+</script>
+</body>
+</html>

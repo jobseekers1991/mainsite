@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="team"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Team</h1>
+    <p>Everyone on contract, how they're pacing, and your private notes.</p>
+  </div>
+  <a href="applicants" class="btn btn-primary"><i class="fas fa-user-plus"></i> Hire more</a>
+</div>
+
+<div class="stat-card-grid" id="teamStats"></div>
+
+<div class="how-tabs-wrap" style="justify-content:flex-start; margin:1.5rem 0 1rem;">
+  <div class="how-tabs" style="background:#fff; flex-wrap:wrap;">
+    <button class="how-tab active" data-tab="active"><i class="fas fa-user-check"></i> Active</button>
+    <button class="how-tab" data-tab="trials"><i class="fas fa-flask"></i> On trial</button>
+    <button class="how-tab" data-tab="past"><i class="fas fa-history"></i> Past</button>
+  </div>
+</div>
+
+<div id="activeView"></div>
+<div id="trialsView" hidden></div>
+<div id="pastView" hidden></div>
+
+<div id="noteModal" class="inline-panel" hidden style="position:fixed; inset:0; margin:auto; max-width:560px; max-height:88vh; overflow:auto; height:fit-content; z-index:100; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <strong style="color:var(--dark);"><i class="fas fa-sticky-note" style="color:var(--primary);"></i> Notes · <span id="noteVa"></span></strong>
+  <p style="font-size:0.78rem; color:var(--text-light); margin:0.25rem 0 0.75rem;"><i class="fas fa-lock"></i> Only your team can see these.</p>
+  <div id="noteList" style="margin-bottom:0.75rem;"></div>
+  <div class="form-row-2">
+    <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Kind</label><select id="noteKind" class="form-control"><option value="general">General</option><option value="30-day">30-day review</option><option value="60-day">60-day review</option><option value="90-day">90-day review</option><option value="praise">Praise</option><option value="concern">Concern</option></select></div>
+    <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Date</label><input id="noteDate" type="date" class="form-control" /></div>
+  </div>
+  <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label">Note</label><textarea id="noteText" class="form-control form-textarea" style="min-height:90px;"></textarea></div>
+  <div style="display:flex; gap:0.5rem;"><button class="btn btn-primary btn-sm" id="noteSave"><i class="fas fa-check"></i> Add note</button><button class="btn btn-ghost btn-sm" id="noteClose">Close</button></div>
+</div>
+<div id="noteBackdrop" hidden style="position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:99;"></div>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  if (!client.notes) client.notes = {};
+  if (!client.past) client.past = [];
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+  const GUARANTEE_DAYS = 30;
+  let noteTarget = null;
+
+  const daysOn = t => Math.floor((Date.now() - t) / DAY_MS);
+  const noteKindColor = { 'general': '#4F46E5', '30-day': '#10B981', '60-day': '#10B981', '90-day': '#10B981', 'praise': '#F59E0B', 'concern': '#EF4444' };
+
+  function renderStats() {
+    const hires = client.hires;
+    const totalHours = hires.reduce((s, h) => s + (h.hoursWeek || 0), 0);
+    const totalCost = hires.reduce((s, h) => s + (h.hoursWeek || 0) * h.rate, 0);
+    const trials = client.trials.filter(t => t.status !== 'ended' && t.status !== 'done').length;
+    const stat = (label, num, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${num}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    $('teamStats').innerHTML =
+      stat('Active hires', hires.length, 'fa-user-check', '#4F46E5', 'on contract') +
+      stat('On trial', trials, 'fa-flask', '#10B981', 'running now') +
+      stat('Weekly hours', totalHours.toFixed(1), 'fa-clock', '#EC4899', 'this week combined') +
+      stat('Weekly cost', money(totalCost), 'fa-dollar-sign', '#F59E0B', 'at contract rates');
+  }
+
+  function hireCard(h) {
+    const va = vaById(h.vaId);
+    const days = daysOn(h.start);
+    const left = GUARANTEE_DAYS - days;
+    const notes = client.notes[h.vaId] || [];
+    return `
+      <div class="item-card">
+        <div class="item-head">
+          <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+          <div class="grow">
+            <h3>${esc(va.name)} ${va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''}</h3>
+            <p>${esc(h.role)} · $${h.rate}/hr · Day ${days} · Started ${fmtDay(h.start)}</p>
+            ${notes.length ? `<p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.25rem;"><i class="fas fa-sticky-note"></i> ${notes.length} note${notes.length === 1 ? '' : 's'} · last: <strong style="color:var(--dark);">${esc((notes[0].text || '').slice(0, 60))}${notes[0].text && notes[0].text.length > 60 ? '…' : ''}</strong></p>` : ''}
+          </div>
+          ${left > 0 ? `<span class="days-left">🛡️ ${left}d guarantee</span>` : '<span class="days-left out">Past guarantee</span>'}
+        </div>
+        <div class="item-meta">
+          <span>This week <strong>${(h.hoursWeek || 0)} hrs</strong></span>
+          <span>Cost <strong>${money((h.hoursWeek || 0) * h.rate)}</strong></span>
+          <span><i class="fas fa-circle" style="color:var(--success); font-size:0.5rem;"></i> Online today</span>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-outline-primary btn-sm" data-act="notes" data-id="${h.vaId}"><i class="fas fa-sticky-note"></i> Notes (${notes.length})</button>
+          <a href="timesheets?va=${h.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-clock"></i> Timesheets</a>
+          <a href="messages?as=client&to=${h.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
+          <a href="calendar?va=${h.vaId}&schedule=1" class="btn btn-ghost btn-sm"><i class="fas fa-calendar-plus"></i> Schedule 1:1</a>
+          <button class="btn btn-ghost btn-sm" data-act="offboard" data-id="${h.vaId}" style="color:var(--danger);"><i class="fas fa-door-open"></i> End contract</button>
+        </div>
+      </div>`;
+  }
+
+  function trialCard(t) {
+    const va = vaById(t.vaId);
+    return `
+      <div class="item-card">
+        <div class="item-head">
+          <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+          <div class="grow"><h3>${esc(va.name)}</h3><p>${esc(t.role)} · ${t.days} days × ${t.hours}h × $${t.rate}/hr</p></div>
+          <span class="status-pill ${t.status === 'in-progress' ? 'active' : 'pending'}">${t.status}</span>
+        </div>
+        <p class="item-quote">${esc(t.scope)}</p>
+        <div class="item-actions">
+          <a href="dashboard-client#trials" class="btn btn-outline-primary btn-sm"><i class="fas fa-flask"></i> Review on Overview</a>
+          <a href="messages?as=client&to=${t.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
+        </div>
+      </div>`;
+  }
+
+  function renderActive() {
+    $('activeView').innerHTML = client.hires.map(hireCard).join('') || '<div class="empty-state"><i class="fas fa-user-check"></i>No active hires yet. <a href="applicants" style="color:var(--primary); font-weight:600;">Review applicants</a></div>';
+  }
+  function renderTrials() {
+    const live = client.trials.filter(t => t.status !== 'ended');
+    $('trialsView').innerHTML = live.map(trialCard).join('') || '<div class="empty-state"><i class="fas fa-flask"></i>No trials in progress.</div>';
+  }
+  function renderPast() {
+    $('pastView').innerHTML = (client.past || []).length ? client.past.map(h => `
+      <div class="item-card dim">
+        <div class="item-head">
+          <img src="https://i.pravatar.cc/100?img=${vaById(h.vaId).img}" alt="" />
+          <div class="grow"><h3>${esc(vaById(h.vaId).name)}</h3><p>${esc(h.role)} · $${h.rate}/hr · ${fmtDay(h.start)} → ${fmtDay(h.end)}</p></div>
+          <span class="status-pill closed">Ended</span>
+        </div>
+        ${h.reason ? `<p class="item-quote">${esc(h.reason)}</p>` : ''}
+      </div>`).join('') : '<div class="empty-state"><i class="fas fa-history"></i>No past hires. Ended contracts show here with reason + notes.</div>';
+  }
+
+  function renderNotes() {
+    const list = client.notes[noteTarget] || [];
+    $('noteList').innerHTML = list.length ? list.map((n, i) => `
+      <div style="padding:0.6rem; border-left:3px solid ${noteKindColor[n.kind] || '#4F46E5'}; background:#F8FAFC; margin-bottom:0.5rem; border-radius:0.3rem;">
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-light); margin-bottom:0.25rem;"><strong style="color:var(--dark); text-transform:uppercase; letter-spacing:0.05em;">${esc(n.kind)}</strong><span>${fmtDay(n.t)} · <button class="btn btn-ghost btn-xs" style="padding:0; color:var(--danger);" data-noteact="del" data-i="${i}">delete</button></span></div>
+        <div style="font-size:0.875rem; color:var(--dark);">${esc(n.text)}</div>
+      </div>`).join('') : '<p style="font-size:0.8125rem; color:var(--text-light);">No notes yet. Add your first below.</p>';
+  }
+
+  function openNotes(vaId) {
+    noteTarget = vaId;
+    const va = vaById(vaId);
+    $('noteVa').textContent = va.name;
+    $('noteDate').value = new Date().toISOString().slice(0, 10);
+    $('noteKind').value = 'general';
+    $('noteText').value = '';
+    renderNotes();
+    $('noteModal').hidden = false; $('noteBackdrop').hidden = false;
+  }
+  const closeNotes = () => { $('noteModal').hidden = true; $('noteBackdrop').hidden = true; noteTarget = null; };
+
+  document.querySelectorAll('.how-tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.how-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    $('activeView').hidden = tab !== 'active';
+    $('trialsView').hidden = tab !== 'trials';
+    $('pastView').hidden = tab !== 'past';
+  }));
+
+  $('activeView').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'notes') { openNotes(id); return; }
+    if (btn.dataset.act === 'offboard') {
+      if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to end'; return; }
+      const h = client.hires.find(x => x.vaId === id);
+      client.hires = client.hires.filter(x => x.vaId !== id);
+      (client.past ||= []).unshift({ ...h, end: Date.now(), reason: 'Contract ended by client' });
+      save(); renderStats(); renderActive(); renderPast();
+      showToast(`Contract with ${vaById(id).name} ended.`);
+    }
+  });
+
+  $('noteSave').addEventListener('click', () => {
+    const text = $('noteText').value.trim();
+    if (!text || !noteTarget) return;
+    (client.notes[noteTarget] ||= []).unshift({ t: new Date($('noteDate').value || Date.now()).getTime(), kind: $('noteKind').value, text });
+    save(); renderNotes(); renderActive();
+    $('noteText').value = '';
+    showToast('Note added');
+  });
+  $('noteClose').addEventListener('click', closeNotes);
+  $('noteBackdrop').addEventListener('click', closeNotes);
+  $('noteList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-noteact]');
+    if (!btn || !noteTarget) return;
+    if (btn.dataset.noteact === 'del') {
+      client.notes[noteTarget].splice(Number(btn.dataset.i), 1);
+      save(); renderNotes(); renderActive();
+    }
+  });
+
+  renderStats(); renderActive(); renderTrials(); renderPast();
+</script>
+</body>
+</html>

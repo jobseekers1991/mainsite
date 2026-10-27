@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Talent Pool — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="talent"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Talent Pool</h1>
+    <p>Keep your favourite VAs within reach. Invite them to a new post in one click.</p>
+  </div>
+  <a href="find-vas" class="btn btn-primary"><i class="fas fa-search"></i> Browse VAs</a>
+</div>
+
+<div class="stat-card-grid" id="poolStats"></div>
+
+<div class="dash-card" style="margin:1.25rem 0; padding:1rem;">
+  <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+    <input type="text" id="searchPool" class="form-control" placeholder="Search by name, skill or location…" style="max-width:360px;" />
+    <select id="sortPool" class="filter-sel" style="margin-left:auto;">
+      <option value="recent">Sort: Recently saved</option>
+      <option value="rate">Sort: Lowest rate</option>
+      <option value="rating">Sort: Top rated</option>
+    </select>
+  </div>
+</div>
+
+<div id="poolList"></div>
+
+<div id="inviteModal" class="inline-panel" hidden style="position:fixed; inset:0; margin:auto; max-width:460px; height:fit-content; z-index:100; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <strong style="color:var(--dark);"><i class="fas fa-paper-plane" style="color:var(--primary);"></i> Invite <span id="inviteName"></span> to apply</strong>
+  <p style="font-size:0.8125rem; color:var(--text-light); margin:0.5rem 0 0.75rem;">They'll get a message with the job link. No application fee counts against their monthly cap.</p>
+  <div class="form-group" style="margin-bottom:0.75rem;">
+    <label class="form-label" for="inviteJob">Job post</label>
+    <select id="inviteJob" class="form-control"></select>
+  </div>
+  <div class="form-group" style="margin-bottom:0.75rem;">
+    <label class="form-label" for="inviteMsg">Message</label>
+    <textarea id="inviteMsg" class="form-control form-textarea" style="min-height:80px;"></textarea>
+  </div>
+  <div style="display:flex; gap:0.5rem;"><button class="btn btn-primary btn-sm" id="inviteSend"><i class="fas fa-paper-plane"></i> Send invite</button><button class="btn btn-ghost btn-sm" id="inviteCancel">Cancel</button></div>
+</div>
+<div id="inviteBackdrop" hidden style="position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:99;"></div>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+  let search = '';
+  let sort = 'recent';
+  let inviteTarget = null;
+
+  function renderStats() {
+    const pool = client.favorites || [];
+    const vas = pool.map(vaById).filter(Boolean);
+    const avgRate = vas.length ? Math.round(vas.reduce((s, v) => s + (v.rate || 0), 0) / vas.length) : 0;
+    const brownout = vas.filter(v => v.brownout).length;
+    const stat = (label, num, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${num}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    $('poolStats').innerHTML =
+      stat('Saved VAs', pool.length, 'fa-star', '#F59E0B', 'in your talent pool') +
+      stat('Average rate', pool.length ? '$' + avgRate + '/hr' : '—', 'fa-dollar-sign', '#10B981', 'blended across pool') +
+      stat('Brownout-ready', brownout, 'fa-bolt', '#EC4899', 'verified setup') +
+      stat('Open roles to invite to', client.jobs.filter(j => (j.status || 'Open') === 'Open').length, 'fa-briefcase', '#4F46E5', 'ready for invites');
+  }
+
+  function filtered() {
+    const q = search.trim().toLowerCase();
+    let vas = (client.favorites || []).map(vaById).filter(Boolean);
+    if (q) vas = vas.filter(v => (v.name + ' ' + (v.title || '') + ' ' + (v.location || '') + ' ' + (v.skills || []).join(' ')).toLowerCase().includes(q));
+    if (sort === 'rate') vas.sort((a, b) => (a.rate || 0) - (b.rate || 0));
+    else if (sort === 'rating') vas.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    return vas;
+  }
+
+  function renderList() {
+    const vas = filtered();
+    $('poolList').innerHTML = vas.map(va => `
+      <div class="item-card">
+        <div class="item-head">
+          <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+          <div class="grow">
+            <h3><a href="va-profile?id=${va.id}">${esc(va.name)}</a> ${va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''} ${va.rising ? '<span class="feat-badge rising"><i class="fas fa-seedling"></i> Rising</span>' : ''}</h3>
+            <p>${esc(va.title || 'Virtual Assistant')} · ${esc(va.location || '')} · ${va.reviews ? `${(va.rating || 0).toFixed(1)}★ (${va.reviews})` : 'New VA'}</p>
+            <div class="va-badges" style="margin:0.5rem 0 0;">
+              ${(va.certs || []).slice(0, 3).map(c => `<span class="feat-badge cert"><i class="fas fa-certificate"></i> ${esc(c)}</span>`).join('')}
+              ${(va.skills || []).slice(0, 4).map(s => `<span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(s)}</span>`).join('')}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:1.125rem; font-weight:800; color:var(--dark);">$${va.rate || 0}/hr</div>
+            <div style="font-size:0.72rem; color:var(--text-light);">${(va.shifts || []).slice(0, 2).map(s => SHIFT_LABELS[s]?.label.replace(' hours', '')).join(', ') || '—'}</div>
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-primary btn-sm" data-act="invite" data-id="${va.id}"><i class="fas fa-paper-plane"></i> Invite to apply</button>
+          <a href="messages?as=client&to=${va.id}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Message</a>
+          <a href="va-profile?id=${va.id}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i> View profile</a>
+          <button class="btn btn-ghost btn-sm" data-act="remove" data-id="${va.id}" style="color:var(--danger);"><i class="fas fa-star" style="opacity:0.5;"></i> Remove</button>
+        </div>
+      </div>`).join('') || `<div class="empty-state"><i class="fas fa-star"></i>No saved VAs yet. Click the star on any VA profile to save them. <a href="find-vas" style="color:var(--primary); font-weight:600;">Browse VAs</a></div>`;
+  }
+
+  function openInvite(vaId) {
+    inviteTarget = vaId;
+    const va = vaById(vaId);
+    $('inviteName').textContent = va.name;
+    $('inviteJob').innerHTML = client.jobs.filter(j => (j.status || 'Open') === 'Open').map(j => `<option value="${j.id}">${esc(j.title)}</option>`).join('') || '<option disabled>No open roles — post a job first</option>';
+    $('inviteMsg').value = `Hi ${va.name.split(' ')[0]} — I'm hiring for ${client.jobs[0] ? client.jobs[0].title : 'a new role'} and your profile stood out. Would you be open to applying?`;
+    $('inviteModal').hidden = false;
+    $('inviteBackdrop').hidden = false;
+  }
+  function closeInvite() { $('inviteModal').hidden = true; $('inviteBackdrop').hidden = true; inviteTarget = null; }
+
+  $('searchPool').addEventListener('input', e => { search = e.target.value; renderList(); });
+  $('sortPool').addEventListener('change', e => { sort = e.target.value; renderList(); });
+  $('inviteBackdrop').addEventListener('click', closeInvite);
+  $('inviteCancel').addEventListener('click', closeInvite);
+  $('inviteSend').addEventListener('click', () => {
+    if (!inviteTarget) return;
+    const va = vaById(inviteTarget);
+    const job = client.jobs.find(j => j.id === $('inviteJob').value);
+    if (!job) { closeInvite(); return; }
+    // Drop a seed applicant entry if they haven't applied yet
+    if (!client.applicants.some(a => a.vaId === va.id && a.jobId === job.id)) {
+      client.applicants.unshift({ vaId: va.id, jobId: job.id, status: 'new', rate: va.rate || 8, match: 80, date: Date.now(), cover: '(Invited by you)', answers: ['(To be answered)', '(To be answered)'], invited: true });
+    }
+    (client.notifications ||= []).unshift({ id: 'n' + Date.now(), kind: 'applicant', title: `Invite sent to ${va.name}`, body: `For ${job.title}`, link: `applicants?job=${job.id}`, t: Date.now(), read: false });
+    save();
+    showToast(`Invite sent to ${va.name} for ${job.title}`);
+    closeInvite();
+  });
+
+  $('poolList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'invite') { openInvite(id); return; }
+    if (btn.dataset.act === 'remove') {
+      client.favorites = (client.favorites || []).filter(v => v !== id);
+      save(); renderStats(); renderList();
+      showToast('Removed from Talent Pool');
+    }
+  });
+
+  renderStats(); renderList();
+</script>
+</body>
+</html>

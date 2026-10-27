@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interviews — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .cal-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:1px; background:var(--border); border-radius:0.75rem; overflow:hidden; }
+    .cal-cell { background:#fff; min-height:88px; padding:0.5rem; font-size:0.75rem; }
+    .cal-cell.other { background:#F8FAFC; color:var(--text-light); }
+    .cal-cell.today { background:rgba(79,70,229,0.05); }
+    .cal-head { background:#F1F5F9; text-align:center; padding:0.5rem; font-weight:700; font-size:0.72rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; }
+    .cal-event { display:block; margin-top:0.25rem; padding:0.2rem 0.4rem; border-radius:0.3rem; background:rgba(79,70,229,0.12); color:var(--primary); font-weight:600; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .cal-event.done { background:rgba(100,116,139,0.12); color:var(--text-light); }
+    .cal-day-num { font-weight:700; color:var(--dark); }
+  </style>
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="calendar"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Interviews</h1>
+    <p>Schedule calls, auto-generate a meeting link, and never miss a chat.</p>
+  </div>
+  <button class="btn btn-primary" id="schedBtn"><i class="fas fa-plus"></i> Schedule interview</button>
+</div>
+
+<div class="stat-card-grid" id="ivStats"></div>
+
+<div class="how-tabs-wrap" style="justify-content:flex-start; margin:1.5rem 0 1rem;">
+  <div class="how-tabs" style="background:#fff; flex-wrap:wrap;">
+    <button class="how-tab active" data-view="list"><i class="fas fa-list"></i> Upcoming</button>
+    <button class="how-tab" data-view="past"><i class="fas fa-history"></i> Past</button>
+    <button class="how-tab" data-view="month"><i class="fas fa-calendar"></i> Month view</button>
+  </div>
+</div>
+
+<div id="listView"></div>
+<div id="pastView" hidden></div>
+<div id="monthView" hidden>
+  <div class="dash-card" style="padding:1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <button class="btn btn-ghost btn-sm" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+      <strong id="monthLabel" style="font-size:1rem; color:var(--dark);"></strong>
+      <button class="btn btn-ghost btn-sm" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+</div>
+
+<div id="schedModal" class="inline-panel" hidden style="position:fixed; inset:0; margin:auto; max-width:460px; height:fit-content; z-index:100; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <strong style="color:var(--dark);"><i class="fas fa-calendar-plus" style="color:var(--primary);"></i> Schedule interview</strong>
+  <div class="form-group" style="margin:0.75rem 0 0.5rem;"><label class="form-label">Who</label><select id="schedVa" class="form-control"></select></div>
+  <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Job</label><select id="schedJob" class="form-control"></select></div>
+  <div class="form-row-2">
+    <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Date</label><input id="schedDate" type="date" class="form-control" /></div>
+    <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Time</label><input id="schedTime" type="time" class="form-control" /></div>
+  </div>
+  <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Duration</label><select id="schedDur" class="form-control"><option value="15">15 min</option><option value="20" selected>20 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
+  <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Platform</label><select id="schedLink" class="form-control"><option value="meet">Google Meet (auto)</option><option value="zoom">Zoom (auto)</option></select></div>
+  <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label">Notes</label><textarea id="schedNote" class="form-control form-textarea" style="min-height:60px;" placeholder="Topics to cover, prep links…"></textarea></div>
+  <div style="display:flex; gap:0.5rem;"><button class="btn btn-primary btn-sm" id="schedSave"><i class="fas fa-check"></i> Schedule &amp; send invite</button><button class="btn btn-ghost btn-sm" id="schedCancel">Cancel</button></div>
+</div>
+<div id="schedBackdrop" hidden style="position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:99;"></div>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  if (!client.interviews) client.interviews = [];
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+  let view = new URLSearchParams(location.search).get('schedule') ? 'list' : 'list';
+  let monthRef = new Date();
+  const presetVa = new URLSearchParams(location.search).get('va');
+  const presetJob = new URLSearchParams(location.search).get('job');
+
+  const fmtDate = t => new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const fmtTime = t => new Date(t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const genLink = p => p === 'zoom' ? `https://zoom.us/j/${Math.floor(Math.random() * 1e10)}` : `https://meet.google.com/${Math.random().toString(36).slice(2, 5)}-${Math.random().toString(36).slice(2, 6)}-${Math.random().toString(36).slice(2, 5)}`;
+
+  function renderStats() {
+    const upcoming = client.interviews.filter(iv => iv.status === 'upcoming');
+    const today = upcoming.filter(iv => new Date(iv.when).toDateString() === new Date().toDateString()).length;
+    const thisWeek = upcoming.filter(iv => iv.when - Date.now() < 7 * DAY_MS).length;
+    const past = client.interviews.filter(iv => iv.status === 'done').length;
+    const stat = (label, num, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${num}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    $('ivStats').innerHTML =
+      stat('Today', today, 'fa-calendar-day', '#4F46E5', today ? 'be ready' : 'nothing scheduled') +
+      stat('This week', thisWeek, 'fa-calendar-week', '#EC4899', 'upcoming calls') +
+      stat('Upcoming total', upcoming.length, 'fa-video', '#10B981', 'in your pipeline') +
+      stat('Completed', past, 'fa-check-circle', '#F59E0B', 'this period');
+  }
+
+  function card(iv) {
+    const va = vaById(iv.vaId);
+    const job = client.jobs.find(j => j.id === iv.jobId);
+    const soon = iv.when - Date.now();
+    const soonLabel = soon > 0 && soon < DAY_MS ? `in ${Math.round(soon / 3600000)}h` : soon > 0 ? `in ${Math.ceil(soon / DAY_MS)}d` : '';
+    return `
+      <div class="item-card${iv.status === 'done' ? ' dim' : ''}">
+        <div class="item-head">
+          <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+          <div class="grow">
+            <h3>${esc(va.name)} <span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(job ? job.title : '—')}</span></h3>
+            <p><i class="fas fa-calendar-alt"></i> ${fmtDate(iv.when)} at ${fmtTime(iv.when)} · ${iv.duration} min ${soonLabel ? `· <strong style="color:var(--primary);">${soonLabel}</strong>` : ''}</p>
+            ${iv.note ? `<p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.25rem;"><i class="fas fa-sticky-note"></i> ${esc(iv.note)}</p>` : ''}
+          </div>
+          <span class="status-pill ${iv.status === 'upcoming' ? 'pending' : 'closed'}">${iv.status}</span>
+        </div>
+        <div class="item-actions">
+          ${iv.status === 'upcoming' ? `<a href="${iv.link}" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-video"></i> Join call</a>` : ''}
+          <a href="messages?as=client&to=${iv.vaId}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Message</a>
+          ${iv.status === 'upcoming' ? `<button class="btn btn-ghost btn-sm" data-act="done" data-id="${iv.id}"><i class="fas fa-check"></i> Mark done</button>` : ''}
+          ${iv.status === 'upcoming' ? `<button class="btn btn-ghost btn-sm" data-act="cancel" data-id="${iv.id}" style="color:var(--danger);"><i class="fas fa-times"></i> Cancel</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function renderList() {
+    const list = client.interviews.filter(iv => iv.status === 'upcoming').sort((a, b) => a.when - b.when);
+    $('listView').innerHTML = list.map(card).join('') || '<div class="empty-state"><i class="fas fa-calendar-plus"></i>No interviews yet. Click "Schedule interview" above.</div>';
+  }
+  function renderPast() {
+    const list = client.interviews.filter(iv => iv.status === 'done').sort((a, b) => b.when - a.when);
+    $('pastView').innerHTML = list.map(card).join('') || '<div class="empty-state"><i class="fas fa-history"></i>No past interviews yet.</div>';
+  }
+
+  function renderMonth() {
+    const ref = monthRef;
+    $('monthLabel').textContent = ref.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const first = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    const start = new Date(first);
+    start.setDate(1 - first.getDay());
+    const todayStr = new Date().toDateString();
+    const cells = [];
+    const heads = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-head">${d}</div>`).join('');
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const other = d.getMonth() !== ref.getMonth() ? ' other' : '';
+      const today = d.toDateString() === todayStr ? ' today' : '';
+      const events = client.interviews.filter(iv => new Date(iv.when).toDateString() === d.toDateString());
+      cells.push(`<div class="cal-cell${other}${today}"><div class="cal-day-num">${d.getDate()}</div>${events.map(iv => `<span class="cal-event ${iv.status === 'done' ? 'done' : ''}" title="${esc(vaById(iv.vaId).name)} · ${fmtTime(iv.when)}">${fmtTime(iv.when)} ${esc(vaById(iv.vaId).name.split(' ')[0])}</span>`).join('')}</div>`);
+    }
+    $('calGrid').innerHTML = heads + cells.join('');
+  }
+
+  function renderAll() { renderStats(); renderList(); renderPast(); renderMonth(); }
+
+  document.querySelectorAll('.how-tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.how-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    view = t.dataset.view;
+    $('listView').hidden = view !== 'list';
+    $('pastView').hidden = view !== 'past';
+    $('monthView').hidden = view !== 'month';
+  }));
+
+  $('prevMonth').addEventListener('click', () => { monthRef = new Date(monthRef.getFullYear(), monthRef.getMonth() - 1, 1); renderMonth(); });
+  $('nextMonth').addEventListener('click', () => { monthRef = new Date(monthRef.getFullYear(), monthRef.getMonth() + 1, 1); renderMonth(); });
+
+  // Schedule modal
+  function openSched(preVa, preJob) {
+    const vas = [...new Set([...client.applicants.map(a => a.vaId), ...(client.favorites || []), ...client.hires.map(h => h.vaId)])].map(vaById).filter(Boolean);
+    $('schedVa').innerHTML = vas.map(v => `<option value="${v.id}"${v.id === preVa ? ' selected' : ''}>${esc(v.name)} — ${esc(v.title || 'VA')}</option>`).join('');
+    $('schedJob').innerHTML = client.jobs.map(j => `<option value="${j.id}"${j.id === preJob ? ' selected' : ''}>${esc(j.title)}</option>`).join('');
+    const tomorrow = new Date(Date.now() + DAY_MS);
+    $('schedDate').value = tomorrow.toISOString().slice(0, 10);
+    $('schedTime').value = '10:00';
+    $('schedNote').value = '';
+    $('schedModal').hidden = false;
+    $('schedBackdrop').hidden = false;
+  }
+  const closeSched = () => { $('schedModal').hidden = true; $('schedBackdrop').hidden = true; };
+  $('schedBtn').addEventListener('click', () => openSched());
+  $('schedCancel').addEventListener('click', closeSched);
+  $('schedBackdrop').addEventListener('click', closeSched);
+  $('schedSave').addEventListener('click', () => {
+    const when = new Date(`${$('schedDate').value}T${$('schedTime').value}`).getTime();
+    if (!when) return;
+    const iv = { id: 'iv' + Date.now(), vaId: $('schedVa').value, jobId: $('schedJob').value, when, duration: Number($('schedDur').value), link: genLink($('schedLink').value), note: $('schedNote').value.trim(), status: 'upcoming' };
+    client.interviews.unshift(iv);
+    (client.notifications ||= []).unshift({ id: 'n' + Date.now(), kind: 'interview', title: `Interview scheduled with ${vaById(iv.vaId).name}`, body: `${fmtDate(iv.when)} at ${fmtTime(iv.when)} · ${iv.duration} min`, link: 'calendar', t: Date.now(), read: false });
+    save();
+    showToast(`Interview scheduled. ${vaById(iv.vaId).name} will get the invite with the meeting link.`);
+    closeSched();
+    renderAll();
+  });
+
+  document.querySelector('.dash-content').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const iv = client.interviews.find(x => x.id === btn.dataset.id);
+    if (!iv) return;
+    if (btn.dataset.act === 'done') { iv.status = 'done'; showToast('Interview marked as done'); }
+    if (btn.dataset.act === 'cancel') {
+      if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to cancel'; return; }
+      client.interviews = client.interviews.filter(x => x.id !== iv.id);
+      showToast('Interview cancelled');
+    }
+    save(); renderAll();
+  });
+
+  renderAll();
+  // Auto-open scheduler if ?schedule=1 or ?va=
+  if (new URLSearchParams(location.search).get('schedule') || presetVa) openSched(presetVa, presetJob);
+</script>
+</body>
+</html>

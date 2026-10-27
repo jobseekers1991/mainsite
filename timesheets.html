@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timesheets — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="timesheets"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Timesheets</h1>
+    <p>Review hours day by day. Approving locks them for the next invoice.</p>
+  </div>
+  <div style="display:flex; gap:0.5rem;">
+    <button class="btn btn-outline-primary" id="approveAll"><i class="fas fa-check-double"></i> Approve all pending</button>
+  </div>
+</div>
+
+<div class="stat-card-grid" id="tsStats"></div>
+
+<div class="dash-card" style="margin:1.25rem 0; padding:1rem;">
+  <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+    <label class="form-label" style="margin:0;">VA</label>
+    <select id="vaSel" class="form-control" style="max-width:260px;"></select>
+    <label class="form-label" style="margin:0;">Period</label>
+    <select id="periodSel" class="form-control" style="max-width:200px;">
+      <option value="7">Last 7 days</option>
+      <option value="14">Last 14 days</option>
+      <option value="30">Last 30 days</option>
+      <option value="all">All</option>
+    </select>
+    <select id="filterSel" class="filter-sel" style="margin-left:auto;">
+      <option value="all">All entries</option>
+      <option value="pending">Pending only</option>
+      <option value="approved">Approved only</option>
+    </select>
+  </div>
+</div>
+
+<div id="weekSummary"></div>
+<div class="dash-card" style="margin-top:1rem;"><div class="table-responsive"><table class="dash-table" style="width:100%;"><thead><tr><th>Day</th><th>VA</th><th style="text-align:right;">Hours</th><th>Note</th><th>Status</th><th></th></tr></thead><tbody id="tsBody"></tbody></table></div></div>
+
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  if (!client.timesheets) client.timesheets = [];
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+  let vaFilter = 'all';
+  let period = 7;
+  let filter = 'all';
+
+  // VA selector populates from everyone with a timesheet or hire
+  const vaIds = [...new Set([...client.hires.map(h => h.vaId), ...client.timesheets.map(t => t.vaId)])];
+
+  function renderStats() {
+    const pending = client.timesheets.filter(t => t.approved === null);
+    const pendingHours = pending.reduce((s, t) => s + t.hours, 0);
+    const weekHours = client.timesheets.filter(t => Date.now() - t.day < 7 * DAY_MS).reduce((s, t) => s + t.hours, 0);
+    const weekCost = client.timesheets.filter(t => Date.now() - t.day < 7 * DAY_MS).reduce((s, t) => {
+      const h = client.hires.find(h => h.vaId === t.vaId);
+      return s + t.hours * (h ? h.rate : 0);
+    }, 0);
+    const stat = (label, num, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${num}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    $('tsStats').innerHTML =
+      stat('Pending approval', pending.length, 'fa-hourglass-half', '#F59E0B', `${pendingHours.toFixed(1)} hrs waiting`) +
+      stat('Hours this week', weekHours.toFixed(1), 'fa-clock', '#4F46E5', 'across your team') +
+      stat('Cost this week', money(weekCost), 'fa-dollar-sign', '#10B981', 'at contract rates') +
+      stat('Active VAs', client.hires.length, 'fa-user-check', '#EC4899', 'logging time');
+  }
+
+  function renderControls() {
+    $('vaSel').innerHTML = '<option value="all">All VAs</option>' + vaIds.map(id => `<option value="${id}">${esc(vaById(id).name)}</option>`).join('');
+    $('vaSel').value = vaFilter;
+    $('periodSel').value = String(period);
+    $('filterSel').value = filter;
+  }
+
+  function filtered() {
+    return client.timesheets.filter(t => {
+      if (vaFilter !== 'all' && t.vaId !== vaFilter) return false;
+      if (period !== 'all' && Date.now() - t.day > Number(period) * DAY_MS) return false;
+      if (filter === 'pending' && t.approved !== null) return false;
+      if (filter === 'approved' && t.approved !== true) return false;
+      return true;
+    }).sort((a, b) => b.day - a.day);
+  }
+
+  function renderWeekSummary() {
+    if (vaFilter === 'all') { $('weekSummary').innerHTML = ''; return; }
+    const va = vaById(vaFilter);
+    const hire = client.hires.find(h => h.vaId === vaFilter);
+    const list = client.timesheets.filter(t => t.vaId === vaFilter && Date.now() - t.day < 7 * DAY_MS);
+    const total = list.reduce((s, t) => s + t.hours, 0);
+    const cost = total * (hire ? hire.rate : 0);
+    const target = hire ? hire.hoursWeek : 40;
+    const pct = Math.min(100, (total / target) * 100);
+    $('weekSummary').innerHTML = `
+      <div class="dash-card" style="padding:1rem; margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <img src="https://i.pravatar.cc/80?img=${va.img}" alt="" style="width:48px; height:48px; border-radius:50%;" />
+            <div><strong style="color:var(--dark);">${esc(va.name)}</strong><div style="font-size:0.8125rem; color:var(--text-light);">${hire ? esc(hire.role) + ' · $' + hire.rate + '/hr' : 'No active contract'}</div></div>
+          </div>
+          <div style="text-align:right;"><div style="font-size:1.25rem; font-weight:800; color:var(--dark);">${total.toFixed(1)} / ${target} hrs</div><div style="font-size:0.8125rem; color:var(--text-light);">${money(cost)} this week</div></div>
+        </div>
+        <div class="progress-bar" style="margin-top:0.75rem;"><div class="progress-fill" style="width:${pct}%; background:${pct > 100 ? 'var(--danger)' : 'var(--primary)'};"></div></div>
+        ${total > target ? `<p style="font-size:0.78rem; color:var(--danger); margin-top:0.4rem;"><i class="fas fa-exclamation-triangle"></i> Over contract hours by ${(total - target).toFixed(1)}. Approve carefully.</p>` : ''}
+      </div>`;
+  }
+
+  function renderTable() {
+    const list = filtered();
+    $('tsBody').innerHTML = list.map((t, i) => {
+      const va = vaById(t.vaId);
+      const hire = client.hires.find(h => h.vaId === t.vaId);
+      const idx = client.timesheets.indexOf(t);
+      const pill = t.approved === true ? '<span class="status-pill hired">Approved</span>' : t.approved === false ? '<span class="status-pill rejected">Disputed</span>' : '<span class="status-pill pending">Pending</span>';
+      return `<tr>
+        <td style="white-space:nowrap;">${new Date(t.day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
+        <td>${esc(va.name)}${hire ? ` <span style="font-size:0.72rem; color:var(--text-light);">· $${hire.rate}/hr</span>` : ''}</td>
+        <td style="text-align:right; font-weight:700;">${t.hours.toFixed(1)}</td>
+        <td style="color:var(--text-light); font-size:0.85rem;">${esc(t.note || '')}</td>
+        <td>${pill}</td>
+        <td style="text-align:right; white-space:nowrap;">${t.approved === null ? `<button class="btn btn-primary btn-xs" data-act="approve" data-i="${idx}">Approve</button> <button class="btn btn-ghost btn-xs" data-act="dispute" data-i="${idx}">Dispute</button>` : t.approved === false ? `<button class="btn btn-ghost btn-xs" data-act="reset" data-i="${idx}">Reset</button>` : ''}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--text-light); padding:1.5rem;">No entries for this view</td></tr>';
+  }
+
+  function renderAll() { renderStats(); renderControls(); renderWeekSummary(); renderTable(); }
+
+  $('vaSel').addEventListener('change', e => { vaFilter = e.target.value; renderWeekSummary(); renderTable(); });
+  $('periodSel').addEventListener('change', e => { period = e.target.value === 'all' ? 'all' : Number(e.target.value); renderTable(); });
+  $('filterSel').addEventListener('change', e => { filter = e.target.value; renderTable(); });
+
+  $('approveAll').addEventListener('click', () => {
+    const pending = client.timesheets.filter(t => t.approved === null);
+    if (!pending.length) { showToast('Nothing pending'); return; }
+    pending.forEach(t => t.approved = true);
+    save(); renderAll();
+    showToast(`${pending.length} entries approved`);
+  });
+
+  $('tsBody').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    const t = client.timesheets[i];
+    if (btn.dataset.act === 'approve') { t.approved = true; showToast('Approved'); }
+    if (btn.dataset.act === 'dispute') { t.approved = false; showToast('Flagged for the VA to adjust'); }
+    if (btn.dataset.act === 'reset') { t.approved = null; }
+    save(); renderAll();
+  });
+
+  renderAll();
+</script>
+</body>
+</html>

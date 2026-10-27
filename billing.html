@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Billing &amp; Payments — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="billing"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header">
+  <h1>Billing &amp; Payments</h1>
+  <p>Payment methods, autopay rules, and your monthly spend cap.</p>
+</div>
+
+<div class="stat-card-grid" id="billStats"></div>
+
+<h2 class="dash-section-title"><i class="fas fa-credit-card" style="color:var(--primary);"></i> Payment methods</h2>
+<div id="methodList"></div>
+<button class="btn btn-outline-primary btn-sm" id="addCard" style="margin-top:0.5rem;"><i class="fas fa-plus"></i> Add payment method</button>
+
+<h2 class="dash-section-title" style="margin-top:1.5rem;"><i class="fas fa-robot" style="color:var(--secondary);"></i> Autopay &amp; limits</h2>
+<div class="dash-card" style="padding:1rem;">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+    <div style="flex:1; min-width:220px;">
+      <strong style="color:var(--dark);">Autopay invoices</strong>
+      <p style="font-size:0.8125rem; color:var(--text-light); margin:0.25rem 0 0;">Approved invoices auto-release after your review window.</p>
+    </div>
+    <label class="switch"><input type="checkbox" id="autopayToggle" /><span class="slider"></span></label>
+  </div>
+  <div class="form-group" style="margin:1rem 0 0;">
+    <label class="form-label">Hold invoices for review (days)</label>
+    <input type="range" id="autopayDays" min="0" max="10" step="1" />
+    <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-light); margin-top:0.25rem;"><span>0 (instant)</span><span id="autopayDaysLbl" style="font-weight:700; color:var(--dark);"></span><span>10 days</span></div>
+  </div>
+  <div class="form-group" style="margin:1rem 0 0;">
+    <label class="form-label">Monthly spend cap</label>
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <span style="font-weight:700; color:var(--text-light);">$</span>
+      <input type="number" id="monthlyCap" class="form-control" style="max-width:180px;" min="0" step="100" />
+      <span style="font-size:0.8125rem; color:var(--text-light);">Pauses autopay once hit this month</span>
+    </div>
+  </div>
+  <div id="capBar" style="margin-top:0.75rem;"></div>
+  <div style="margin-top:1rem;"><button class="btn btn-primary btn-sm" id="saveBilling"><i class="fas fa-check"></i> Save changes</button></div>
+</div>
+
+<h2 class="dash-section-title" style="margin-top:1.5rem;"><i class="fas fa-receipt" style="color:var(--accent);"></i> Recent charges</h2>
+<div class="dash-card"><div class="table-responsive"><table class="dash-table" style="width:100%;"><thead><tr><th>Date</th><th>Description</th><th>Method</th><th style="text-align:right;">Amount</th></tr></thead><tbody id="historyBody"></tbody></table></div></div>
+
+<div id="cardModal" class="inline-panel" hidden style="position:fixed; inset:0; margin:auto; max-width:440px; height:fit-content; z-index:100; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <strong style="color:var(--dark);"><i class="fas fa-credit-card" style="color:var(--primary);"></i> Add payment method</strong>
+  <p style="font-size:0.78rem; color:var(--text-light); margin:0.25rem 0 0.75rem;"><i class="fas fa-lock"></i> Processed securely by Stripe. Demo card: 4242 4242 4242 4242.</p>
+  <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Card number</label><input id="cardNum" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" /></div>
+  <div class="form-row-2">
+    <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Expiry</label><input id="cardExp" class="form-control" placeholder="MM/YYYY" /></div>
+    <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">CVC</label><input id="cardCvc" class="form-control" placeholder="123" maxlength="4" /></div>
+  </div>
+  <div style="display:flex; gap:0.5rem; margin-top:0.5rem;"><button class="btn btn-primary btn-sm" id="cardSave"><i class="fas fa-plus"></i> Add card</button><button class="btn btn-ghost btn-sm" id="cardCancel">Cancel</button></div>
+</div>
+<div id="cardBackdrop" hidden style="position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:99;"></div>
+
+<style>
+  .switch { position:relative; display:inline-block; width:48px; height:26px; }
+  .switch input { opacity:0; width:0; height:0; }
+  .slider { position:absolute; cursor:pointer; inset:0; background:#CBD5E1; border-radius:999px; transition:0.2s; }
+  .slider:before { position:absolute; content:""; height:20px; width:20px; left:3px; top:3px; background:white; border-radius:50%; transition:0.2s; }
+  .switch input:checked + .slider { background:var(--primary); }
+  .switch input:checked + .slider:before { transform:translateX(22px); }
+  .pay-card { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem; background:#fff; border:1px solid var(--border); border-radius:0.75rem; margin-bottom:0.5rem; }
+  .pay-card.default { border-color:var(--primary); background:rgba(79,70,229,0.03); }
+</style>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  if (!client.billing) client.billing = { methods: [], autopay: true, autopayAfterDays: 5, cap: 3000, cycle: 'weekly', history: [] };
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+
+  function renderStats() {
+    const monthSpend = (client.billing.history || []).filter(h => Date.now() - h.t < 30 * DAY_MS).reduce((s, h) => s + h.amount, 0);
+    const pending = client.invoices.filter(i => i.status === 'due').reduce((s, i) => s + i.hours * i.rate, 0);
+    const defaultMethod = client.billing.methods.find(m => m.default);
+    const stat = (label, num, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${num}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    $('billStats').innerHTML =
+      stat('Spent this month', money(monthSpend), 'fa-dollar-sign', '#4F46E5', `cap ${money(client.billing.cap)}`) +
+      stat('Awaiting approval', money(pending), 'fa-hourglass-half', '#F59E0B', `${client.invoices.filter(i => i.status === 'due').length} invoices`) +
+      stat('Autopay', client.billing.autopay ? 'ON' : 'OFF', 'fa-robot', '#10B981', client.billing.autopay ? `after ${client.billing.autopayAfterDays}d review` : 'manual only') +
+      stat('Default card', defaultMethod ? defaultMethod.brand + ' •' + defaultMethod.last4 : '—', 'fa-credit-card', '#EC4899', defaultMethod ? 'exp ' + defaultMethod.expiry : 'add one');
+  }
+
+  function renderMethods() {
+    $('methodList').innerHTML = client.billing.methods.map(m => `
+      <div class="pay-card${m.default ? ' default' : ''}">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <i class="fab fa-cc-${m.brand.toLowerCase()}" style="font-size:1.75rem; color:var(--primary);"></i>
+          <div><strong style="color:var(--dark);">${esc(m.brand)} •${m.last4}</strong><div style="font-size:0.78rem; color:var(--text-light);">Expires ${esc(m.expiry)}${m.default ? ' · Default' : ''}</div></div>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          ${m.default ? '' : `<button class="btn btn-ghost btn-sm" data-act="default" data-id="${m.id}">Make default</button>`}
+          <button class="btn btn-ghost btn-sm" data-act="remove" data-id="${m.id}" style="color:var(--danger);">Remove</button>
+        </div>
+      </div>`).join('') || '<div class="empty-state" style="padding:1rem;"><i class="fas fa-credit-card"></i>No payment methods. Add one to enable autopay.</div>';
+  }
+
+  function renderAutopayForm() {
+    $('autopayToggle').checked = !!client.billing.autopay;
+    $('autopayDays').value = client.billing.autopayAfterDays;
+    $('autopayDaysLbl').textContent = client.billing.autopayAfterDays + ' days';
+    $('monthlyCap').value = client.billing.cap;
+    renderCapBar();
+  }
+
+  function renderCapBar() {
+    const spend = (client.billing.history || []).filter(h => Date.now() - h.t < 30 * DAY_MS).reduce((s, h) => s + h.amount, 0);
+    const pct = Math.min(100, (spend / client.billing.cap) * 100);
+    $('capBar').innerHTML = `<div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-light); margin-bottom:0.25rem;"><span>Cap usage</span><strong style="color:${pct > 85 ? 'var(--danger)' : 'var(--dark)'};">${money(spend)} of ${money(client.billing.cap)}</strong></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%; background:${pct > 85 ? 'var(--danger)' : 'var(--primary)'};"></div></div>`;
+  }
+
+  function renderHistory() {
+    $('historyBody').innerHTML = (client.billing.history || []).map(h => `<tr><td style="white-space:nowrap;">${fmtDay(h.t)}</td><td>${esc(h.desc)}</td><td style="color:var(--text-light);">${esc(h.method)}</td><td style="text-align:right; font-weight:700;">${money(h.amount)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center; color:var(--text-light); padding:1rem;">No charges yet.</td></tr>';
+  }
+
+  function renderAll() { renderStats(); renderMethods(); renderAutopayForm(); renderHistory(); }
+
+  $('autopayDays').addEventListener('input', e => { $('autopayDaysLbl').textContent = e.target.value + ' days'; });
+  $('saveBilling').addEventListener('click', () => {
+    client.billing.autopay = $('autopayToggle').checked;
+    client.billing.autopayAfterDays = Number($('autopayDays').value);
+    client.billing.cap = Number($('monthlyCap').value) || 0;
+    save(); renderStats(); renderCapBar();
+    showToast('Billing settings saved');
+  });
+
+  // Add card modal
+  $('addCard').addEventListener('click', () => {
+    $('cardNum').value = ''; $('cardExp').value = ''; $('cardCvc').value = '';
+    $('cardModal').hidden = false; $('cardBackdrop').hidden = false;
+  });
+  const closeCard = () => { $('cardModal').hidden = true; $('cardBackdrop').hidden = true; };
+  $('cardCancel').addEventListener('click', closeCard);
+  $('cardBackdrop').addEventListener('click', closeCard);
+  $('cardSave').addEventListener('click', () => {
+    const num = $('cardNum').value.replace(/\s/g, '');
+    if (num.length < 15) { $('cardNum').style.borderColor = 'var(--danger)'; return; }
+    const first = num[0];
+    const brand = first === '4' ? 'Visa' : first === '5' ? 'Mastercard' : first === '3' ? 'Amex' : 'Visa';
+    client.billing.methods.push({ id: 'pm' + Date.now().toString(36), brand, last4: num.slice(-4), expiry: $('cardExp').value || '—', default: client.billing.methods.length === 0 });
+    save(); renderMethods(); renderStats(); closeCard();
+    showToast('Payment method added');
+  });
+
+  $('methodList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'default') {
+      client.billing.methods.forEach(m => m.default = m.id === id);
+      save(); renderMethods(); renderStats();
+      showToast('Default payment method updated');
+    }
+    if (btn.dataset.act === 'remove') {
+      if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = 'Click again to confirm'; return; }
+      const wasDefault = client.billing.methods.find(m => m.id === id)?.default;
+      client.billing.methods = client.billing.methods.filter(m => m.id !== id);
+      if (wasDefault && client.billing.methods[0]) client.billing.methods[0].default = true;
+      save(); renderMethods(); renderStats();
+      showToast('Removed');
+    }
+  });
+
+  renderAll();
+</script>
+</body>
+</html>

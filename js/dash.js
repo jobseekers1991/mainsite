@@ -31,15 +31,26 @@ const DASH_ROLES = {
     nav: [
       ['Hiring'],
       ['overview', 'dashboard-client', 'fa-th-large', 'Overview'],
-      ['applicants', 'applicants', 'fa-user-friends', 'Jobs &amp; Applicants', 'applicants'],
+      ['myjobs', 'my-jobs', 'fa-briefcase', 'My Job Posts', 'openjobs'],
+      ['applicants', 'applicants', 'fa-user-friends', 'Applicants', 'applicants'],
+      ['talent', 'talent-pool', 'fa-star', 'Talent Pool'],
+      ['calendar', 'calendar', 'fa-calendar-alt', 'Interviews', 'interviews'],
       ['messages', 'messages?as=client', 'fa-comments', 'Messages', 'msgs'],
       ['post', 'post-job', 'fa-plus-circle', 'Post a Job'],
+      ['templates', 'templates', 'fa-copy', 'Templates'],
       ['match', 'ai-match', 'fa-magic', 'AI Match'],
       ['Team'],
-      ['hires', 'dashboard-client#hires', 'fa-user-check', 'Hires &amp; Trials'],
-      ['invoices', 'dashboard-client#invoices', 'fa-file-invoice-dollar', 'Invoices', 'invoices'],
+      ['team', 'team', 'fa-users', 'Team'],
+      ['timesheets', 'timesheets', 'fa-clock', 'Timesheets', 'timesheets'],
       ['guarantee', 'dashboard-client#guarantee', 'fa-sync-alt', 'Replacement Guarantee'],
       ['compliance', 'compliance', 'fa-file-signature', 'Contracts &amp; NDAs'],
+      ['Billing'],
+      ['invoices', 'invoices', 'fa-file-invoice-dollar', 'Invoices', 'invoices'],
+      ['billing', 'billing', 'fa-credit-card', 'Billing &amp; Payments'],
+      ['reports', 'reports', 'fa-chart-line', 'Spend Reports'],
+      ['Account'],
+      ['notifications', 'notifications', 'fa-bell', 'Notifications', 'notifs'],
+      ['settings', 'settings', 'fa-cog', 'Settings'],
     ],
   },
   admin: {
@@ -65,8 +76,12 @@ function dashBadges(roleKey) {
     const c = Store.get('jsph-client', seedClient);
     return {
       msgs: unread(Store.get('jsph-threads-client', () => seedThreads('client'))),
+      openjobs: c.jobs.filter(j => (j.status || 'Open') === 'Open').length,
       applicants: c.applicants.filter(a => a.status === 'new').length,
+      interviews: (c.interviews || []).filter(iv => iv.status === 'upcoming').length,
+      timesheets: (c.timesheets || []).filter(t => t.approved === null).length,
       invoices: c.invoices.filter(i => i.status === 'due').length,
+      notifs: (c.notifications || []).filter(n => !n.read).length,
     };
   }
   if (roleKey === 'admin') {

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Templates — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="templates"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Job Templates</h1>
+    <p>Save a role once and spin up new posts in seconds. Screening questions carry over.</p>
+  </div>
+  <button class="btn btn-primary" id="newTplBtn"><i class="fas fa-plus"></i> New template</button>
+</div>
+
+<div id="tplList"></div>
+
+<div id="tplModal" class="inline-panel" hidden style="position:fixed; inset:0; margin:auto; max-width:560px; max-height:88vh; overflow:auto; height:fit-content; z-index:100; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <strong style="color:var(--dark);"><i class="fas fa-copy" style="color:var(--primary);"></i> <span id="tplModalTitle">New template</span></strong>
+  <input type="hidden" id="tplId" />
+  <div class="form-group" style="margin:0.75rem 0 0.5rem;"><label class="form-label">Title</label><input id="tplTitle" class="form-control" placeholder="e.g. Executive VA (US night shift)" /></div>
+  <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Summary</label><textarea id="tplSummary" class="form-control form-textarea" style="min-height:70px;" placeholder="One paragraph the VA will read first"></textarea></div>
+  <div class="form-row-2">
+    <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Rate band</label><input id="tplRate" class="form-control" placeholder="e.g. $6–$10/hr" /></div>
+    <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Shift</label><select id="tplShift" class="form-control"><option value="us-east">US Eastern</option><option value="us-west">US Pacific</option><option value="uk">UK</option><option value="au">AU</option><option value="ph">PH / Flex</option></select></div>
+  </div>
+  <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Must-have skills (comma separated)</label><input id="tplSkills" class="form-control" placeholder="Calendar, Email, HubSpot" /></div>
+  <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label">Screening questions (one per line)</label><textarea id="tplScreening" class="form-control form-textarea" style="min-height:90px;" placeholder="Describe your calendar system.&#10;Backup plan during brownouts?"></textarea></div>
+  <div style="display:flex; gap:0.5rem;"><button class="btn btn-primary btn-sm" id="tplSave"><i class="fas fa-save"></i> Save template</button><button class="btn btn-ghost btn-sm" id="tplCancel">Cancel</button></div>
+</div>
+<div id="tplBackdrop" hidden style="position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:99;"></div>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  if (!client.templates) client.templates = [];
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+
+  function render() {
+    $('tplList').innerHTML = client.templates.map(t => {
+      const shift = SHIFT_LABELS[t.shift] || { label: '—', icon: 'fa-clock' };
+      return `
+        <div class="item-card">
+          <div class="item-head">
+            <div class="job-logo" style="background:rgba(79,70,229,0.08); width:48px; height:48px; font-size:1.25rem;"><i class="fas fa-copy" style="color:var(--primary);"></i></div>
+            <div class="grow">
+              <h3>${esc(t.title)}</h3>
+              <p>${esc(t.rate || '—')} · <i class="fas ${shift.icon}"></i> ${shift.label} · Used ${t.used || 0}×</p>
+              ${t.summary ? `<p class="item-quote" style="margin-top:0.5rem;">${esc(t.summary)}</p>` : ''}
+            </div>
+          </div>
+          ${(t.skills || []).length ? `<div class="item-meta" style="flex-wrap:wrap;">${t.skills.map(s => `<span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(s)}</span>`).join('')}</div>` : ''}
+          ${(t.screening || []).length ? `<details style="margin-top:0.5rem; font-size:0.85rem;"><summary style="cursor:pointer; color:var(--primary); font-weight:600;">${t.screening.length} screening question${t.screening.length === 1 ? '' : 's'}</summary>${t.screening.map(q => `<p style="margin-top:0.4rem; color:var(--text-light);">• ${esc(q)}</p>`).join('')}</details>` : ''}
+          <div class="item-actions">
+            <a href="post-job?tpl=${t.id}" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i> Post from template</a>
+            <button class="btn btn-outline-primary btn-sm" data-act="edit" data-id="${t.id}"><i class="fas fa-edit"></i> Edit</button>
+            <button class="btn btn-ghost btn-sm" data-act="duplicate" data-id="${t.id}"><i class="fas fa-clone"></i> Duplicate</button>
+            <button class="btn btn-ghost btn-sm" data-act="delete" data-id="${t.id}" style="color:var(--danger);"><i class="fas fa-trash"></i> Delete</button>
+          </div>
+        </div>`;
+    }).join('') || `<div class="empty-state"><i class="fas fa-copy"></i>No templates saved. <a href="post-job" style="color:var(--primary); font-weight:600;">Create one from a job post</a></div>`;
+  }
+
+  function openModal(id) {
+    const t = client.templates.find(x => x.id === id) || { id: '', title: '', summary: '', rate: '', shift: 'us-east', skills: [], screening: [] };
+    $('tplModalTitle').textContent = id ? 'Edit template' : 'New template';
+    $('tplId').value = t.id || '';
+    $('tplTitle').value = t.title;
+    $('tplSummary').value = t.summary;
+    $('tplRate').value = t.rate;
+    $('tplShift').value = t.shift;
+    $('tplSkills').value = (t.skills || []).join(', ');
+    $('tplScreening').value = (t.screening || []).join('\n');
+    $('tplModal').hidden = false; $('tplBackdrop').hidden = false;
+  }
+  const close = () => { $('tplModal').hidden = true; $('tplBackdrop').hidden = true; };
+
+  $('newTplBtn').addEventListener('click', () => openModal(''));
+  $('tplCancel').addEventListener('click', close);
+  $('tplBackdrop').addEventListener('click', close);
+  $('tplSave').addEventListener('click', () => {
+    if (!$('tplTitle').value.trim()) { $('tplTitle').focus(); return; }
+    const data = {
+      title: $('tplTitle').value.trim(),
+      summary: $('tplSummary').value.trim(),
+      rate: $('tplRate').value.trim(),
+      shift: $('tplShift').value,
+      skills: $('tplSkills').value.split(',').map(s => s.trim()).filter(Boolean),
+      screening: $('tplScreening').value.split('\n').map(s => s.trim()).filter(Boolean),
+    };
+    const id = $('tplId').value;
+    if (id) {
+      const t = client.templates.find(x => x.id === id);
+      Object.assign(t, data);
+    } else {
+      client.templates.unshift({ id: 'tpl-' + Date.now().toString(36), used: 0, ...data });
+    }
+    save(); close(); render();
+    showToast('Template saved');
+  });
+
+  $('tplList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'edit') { openModal(id); return; }
+    if (btn.dataset.act === 'duplicate') {
+      const t = client.templates.find(x => x.id === id);
+      client.templates.unshift({ ...t, id: 'tpl-' + Date.now().toString(36), title: t.title + ' (copy)', used: 0 });
+      save(); render(); showToast('Template duplicated'); return;
+    }
+    if (btn.dataset.act === 'delete') {
+      if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to delete'; return; }
+      client.templates = client.templates.filter(x => x.id !== id);
+      save(); render(); showToast('Template deleted');
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>

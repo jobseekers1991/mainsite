@@ -187,8 +187,89 @@ const seedClient = () => ({
     { id: 'INV-2026-0101', vaId: 'maria-santos', period: 'Oct 12–18', hours: 38.5, rate: 9, status: 'due' },
     { id: 'INV-2026-0098', vaId: 'diana-flores', period: 'Oct 12–18', hours: 26, rate: 10, status: 'due', note: 'Logged 26h but contract is 20h/week' },
     { id: 'INV-2026-0087', vaId: 'diana-flores', period: 'Oct 5–11', hours: 20, rate: 10, status: 'paid' },
+    { id: 'INV-2026-0076', vaId: 'maria-santos', period: 'Oct 5–11', hours: 37, rate: 9, status: 'paid' },
+    { id: 'INV-2026-0065', vaId: 'diana-flores', period: 'Sep 28–Oct 4', hours: 20, rate: 10, status: 'paid' },
+    { id: 'INV-2026-0054', vaId: 'maria-santos', period: 'Sep 28–Oct 4', hours: 39.5, rate: 9, status: 'paid' },
   ],
   replacements: [],
+  // Talent Pool: saved VA ids across jobs
+  favorites: ['bea-ocampo', 'paolo-garcia', 'kim-navarro'],
+  // Scheduled interviews
+  interviews: [
+    { id: 'iv1', vaId: 'kim-navarro', jobId: 'exec-assistant', when: Date.now() + 1 * DAY_MS + 3 * 3600000, duration: 20, link: 'https://meet.google.com/abc-defg-hij', note: 'Walk through calendar workflow and brownout plan', status: 'upcoming' },
+    { id: 'iv2', vaId: 'paolo-garcia', jobId: 'exec-assistant', when: Date.now() + 2 * DAY_MS + 1 * 3600000, duration: 30, link: 'https://zoom.us/j/8842103941', note: '', status: 'upcoming' },
+    { id: 'iv3', vaId: 'bea-ocampo', jobId: 'exec-assistant', when: daysAgo(1), duration: 20, link: 'https://meet.google.com/past-abcd-xyz', note: 'Great culture fit', status: 'done' },
+  ],
+  // Reusable job post templates
+  templates: [
+    { id: 'tpl-ea', title: 'Executive VA (standard)', summary: 'Full-time EA for CEO calendar + inbox + travel. Night-shift (EST).', rate: '$6–$10/hr', shift: 'us-east', skills: ['Calendar Mgmt', 'Email', 'CRM'], screening: ['Describe your calendar-management system.', 'What is your backup plan for brownouts?'], used: 3 },
+    { id: 'tpl-sdr', title: 'Appointment Setter (SDR)', summary: 'Cold-call US leads, log in HubSpot, book sales calls.', rate: '$7–$9/hr', shift: 'us-east', skills: ['Cold Calling', 'HubSpot', 'Lead Qualification'], screening: ['Share a short voice sample.', 'How many dials per hour do you average?'], used: 1 },
+  ],
+  // VA daily hours before an invoice is generated
+  timesheets: [
+    { vaId: 'maria-santos', day: daysAgo(0.3), hours: 7.5, note: 'Inbox + calendar + draft Denver itinerary', approved: null },
+    { vaId: 'maria-santos', day: daysAgo(1), hours: 8, note: 'EOD report + travel booking + CRM updates', approved: null },
+    { vaId: 'maria-santos', day: daysAgo(2), hours: 7, note: 'Calendar audit, 3 meetings rescheduled', approved: true },
+    { vaId: 'maria-santos', day: daysAgo(3), hours: 8, note: 'Inbox zero + CEO brief', approved: true },
+    { vaId: 'diana-flores', day: daysAgo(0.3), hours: 5, note: 'Shopify product launches + review ticket queue', approved: null },
+    { vaId: 'diana-flores', day: daysAgo(1), hours: 4, note: 'Order fulfilment + supplier emails', approved: true },
+    { vaId: 'diana-flores', day: daysAgo(2), hours: 5, note: 'Spike: Black Friday prep', approved: true },
+  ],
+  // Performance notes per hire (keyed by vaId)
+  notes: {
+    'maria-santos': [
+      { t: daysAgo(1), kind: '30-day', text: 'Hit every KPI in the first month. Calendar load down 30%, inbox at zero. Consider promoting to primary EA for a second exec.' },
+      { t: daysAgo(10), kind: 'general', text: 'Great written English, picks up HubSpot workflows fast.' },
+    ],
+    'diana-flores': [
+      { t: daysAgo(5), kind: '60-day', text: 'Solid on daily ops but needs more initiative on supplier escalations. 1:1 coaching in week 10.' },
+    ],
+  },
+  // Stored payment methods, autopay, cap
+  billing: {
+    methods: [
+      { id: 'pm1', brand: 'Visa', last4: '4242', expiry: '09/2028', default: true },
+      { id: 'pm2', brand: 'Mastercard', last4: '5151', expiry: '03/2027', default: false },
+    ],
+    autopay: true,
+    autopayAfterDays: 5,
+    cap: 3000,
+    cycle: 'weekly',
+    history: [
+      { t: daysAgo(7), amount: 333, method: 'Visa •4242', desc: 'Autopay · INV-2026-0076' },
+      { t: daysAgo(7), amount: 200, method: 'Visa •4242', desc: 'Autopay · INV-2026-0087' },
+      { t: daysAgo(14), amount: 355.5, method: 'Visa •4242', desc: 'Autopay · INV-2026-0054' },
+      { t: daysAgo(14), amount: 200, method: 'Visa •4242', desc: 'Autopay · INV-2026-0065' },
+    ],
+  },
+  // Unified alerts
+  notifications: [
+    { id: 'n1', kind: 'applicant', title: 'New applicant: Bea Ocampo', body: 'Applied to Executive VA', link: 'applicants?job=exec-assistant', t: daysAgo(0.3), read: false },
+    { id: 'n2', kind: 'interview', title: 'Kim Navarro accepted your interview', body: 'Tomorrow 10:00 AM EST · 20 min', link: 'calendar', t: daysAgo(0.4), read: false },
+    { id: 'n3', kind: 'timesheet', title: 'Maria Santos submitted today\'s hours', body: '7.5 hrs · Awaiting approval', link: 'timesheets', t: daysAgo(0.5), read: false },
+    { id: 'n4', kind: 'invoice', title: 'Invoice INV-2026-0098 flagged', body: 'Diana Flores · 26 hrs (contract is 20h/week)', link: 'invoices', t: daysAgo(1), read: false },
+    { id: 'n5', kind: 'trial', title: 'Grace Villanueva finished day 2 of trial', body: 'Real Estate Cold Caller · 150 leads called', link: 'dashboard-client#trials', t: daysAgo(1.4), read: true },
+    { id: 'n6', kind: 'invoice', title: 'Autopay released $333.00', body: 'INV-2026-0076 · Visa •4242', link: 'billing', t: daysAgo(7), read: true },
+  ],
+  // Company settings / verification
+  profile: {
+    company: 'Carter Digital Agency',
+    industry: 'Marketing Agency',
+    size: '11–50',
+    country: 'United States',
+    timezone: 'America/New_York',
+    website: 'https://carterdigital.co',
+    about: 'Growth marketing agency serving B2B SaaS companies. We hire 2–4 PH VAs each quarter for EA, SDR and content ops.',
+    logo: '',
+    businessVerified: true,
+    paymentVerified: true,
+  },
+  // Multi-seat
+  members: [
+    { email: 'james@carterdigital.co', name: 'James Carter', role: 'admin', status: 'active', lastActive: daysAgo(0.1) },
+    { email: 'laura@carterdigital.co', name: 'Laura Reyes', role: 'recruiter', status: 'active', lastActive: daysAgo(0.8) },
+    { email: 'finance@carterdigital.co', name: 'Finance Team', role: 'billing', status: 'invited', lastActive: null },
+  ],
 });
 
 /* ---------- Admin queues ---------- */

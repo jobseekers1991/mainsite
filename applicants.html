@@ -39,7 +39,8 @@
     <label class="form-label" for="jobSel" style="margin:0;">Job</label>
     <select id="jobSel" class="form-control" style="max-width:420px;"></select>
     <span id="jobInfo" style="font-size:0.8125rem; color:var(--text-light);"></span>
-    <select id="sortSel" class="filter-sel" style="margin-left:auto;">
+    <button class="btn btn-outline-primary btn-sm" id="compareBtn" style="margin-left:auto;"><i class="fas fa-balance-scale"></i> Compare shortlist</button>
+    <select id="sortSel" class="filter-sel">
       <option value="match">Sort: Best match</option>
       <option value="rate">Sort: Lowest rate</option>
       <option value="date">Sort: Newest</option>
@@ -47,6 +48,7 @@
   </div>
 </div>
 
+<div id="compareView" hidden></div>
 <div class="seg-tabs" id="statusTabs"></div>
 <div id="applicantList"></div>
     </main>
@@ -56,8 +58,9 @@
 <script src="js/main.js"></script>
 <script>
   let client = Store.get('jsph-client', seedClient);
-  let jobId = new URLSearchParams(location.search).get('job') || client.jobs[0].id;
-  let status = 'all';
+  const _params = new URLSearchParams(location.search);
+  let jobId = _params.get('job') || client.jobs[0].id;
+  let status = _params.get('status') || 'all';
   const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
 
@@ -132,7 +135,9 @@
             ${a.status === 'new' ? `<button class="btn btn-outline-primary btn-sm" data-act="shortlist" data-i="${i}"><i class="fas fa-star"></i> Shortlist</button>` : ''}
             ${['new', 'shortlisted'].includes(a.status) ? `<button class="btn btn-primary btn-sm" data-act="trial" data-i="${i}"><i class="fas fa-flask"></i> Offer paid trial</button>` : ''}
             ${['shortlisted', 'trial'].includes(a.status) ? `<button class="btn btn-outline-primary btn-sm" data-act="hire" data-i="${i}"><i class="fas fa-handshake"></i> Hire</button>` : ''}
+            <a href="calendar?va=${a.vaId}&job=${jobId}&schedule=1" class="btn btn-ghost btn-sm"><i class="fas fa-calendar-plus"></i> Interview</a>
             <a href="messages?as=client&to=${a.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
+            <button class="btn btn-ghost btn-sm" data-act="favorite" data-i="${i}" title="Save to Talent Pool"><i class="fas fa-star" style="color:${(client.favorites || []).includes(a.vaId) ? 'var(--accent)' : 'var(--text-light)'};"></i></button>
             ${['new', 'shortlisted'].includes(a.status) ? `<button class="btn btn-ghost btn-sm" data-act="reject" data-i="${i}" style="color:var(--danger);"><i class="fas fa-times"></i> Decline</button>` : ''}
             ${a.status === 'rejected' ? `<button class="btn btn-ghost btn-sm" data-act="undo" data-i="${i}"><i class="fas fa-undo"></i> Undo</button>` : ''}
           </div>
@@ -180,9 +185,45 @@
         if (!client.hires.some(h => h.vaId === a.vaId)) client.hires.unshift({ vaId: a.vaId, role: client.jobs.find(j => j.id === jobId).title, rate: a.rate, start: Date.now(), hoursWeek: 0 });
         showToast(`${va.name} hired! The 30-day Replacement Guarantee starts today.`);
         break;
+      case 'favorite':
+        client.favorites ||= [];
+        if (client.favorites.includes(a.vaId)) { client.favorites = client.favorites.filter(x => x !== a.vaId); showToast(`${va.name} removed from Talent Pool`); }
+        else { client.favorites.push(a.vaId); showToast(`${va.name} saved to Talent Pool`); }
+        break;
     }
     save();
     render();
+  });
+
+  // Compare shortlist panel
+  document.getElementById('compareBtn').addEventListener('click', () => {
+    const panel = document.getElementById('compareView');
+    const shown = panel.hidden;
+    panel.hidden = !shown;
+    document.getElementById('compareBtn').innerHTML = shown ? '<i class="fas fa-times"></i> Hide compare' : '<i class="fas fa-balance-scale"></i> Compare shortlist';
+    if (!shown) return;
+    const picked = forJob().filter(a => ['shortlisted', 'trial'].includes(a.status));
+    if (!picked.length) {
+      panel.innerHTML = '<div class="dash-card" style="padding:1rem; margin-bottom:1rem;"><div class="empty-state" style="padding:1.25rem;"><i class="fas fa-balance-scale"></i>Shortlist 2 or more applicants to compare them side by side.</div></div>';
+      return;
+    }
+    const row = (label, cells) => `<tr><th style="text-align:left; font-weight:700; color:var(--dark); padding:0.6rem; border-bottom:1px solid var(--border); background:#F8FAFC;">${label}</th>${cells.map(c => `<td style="padding:0.6rem; border-bottom:1px solid var(--border); vertical-align:top;">${c}</td>`).join('')}</tr>`;
+    const header = `<tr><th></th>${picked.map(a => { const v = vaById(a.vaId); return `<th style="padding:0.75rem; text-align:center; background:#F8FAFC; border-bottom:1px solid var(--border);"><img src="https://i.pravatar.cc/60?img=${v.img}" alt="" style="width:40px; height:40px; border-radius:50%;" /><div style="font-weight:700; color:var(--dark); margin-top:0.25rem;">${esc(v.name)}</div></th>`; }).join('')}</tr>`;
+    panel.innerHTML = `<div class="dash-card" style="margin-bottom:1.25rem; padding:1rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;"><strong style="color:var(--dark);"><i class="fas fa-balance-scale"></i> Comparing ${picked.length} shortlisted applicants</strong><span style="font-size:0.8125rem; color:var(--text-light);">Shortlist more to add columns</span></div>
+      <div class="table-responsive"><table class="dash-table" style="width:100%;">${header}
+        ${row('Match score', picked.map(a => `<strong style="color:var(--primary); font-size:1rem;">${a.match}%</strong>`))}
+        ${row('Rate', picked.map(a => `<strong>$${a.rate}/hr</strong>`))}
+        ${row('Rating', picked.map(a => { const v = vaById(a.vaId); return v.reviews ? `${(v.rating||0).toFixed(1)}★ <span style="color:var(--text-light);">(${v.reviews})</span>` : 'New'; }))}
+        ${row('Location', picked.map(a => esc(vaById(a.vaId).location || '—')))}
+        ${row('Shifts', picked.map(a => (vaById(a.vaId).shifts || []).map(s => SHIFT_LABELS[s]?.label.replace(' hours','')).join(', ') || '—'))}
+        ${row('English', picked.map(a => esc(vaById(a.vaId).english || '—')))}
+        ${row('Brownout-ready', picked.map(a => vaById(a.vaId).brownout ? '<span style="color:var(--success); font-weight:700;"><i class="fas fa-check"></i></span>' : '<span style="color:var(--text-light);">—</span>'))}
+        ${row('Certifications', picked.map(a => (vaById(a.vaId).certs || []).map(c => esc(c)).join(', ') || '—'))}
+        ${row('Applied', picked.map(a => fmtDay(a.date)))}
+        ${row('Cover note', picked.map(a => `<span style="font-size:0.85rem; color:var(--text-light);">${esc((a.cover || '').slice(0, 160))}${a.cover && a.cover.length > 160 ? '…' : ''}</span>`))}
+      </table></div>
+    </div>`;
   });
 
   render();

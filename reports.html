@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spend Reports — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="reports"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Spend Reports</h1>
+    <p>Where your money goes — by VA, job, and month.</p>
+  </div>
+  <button class="btn btn-outline-primary" id="exportCsv"><i class="fas fa-file-csv"></i> Export CSV</button>
+</div>
+
+<div class="stat-card-grid" id="repStats"></div>
+
+<div class="how-tabs-wrap" style="justify-content:flex-start; margin:1.5rem 0 1rem;">
+  <div class="how-tabs" style="background:#fff; flex-wrap:wrap;">
+    <button class="how-tab active" data-tab="va"><i class="fas fa-user"></i> By VA</button>
+    <button class="how-tab" data-tab="job"><i class="fas fa-briefcase"></i> By Job</button>
+    <button class="how-tab" data-tab="month"><i class="fas fa-calendar-alt"></i> By Month</button>
+  </div>
+</div>
+
+<div id="repContent"></div>
+
+<style>
+  .bar-row { display:grid; grid-template-columns:160px 1fr 100px; gap:1rem; align-items:center; padding:0.75rem 0; border-bottom:1px solid var(--border); }
+  .bar-row:last-child { border-bottom:none; }
+  .bar-track { background:#F1F5F9; border-radius:0.3rem; height:10px; position:relative; overflow:hidden; }
+  .bar-fill { position:absolute; inset:0; background:linear-gradient(90deg, var(--primary), var(--secondary)); border-radius:0.3rem; }
+  .bar-label { font-size:0.875rem; color:var(--dark); font-weight:600; }
+  .bar-sub { font-size:0.72rem; color:var(--text-light); }
+  .bar-amt { font-weight:800; color:var(--dark); text-align:right; }
+</style>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  const $ = id => document.getElementById(id);
+  let tab = 'va';
+
+  const amountOf = inv => inv.hours * inv.rate;
+  const paidInv = () => client.invoices.filter(i => i.status === 'paid' || i.status === 'due');
+
+  function renderStats() {
+    const inv = paidInv();
+    const total = inv.reduce((s, i) => s + amountOf(i), 0);
+    const uniqueVa = new Set(inv.map(i => i.vaId)).size;
+    const avg = inv.length ? total / inv.length : 0;
+    const topVa = (() => {
+      const map = {};
+      inv.forEach(i => map[i.vaId] = (map[i.vaId] || 0) + amountOf(i));
+      const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
+      return sorted[0] ? vaById(sorted[0][0]).name : '—';
+    })();
+    const stat = (label, num, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${num}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    $('repStats').innerHTML =
+      stat('Lifetime spend', money(total), 'fa-dollar-sign', '#4F46E5', `${inv.length} invoices`) +
+      stat('VAs paid', uniqueVa, 'fa-users', '#EC4899', 'unique contractors') +
+      stat('Avg invoice', money(avg), 'fa-chart-line', '#10B981', 'per billing period') +
+      stat('Top VA', topVa.split(' ')[0], 'fa-star', '#F59E0B', 'biggest spend');
+  }
+
+  function groupBy(key, label) {
+    const inv = paidInv();
+    const map = {};
+    inv.forEach(i => {
+      const k = key(i);
+      if (!map[k]) map[k] = { k, label: label(i), hours: 0, amount: 0, count: 0 };
+      map[k].hours += i.hours;
+      map[k].amount += amountOf(i);
+      map[k].count++;
+    });
+    return Object.values(map).sort((a, b) => b.amount - a.amount);
+  }
+
+  function bars(data, sublabel) {
+    const max = Math.max(...data.map(d => d.amount), 1);
+    return `<div class="dash-card" style="padding:1rem;">${data.map(d => `
+      <div class="bar-row">
+        <div>
+          <div class="bar-label">${esc(d.label)}</div>
+          <div class="bar-sub">${sublabel(d)}</div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(d.amount / max * 100).toFixed(1)}%"></div></div>
+        <div class="bar-amt">${money(d.amount)}</div>
+      </div>`).join('')}</div>`;
+  }
+
+  function render() {
+    let data;
+    if (tab === 'va') {
+      data = groupBy(i => i.vaId, i => vaById(i.vaId).name);
+      $('repContent').innerHTML = data.length ? bars(data, d => `${d.hours.toFixed(1)} hrs · ${d.count} invoice${d.count === 1 ? '' : 's'}`) : '<div class="empty-state"><i class="fas fa-chart-bar"></i>No invoices yet.</div>';
+    } else if (tab === 'job') {
+      // Map vaId to the most recent job the VA was hired for
+      const hireRoleByVa = Object.fromEntries(client.hires.map(h => [h.vaId, h.role]));
+      data = groupBy(i => hireRoleByVa[i.vaId] || 'Other', i => hireRoleByVa[i.vaId] || 'Other');
+      $('repContent').innerHTML = bars(data, d => `${d.hours.toFixed(1)} hrs · ${d.count} invoice${d.count === 1 ? '' : 's'}`);
+    } else {
+      // By month: group by the Period string (approximate — the period strings already include month)
+      data = groupBy(i => i.period, i => i.period);
+      $('repContent').innerHTML = bars(data, d => `${d.hours.toFixed(1)} hrs · ${d.count} invoice${d.count === 1 ? '' : 's'}`);
+    }
+  }
+
+  document.querySelectorAll('.how-tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.how-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    tab = t.dataset.tab;
+    render();
+  }));
+
+  $('exportCsv').addEventListener('click', () => {
+    const inv = paidInv();
+    const rows = [['Invoice', 'VA', 'Period', 'Hours', 'Rate', 'Amount', 'Status']];
+    inv.forEach(i => rows.push([i.id, vaById(i.vaId).name, i.period, i.hours, i.rate, amountOf(i).toFixed(2), i.status]));
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `spend-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    showToast(`Exported ${rows.length - 1} rows`);
+  });
+
+  renderStats(); render();
+</script>
+</body>
+</html>

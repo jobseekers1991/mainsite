@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notifications — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="notifications"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>Notifications</h1>
+    <p>Everything that needs your attention, in one feed.</p>
+  </div>
+  <div style="display:flex; gap:0.5rem;">
+    <button class="btn btn-outline-primary" id="markAll"><i class="fas fa-check-double"></i> Mark all read</button>
+    <button class="btn btn-ghost" id="clearAll" style="color:var(--danger);"><i class="fas fa-trash"></i> Clear all</button>
+  </div>
+</div>
+
+<div class="seg-tabs" id="notifTabs" style="margin-top:1rem;"></div>
+<div id="notifList"></div>
+
+<style>
+  .notif { display:flex; gap:0.75rem; padding:1rem; background:#fff; border:1px solid var(--border); border-radius:0.75rem; margin-bottom:0.5rem; cursor:pointer; transition:all 0.15s; }
+  .notif.unread { background:rgba(79,70,229,0.03); border-left:3px solid var(--primary); }
+  .notif:hover { border-color:var(--primary); }
+  .notif-ico { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1rem; }
+  .notif-time { font-size:0.72rem; color:var(--text-light); white-space:nowrap; }
+  .notif-close { background:none; border:none; color:var(--text-light); cursor:pointer; padding:0.25rem; }
+</style>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  if (!client.notifications) client.notifications = [];
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+  let filter = 'all';
+
+  const KINDS = {
+    all:        { label: 'All',         icon: 'fa-bell',             color: '#4F46E5' },
+    unread:     { label: 'Unread',      icon: 'fa-circle',           color: '#EC4899' },
+    applicant:  { label: 'Applicants',  icon: 'fa-user-plus',        color: '#4F46E5' },
+    interview:  { label: 'Interviews',  icon: 'fa-video',            color: '#10B981' },
+    timesheet:  { label: 'Timesheets',  icon: 'fa-clock',            color: '#F59E0B' },
+    invoice:    { label: 'Invoices',    icon: 'fa-file-invoice-dollar', color: '#EC4899' },
+    trial:      { label: 'Trials',      icon: 'fa-flask',            color: '#10B981' },
+  };
+
+  const ago = t => {
+    const d = Date.now() - t;
+    if (d < 3600000) return Math.round(d / 60000) + 'm ago';
+    if (d < DAY_MS) return Math.round(d / 3600000) + 'h ago';
+    if (d < 7 * DAY_MS) return Math.round(d / DAY_MS) + 'd ago';
+    return fmtDay(t);
+  };
+
+  function filtered() {
+    if (filter === 'all') return client.notifications;
+    if (filter === 'unread') return client.notifications.filter(n => !n.read);
+    return client.notifications.filter(n => n.kind === filter);
+  }
+
+  function renderTabs() {
+    $('notifTabs').innerHTML = Object.entries(KINDS).map(([k, v]) => {
+      const count = k === 'all' ? client.notifications.length : k === 'unread' ? client.notifications.filter(n => !n.read).length : client.notifications.filter(n => n.kind === k).length;
+      return `<button type="button" data-f="${k}" class="${k === filter ? 'active' : ''}">${v.label}<span>${count}</span></button>`;
+    }).join('');
+  }
+
+  function renderList() {
+    const list = filtered();
+    $('notifList').innerHTML = list.length ? list.map(n => {
+      const kind = KINDS[n.kind] || KINDS.all;
+      return `
+        <a class="notif${n.read ? '' : ' unread'}" href="${esc(n.link || '#')}" data-id="${n.id}" style="text-decoration:none; color:inherit;">
+          <div class="notif-ico" style="background:${kind.color}1a; color:${kind.color};"><i class="fas ${kind.icon}"></i></div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; justify-content:space-between; gap:0.5rem;"><strong style="color:var(--dark); font-size:0.9375rem;">${esc(n.title)}</strong><span class="notif-time">${ago(n.t)}</span></div>
+            <p style="font-size:0.8125rem; color:var(--text-light); margin:0.25rem 0 0;">${esc(n.body || '')}</p>
+          </div>
+          <button class="notif-close" data-act="delete" data-id="${n.id}" title="Dismiss"><i class="fas fa-times"></i></button>
+        </a>`;
+    }).join('') : '<div class="empty-state"><i class="fas fa-bell"></i>Nothing here. You\'re all caught up.</div>';
+  }
+
+  function renderAll() { renderTabs(); renderList(); }
+
+  $('notifTabs').addEventListener('click', e => {
+    const btn = e.target.closest('[data-f]');
+    if (btn) { filter = btn.dataset.f; renderAll(); }
+  });
+
+  $('notifList').addEventListener('click', e => {
+    const close = e.target.closest('[data-act="delete"]');
+    if (close) {
+      e.preventDefault();
+      client.notifications = client.notifications.filter(n => n.id !== close.dataset.id);
+      save(); renderAll();
+      return;
+    }
+    const link = e.target.closest('a.notif');
+    if (link) {
+      const n = client.notifications.find(x => x.id === link.dataset.id);
+      if (n && !n.read) { n.read = true; save(); }
+      // Allow navigation to proceed
+    }
+  });
+
+  $('markAll').addEventListener('click', () => {
+    client.notifications.forEach(n => n.read = true);
+    save(); renderAll();
+    showToast('All marked as read');
+  });
+
+  $('clearAll').addEventListener('click', e => {
+    if (e.target.dataset.confirm !== '1') { e.target.dataset.confirm = '1'; e.target.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to clear'; return; }
+    client.notifications = [];
+    save(); renderAll();
+    showToast('Notifications cleared');
+  });
+
+  renderAll();
+</script>
+</body>
+</html>

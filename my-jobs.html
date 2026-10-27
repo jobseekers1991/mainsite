@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Job Posts — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dash-body">
+
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar" data-role="client" data-active="myjobs"></aside>
+  <div class="dash-overlay" id="dashOverlay"></div>
+
+  <div class="dash-main">
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/va-data.js"></script>
+<script src="js/app-data.js"></script>
+<script src="js/dash.js"></script>
+
+    <main class="dash-content">
+<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+  <div>
+    <h1>My Job Posts</h1>
+    <p>Every role you've posted, who applied, and what to do next.</p>
+  </div>
+  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+    <a href="ai-match" class="btn btn-outline-primary"><i class="fas fa-magic"></i> AI Match</a>
+    <a href="post-job" class="btn btn-primary"><i class="fas fa-plus"></i> Post a Job</a>
+  </div>
+</div>
+
+<div class="stat-card-grid" id="jobStats"></div>
+
+<div class="seg-tabs" id="jobTabs" style="margin-top:1.5rem;"></div>
+<div id="jobList"></div>
+    </main>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  let client = Store.get('jsph-client', seedClient);
+  let filter = 'all';
+  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const $ = id => document.getElementById(id);
+
+  // Ensure every job has a status + views so older stored data stays compatible
+  client.jobs.forEach((j, i) => {
+    if (!j.status) j.status = 'Open';
+    if (j.views == null) j.views = 23 + i * 47;
+  });
+
+  const GROUPS = {
+    all: { label: 'All', match: () => true },
+    Open: { label: 'Open', match: j => j.status === 'Open' },
+    Paused: { label: 'Paused', match: j => j.status === 'Paused' },
+    Closed: { label: 'Closed', match: j => j.status === 'Closed' },
+  };
+
+  const APP_PILL = {
+    new: ['New', 'new'],
+    shortlisted: ['Shortlisted', 'viewed'],
+    trial: ['Paid trial', 'trial'],
+    hired: ['Hired', 'hired'],
+    rejected: ['Declined', 'rejected'],
+  };
+
+  const DEFAULT_META = { emoji: '📋', logoBg: 'rgba(79,70,229,0.08)' };
+  const meta = id => {
+    const j = jobById(id);
+    return j ? { emoji: j.emoji, logoBg: j.logoBg } : DEFAULT_META;
+  };
+
+  function renderStats() {
+    const open = client.jobs.filter(j => j.status === 'Open').length;
+    const totalApps = client.applicants.length;
+    const needReview = client.applicants.filter(a => a.status === 'new').length;
+    const hired = client.applicants.filter(a => a.status === 'hired').length;
+    const stat = (label, num, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${num}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    $('jobStats').innerHTML =
+      stat('Open posts', open, 'fa-briefcase', '#4F46E5', `${client.jobs.length} total`) +
+      stat('Total applicants', totalApps, 'fa-user-friends', '#EC4899', 'across all posts') +
+      stat('Need review', needReview, 'fa-user-plus', '#F59E0B', needReview ? '<a href="applicants" style="color:var(--primary);font-weight:600;">Review now</a>' : 'all caught up') +
+      stat('Hired', hired, 'fa-handshake', '#10B981', 'from these posts');
+  }
+
+  function renderTabs() {
+    $('jobTabs').innerHTML = Object.entries(GROUPS).map(([key, g]) =>
+      `<button type="button" data-filter="${key}" class="${key === filter ? 'active' : ''}">${g.label}<span>${client.jobs.filter(g.match).length}</span></button>`).join('');
+  }
+
+  function renderList() {
+    const list = client.jobs.filter(GROUPS[filter].match);
+    $('jobList').innerHTML = list.map(j => {
+      const i = client.jobs.indexOf(j);
+      const m = meta(j.id);
+      const applicants = client.applicants.filter(a => a.jobId === j.id);
+      const by = s => applicants.filter(a => a.status === s).length;
+      const closed = j.status === 'Closed';
+      const chip = s => `<a href="applicants?job=${j.id}&status=${s}" class="status-pill ${APP_PILL[s][1]}" style="text-decoration:none;">${APP_PILL[s][0]} <strong>${by(s)}</strong></a>`;
+      const statusPill = j.status === 'Open' ? 'active' : j.status === 'Paused' ? 'pending' : 'closed';
+      return `
+        <div class="item-card${closed ? ' dim' : ''}">
+          <div class="item-head">
+            <div class="job-logo" style="background:${m.logoBg}; width:48px; height:48px; font-size:1.375rem;">${m.emoji}</div>
+            <div class="grow">
+              <h3><a href="applicants?job=${j.id}">${esc(j.title)}</a></h3>
+              <p>Posted ${fmtDay(j.posted)} · ${j.views.toLocaleString()} views · <strong style="color:var(--dark);">${applicants.length}</strong> applicant${applicants.length === 1 ? '' : 's'}</p>
+            </div>
+            <span class="status-pill ${statusPill}">${j.status}</span>
+          </div>
+          <div class="item-meta" style="flex-wrap:wrap; gap:0.5rem;">
+            ${['new','shortlisted','trial','hired','rejected'].map(chip).join('')}
+          </div>
+          <div class="item-actions">
+            <a href="applicants?job=${j.id}" class="btn btn-primary btn-sm"><i class="fas fa-user-friends"></i> Review applicants</a>
+            <button class="btn btn-outline-primary btn-sm" data-act="analytics" data-i="${i}"><i class="fas fa-chart-line"></i> Analytics</button>
+            <a href="post-job?id=${j.id}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i> Edit</a>
+            <button class="btn btn-ghost btn-sm" data-act="duplicate" data-i="${i}"><i class="fas fa-copy"></i> Duplicate</button>
+            ${j.status === 'Open' ? `<button class="btn btn-ghost btn-sm" data-act="pause" data-i="${i}"><i class="fas fa-pause"></i> Pause</button>` : ''}
+            ${j.status === 'Paused' ? `<button class="btn btn-ghost btn-sm" data-act="reopen" data-i="${i}"><i class="fas fa-play"></i> Reopen</button>` : ''}
+            ${j.status !== 'Closed' ? `<button class="btn btn-ghost btn-sm" data-act="close" data-i="${i}" style="color:var(--danger);"><i class="fas fa-door-closed"></i> Close</button>` : `<button class="btn btn-ghost btn-sm" data-act="reopen" data-i="${i}"><i class="fas fa-door-open"></i> Reopen</button>`}
+          </div>
+          <div id="analytics-${i}" hidden style="margin-top:1rem; padding:1rem; background:#F8FAFC; border-radius:0.5rem;">
+            ${(() => {
+              const total = applicants.length;
+              const sl = by('shortlisted') + by('trial') + by('hired');
+              const tr = by('trial') + by('hired');
+              const hi = by('hired');
+              const applyRate = j.views ? (total / j.views * 100).toFixed(1) : '0';
+              const funnel = [
+                ['Views', j.views, '#64748B'],
+                ['Applicants', total, '#4F46E5'],
+                ['Shortlisted', sl, '#EC4899'],
+                ['Trial', tr, '#F59E0B'],
+                ['Hired', hi, '#10B981'],
+              ];
+              const max = Math.max(...funnel.map(f => f[1]), 1);
+              return `
+                <strong style="color:var(--dark); font-size:0.875rem;"><i class="fas fa-chart-line"></i> Hiring funnel</strong>
+                <div style="display:grid; grid-template-columns:120px 1fr 60px; gap:0.5rem; align-items:center; margin-top:0.75rem;">
+                  ${funnel.map(([lbl, n, c]) => `
+                    <div style="font-size:0.8125rem; color:var(--text-light);">${lbl}</div>
+                    <div style="background:#E2E8F0; height:14px; border-radius:0.3rem; overflow:hidden;"><div style="background:${c}; height:100%; width:${(n / max * 100).toFixed(1)}%;"></div></div>
+                    <div style="font-weight:800; color:var(--dark); text-align:right;">${n}</div>
+                  `).join('')}
+                </div>
+                <div class="item-meta" style="margin-top:0.75rem;">
+                  <span>Apply rate <strong>${applyRate}%</strong></span>
+                  <span>Shortlist rate <strong>${total ? (sl / total * 100).toFixed(0) : 0}%</strong></span>
+                  <span>Trial rate <strong>${total ? (tr / total * 100).toFixed(0) : 0}%</strong></span>
+                  <span>Hire rate <strong>${total ? (hi / total * 100).toFixed(0) : 0}%</strong></span>
+                  <span>Time to hire <strong>${hi ? Math.max(1, Math.round((Date.now() - j.posted) / DAY_MS)) + ' days' : '—'}</strong></span>
+                </div>`;
+            })()}
+          </div>
+        </div>`;
+    }).join('') || `<div class="empty-state"><i class="fas fa-briefcase"></i>No posts in this list. <a href="post-job" style="color:var(--primary); font-weight:600;">Post a job</a></div>`;
+  }
+
+  function renderAll() { renderStats(); renderTabs(); renderList(); }
+
+  $('jobTabs').addEventListener('click', e => {
+    const btn = e.target.closest('[data-filter]');
+    if (btn) { filter = btn.dataset.filter; renderTabs(); renderList(); }
+  });
+
+  $('jobList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    const j = client.jobs[i];
+    const act = btn.dataset.act;
+    if (act === 'analytics') { const el = $('analytics-' + i); el.hidden = !el.hidden; return; }
+    if (act === 'pause') { j.status = 'Paused'; showToast(`${j.title} paused — VAs won't see it until you reopen.`); }
+    else if (act === 'reopen') { j.status = 'Open'; showToast(`${j.title} is live again.`); }
+    else if (act === 'close') {
+      if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to close'; return; }
+      j.status = 'Closed';
+      showToast(`${j.title} closed. Existing applicants keep their status.`);
+    }
+    else if (act === 'duplicate') {
+      const copy = { ...j, id: j.id + '-copy-' + Date.now().toString(36), title: j.title + ' (copy)', status: 'Open', posted: Date.now(), views: 0 };
+      client.jobs.unshift(copy);
+      showToast('Draft duplicated. Edit the copy to tailor it.');
+    }
+    save();
+    renderAll();
+  });
+
+  renderAll();
+</script>
+</body>
+</html>
