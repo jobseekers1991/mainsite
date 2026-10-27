@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const PORT = 3004;
+const PORT = process.env.PORT || 3004;
 const ROOT = __dirname;
 
 const MIME = {
@@ -101,6 +101,6 @@ http.createServer((req, res) => {
       notFound(res);
     }
   });
-}).listen(PORT, () => {
-  console.log(`\n  Jobseekers.ph running at http://localhost:${PORT}\n`);
+}).listen(PORT, '0.0.0.0', () => {
+  console.log(`\n  Jobseekers.ph running on port ${PORT}\n`);
 });
