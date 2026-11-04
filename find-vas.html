@@ -60,7 +60,7 @@
   <div class="page-hero-content">
     <div class="breadcrumb"><a href="index">Home</a><i class="fas fa-chevron-right"></i><span>Find VAs</span></div>
     <h1>Find Your Perfect Virtual Assistant</h1>
-    <p>Browse 12,000+ verified Filipino VAs ready to support your business goals.</p>
+    <p>Browse <strong id="heroCount">30,000+</strong> verified Filipino VAs ready to support your business goals.</p>
   </div>
 </section>
 
@@ -207,11 +207,16 @@
 
         <div class="alert alert-warn" id="noVaMatch" hidden><i class="fas fa-info-circle"></i> No VAs on this page match those filters. Try fewer filters, or let <a href="ai-match" style="font-weight:700; text-decoration:underline;">AI Match</a> search for you.</div>
 
-        <!-- VA Cards -->
+        <!-- VA Cards (rendered by inline script below from /api/vas) -->
         <div class="grid-2" style="gap:1.25rem;" id="vaGrid">
+          <div id="vaLoading" style="grid-column:1/-1; text-align:center; padding:3rem 1rem; color:var(--text-light);">
+            <i class="fas fa-spinner fa-spin" style="font-size:1.5rem; color:var(--primary);"></i>
+            <p style="margin-top:0.75rem; font-size:0.9375rem;">Loading verified VAs…</p>
+          </div>
+        </div>
 
-          <!-- Card -->
-          <div class="va-card" data-shifts="us-east us-west" data-brownout="1" data-trial="1" data-rising="0" data-certified="1">
+        <!-- (sample cards removed — real profiles loaded from training-center DB) -->
+        <div style="display:none;" aria-hidden="true"><div class="va-card" data-shifts="us-east us-west" data-brownout="1" data-trial="1" data-rising="0" data-certified="1">
             <div class="featured-badge"><i class="fas fa-crown"></i> Top Rated</div>
             <div class="va-card-head">
               <div class="va-avatar"><img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" /><div class="va-status online"></div></div>
@@ -413,18 +418,8 @@
 
         </div>
 
-        <!-- Pagination -->
-        <div class="pagination">
-          <button disabled><i class="fas fa-chevron-left"></i></button>
-          <button class="active">1</button>
-          <button>2</button>
-          <button>3</button>
-          <button>4</button>
-          <button>5</button>
-          <span style="padding:0 0.5rem; color:var(--text-light);">...</span>
-          <button>48</button>
-          <button><i class="fas fa-chevron-right"></i></button>
-        </div>
+        <!-- Pagination (rendered by inline script) -->
+        <div class="pagination" id="vaPagination"></div>
       </div>
     </div>
   </div>
@@ -462,35 +457,140 @@
 
 <script src="js/main.js"></script>
 <script>
-  // Shift + trust filters (client-side over the cards on this page)
-  const vaCards = [...document.querySelectorAll('#vaGrid .va-card')];
-  const vaCount = document.getElementById('vaCount');
-  const totalLabel = vaCount.textContent;
+  // ============================================================
+  // Load real VAs from the training-center DB via /api/vas.
+  // Search box (filter-bar) feeds q=; sidebar filters that have no
+  // backing field yet (shifts/brownout/trial/certified/rising) are
+  // kept visible but no-op until profiles start declaring them.
+  // ============================================================
+  const grid       = document.getElementById('vaGrid');
+  const vaCount    = document.getElementById('vaCount');
+  const heroCount  = document.getElementById('heroCount');
+  const noMatchBox = document.getElementById('noVaMatch');
+  const pager      = document.getElementById('vaPagination');
+  const searchInput = document.querySelector('.filter-bar input[type="text"]');
 
-  function filterVAs() {
-    const shift = document.querySelector('input[name="shift"]:checked').value;
-    const flags = [...document.querySelectorAll('[data-flag]:checked')].map(el => el.dataset.flag);
-    let shown = 0;
-    vaCards.forEach(card => {
-      const ok = (!shift || card.dataset.shifts.split(' ').includes(shift)) && flags.every(f => card.dataset[f] === '1');
-      card.hidden = !ok;
-      if (ok) shown++;
-    });
-    const filtering = shift || flags.length;
-    vaCount.textContent = filtering ? shown : totalLabel;
-    document.getElementById('noVaMatch').hidden = shown > 0;
+  const state = { q: '', page: 1, limit: 24 };
+
+  // Consistent "initials chip" color per VA — hash their name into a hue.
+  function nameHue(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h % 360;
+  }
+  function initials(name) {
+    const parts = String(name || '').trim().split(/\s+/).slice(0, 2);
+    return parts.map(p => p[0] || '').join('').toUpperCase() || '?';
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+  function cardHTML(v) {
+    const hue = nameHue(v.name || v.slug || '');
+    const avatar = `
+      <div class="va-avatar">
+        <div style="width:60px;height:60px;border-radius:50%;background:hsl(${hue},62%,52%);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.125rem;border:3px solid var(--border);">${esc(initials(v.name))}</div>
+        <div class="va-status online"></div>
+      </div>`;
+    const skills = (v.skills || []).slice(0, 4).map(s => `<span class="skill-tag">${esc(s)}</span>`).join('');
+    const location = esc([v.city, v.state].filter(Boolean).join(', ')) || 'Philippines';
+    const featured = v.featured ? `<div class="featured-badge"><i class="fas fa-crown"></i> Featured Graduate</div>` : '';
+    const certBadge = (v.certs && v.certs.length)
+      ? `<div class="va-badges"><span class="feat-badge cert"><i class="fas fa-certificate"></i> Training-center certified</span></div>`
+      : '';
+    return `
+      <div class="va-card">
+        ${featured}
+        <div class="va-card-head">
+          ${avatar}
+          <div class="va-info">
+            <div class="va-name">${esc(v.name)} <span class="verified"><i class="fas fa-check-circle"></i></span></div>
+            <div class="va-title">${esc(v.title)}</div>
+          </div>
+        </div>
+        <div class="va-skills">${skills}</div>
+        ${certBadge}
+        <div class="va-card-foot">
+          <div class="va-location"><i class="fas fa-map-marker-alt"></i> ${location}</div>
+          <a href="/${encodeURIComponent(v.slug)}" class="btn btn-primary btn-sm">View Profile</a>
+        </div>
+      </div>`;
   }
 
-  document.querySelectorAll('input[name="shift"], [data-flag]').forEach(el => el.addEventListener('change', filterVAs));
-  document.querySelector('[data-clear="shift"]').addEventListener('click', () => { document.querySelector('input[name="shift"][value=""]').checked = true; filterVAs(); });
-  document.querySelector('[data-clear="trust"]').addEventListener('click', () => { document.querySelectorAll('[data-flag]').forEach(el => { el.checked = false; }); filterVAs(); });
+  function renderPager(page, pages) {
+    if (pages <= 1) { pager.innerHTML = ''; return; }
+    const buttons = [];
+    buttons.push(`<button ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}"><i class="fas fa-chevron-left"></i></button>`);
 
-  // Deep links, e.g. find-vas?rising=1 or find-vas?shift=us-east
-  const params = new URLSearchParams(location.search);
-  if (params.get('rising')) document.querySelector('[data-flag="rising"]').checked = true;
-  const shiftParam = document.querySelector(`input[name="shift"][value="${params.get('shift')}"]`);
-  if (shiftParam) shiftParam.checked = true;
-  filterVAs();
+    const windowSize = 5;
+    let from = Math.max(1, page - 2);
+    let to   = Math.min(pages, from + windowSize - 1);
+    from = Math.max(1, to - windowSize + 1);
+
+    if (from > 1) {
+      buttons.push(`<button data-page="1">1</button>`);
+      if (from > 2) buttons.push(`<span style="padding:0 0.5rem; color:var(--text-light);">…</span>`);
+    }
+    for (let p = from; p <= to; p++) {
+      buttons.push(`<button class="${p === page ? 'active' : ''}" data-page="${p}">${p}</button>`);
+    }
+    if (to < pages) {
+      if (to < pages - 1) buttons.push(`<span style="padding:0 0.5rem; color:var(--text-light);">…</span>`);
+      buttons.push(`<button data-page="${pages}">${pages}</button>`);
+    }
+
+    buttons.push(`<button ${page >= pages ? 'disabled' : ''} data-page="${page + 1}"><i class="fas fa-chevron-right"></i></button>`);
+    pager.innerHTML = buttons.join('');
+  }
+
+  async function load(opts) {
+    const scroll = opts && opts.scroll;
+    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:3rem 1rem; color:var(--text-light);"><i class="fas fa-spinner fa-spin" style="font-size:1.25rem; color:var(--primary);"></i></div>`;
+    noMatchBox.hidden = true;
+    const params = new URLSearchParams({ page: state.page, limit: state.limit });
+    if (state.q) params.set('q', state.q);
+    let data;
+    try {
+      const res = await fetch('/api/vas?' + params.toString());
+      data = await res.json();
+    } catch (e) {
+      grid.innerHTML = `<div style="grid-column:1/-1; padding:2rem; text-align:center; color:var(--text-light);">Couldn't reach the server. Try refreshing.</div>`;
+      return;
+    }
+    if (!data.ok || !data.vas.length) {
+      grid.innerHTML = '';
+      noMatchBox.hidden = false;
+      vaCount.textContent = '0';
+      pager.innerHTML = '';
+      return;
+    }
+    grid.innerHTML = data.vas.map(cardHTML).join('');
+    vaCount.textContent = data.total.toLocaleString();
+    if (heroCount) heroCount.textContent = data.total.toLocaleString();
+    renderPager(data.page, data.pages);
+    const bar = document.querySelector('.filter-bar');
+    if (scroll && bar) window.scrollTo({ top: bar.offsetTop - 80, behavior: 'smooth' });
+  }
+
+  pager.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-page]');
+    if (!btn) return;
+    const p = parseInt(btn.dataset.page, 10);
+    if (!isNaN(p) && p >= 1) { state.page = p; load({ scroll: true }); }
+  });
+
+  let searchTimer;
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => { state.q = searchInput.value.trim(); state.page = 1; load(); }, 300);
+    });
+  }
+
+  // Deep links: ?q=foo
+  const qp = new URLSearchParams(location.search);
+  if (qp.get('q')) { state.q = qp.get('q'); if (searchInput) searchInput.value = state.q; }
+
+  load();
 </script>
 </body>
 </html>

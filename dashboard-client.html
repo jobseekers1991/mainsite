@@ -23,14 +23,43 @@
 <script src="js/dash.js"></script>
 
     <main class="dash-content">
-<div class="dash-page-header" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; flex-wrap:wrap;">
+<div id="verifyBanner" class="verify-banner" hidden>
+  <div class="verify-banner-icon"><i class="fas fa-envelope" aria-hidden="true"></i></div>
+  <div class="verify-banner-body">
+    <strong>Verify your email to unlock everything.</strong>
+    <p>We sent a link to <span id="verifyBannerEmail">your inbox</span>. Clients post jobs and VAs apply once email is confirmed.</p>
+  </div>
+  <div class="verify-banner-actions">
+    <button type="button" class="btn btn-primary btn-sm" id="verifyBannerResend">Resend link</button>
+  </div>
+</div>
+<script>
+(function(){
+  fetch('/api/me').then(r => r.json()).then(d => {
+    if (!d.ok || !d.user || d.user.verified) return;
+    const b = document.getElementById('verifyBanner');
+    document.getElementById('verifyBannerEmail').textContent = d.user.email || 'your inbox';
+    b.hidden = false;
+    document.getElementById('verifyBannerResend').addEventListener('click', async (e) => {
+      e.target.setAttribute('aria-busy', 'true');
+      try {
+        const res = await fetch('/api/resend-verification', { method: 'POST' });
+        const p = await res.json().catch(() => ({}));
+        e.target.textContent = (res.ok && p.ok) ? 'Link sent — check inbox' : 'Could not send — try again';
+      } catch (_) { e.target.textContent = 'Could not send — try again'; }
+      finally { e.target.setAttribute('aria-busy', 'false'); }
+    });
+  }).catch(() => {});
+})();
+</script>
+<div class="dash-page-header page-header">
   <div>
     <h1>Welcome back, James 👋</h1>
     <p id="todayLine"></p>
   </div>
-  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-    <a href="applicants" class="btn btn-outline-primary"><i class="fas fa-user-friends"></i> Review applicants</a>
-    <a href="post-job" class="btn btn-primary"><i class="fas fa-plus"></i> Post a Job</a>
+  <div class="btn-group">
+    <a href="applicants" class="btn btn-outline-primary"><i class="fas fa-user-friends" aria-hidden="true"></i> Review applicants</a>
+    <a href="post-job" class="btn btn-primary"><i class="fas fa-plus" aria-hidden="true"></i> Post a Job</a>
   </div>
 </div>
 
@@ -38,28 +67,32 @@
 
 <div id="todoBox"></div>
 
-<h2 class="dash-section-title" id="hires"><i class="fas fa-user-check" style="color:var(--primary);"></i> Active hires <span class="count" id="hiresCount"></span></h2>
+<h2 class="dash-section-title" id="hires"><i class="fas fa-user-check section-icon-primary" aria-hidden="true"></i> Active hires <span class="count" id="hiresCount"></span></h2>
 <div id="hireList"></div>
 
-<h2 class="dash-section-title" id="trials"><i class="fas fa-flask" style="color:var(--success);"></i> Paid trials <span class="count" id="trialsCount"></span></h2>
+<h2 class="dash-section-title" id="trials"><i class="fas fa-flask section-icon-success" aria-hidden="true"></i> Paid trials <span class="count" id="trialsCount"></span></h2>
 <div id="trialList"></div>
 
-<h2 class="dash-section-title" id="invoices"><i class="fas fa-file-invoice-dollar" style="color:var(--accent);"></i> Invoices to approve <span class="count" id="invCount"></span></h2>
-<div class="dash-card"><div class="table-responsive"><table class="dash-table" style="width:100%;"><thead><tr><th>Invoice</th><th>VA</th><th>Period</th><th style="text-align:right;">Hours</th><th style="text-align:right;">Amount</th><th>Status</th><th></th></tr></thead><tbody id="invBody"></tbody></table></div></div>
-<div id="disputeForm" class="inline-panel" hidden style="background:#fff;">
-  <strong style="color:var(--dark);"><i class="fas fa-balance-scale" style="color:var(--danger);"></i> Dispute <span id="disputeInv"></span></strong>
-  <p style="font-size:0.8125rem; color:var(--text-light); margin:0.25rem 0 0.75rem;">The payment stays in escrow while our team reviews time logs, messages and delivered work. Most disputes are settled within 10 working days.</p>
+<h2 class="dash-section-title" id="invoices"><i class="fas fa-file-invoice-dollar section-icon-accent" aria-hidden="true"></i> Invoices to approve <span class="count" id="invCount"></span></h2>
+<div class="dash-card"><div class="table-responsive"><table class="dash-table"><thead><tr><th>Invoice</th><th>VA</th><th>Period</th><th class="num">Hours</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead><tbody id="invBody"></tbody></table></div></div>
+<div id="disputeForm" class="inline-panel inline-panel-light" hidden>
+  <strong class="inline-panel-title"><i class="fas fa-balance-scale section-icon-danger" aria-hidden="true"></i> Dispute <span id="disputeInv"></span></strong>
+  <p class="form-hint" style="margin:0.25rem 0 0.75rem;">The payment stays in escrow while our team reviews time logs, messages and delivered work. Most disputes are settled within 10 working days.</p>
   <div class="form-group" style="margin-bottom:0.75rem;">
     <label class="form-label" for="disputeReason">What's wrong?</label>
     <select id="disputeReason" class="form-control"><option>Hours billed don't match the agreement</option><option>Work wasn't delivered</option><option>Work quality didn't meet the agreed scope</option><option>Other</option></select>
   </div>
-  <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label" for="disputeNote">Details</label><textarea id="disputeNote" class="form-control form-textarea" style="min-height:70px;" placeholder="e.g. Contract is 20h/week but 26h were billed without approval."></textarea></div>
-  <div style="display:flex; gap:0.5rem;"><button class="btn btn-primary btn-sm" id="disputeSubmit">Open dispute</button><button class="btn btn-ghost btn-sm" id="disputeCancel">Cancel</button></div>
+  <div class="form-group" style="margin-bottom:0.75rem;">
+    <label class="form-label" for="disputeNote">Details</label>
+    <textarea id="disputeNote" class="form-control form-textarea" style="min-height:70px;" placeholder="e.g. Contract is 20h/week but 26h were billed without approval."></textarea>
+    <div id="disputeNoteError" class="form-error-message" hidden><i class="fas fa-exclamation-circle" aria-hidden="true"></i> Add a short note so our team can review your dispute.</div>
+  </div>
+  <div class="btn-group"><button class="btn btn-primary btn-sm" id="disputeSubmit">Open dispute</button><button class="btn btn-ghost btn-sm" id="disputeCancel">Cancel</button></div>
 </div>
 
-<h2 class="dash-section-title" id="guarantee"><i class="fas fa-sync-alt" style="color:var(--secondary);"></i> Replacement Guarantee</h2>
+<h2 class="dash-section-title" id="guarantee"><i class="fas fa-sync-alt section-icon-secondary" aria-hidden="true"></i> Replacement Guarantee</h2>
 <div id="replacementList"></div>
-<p style="font-size:0.8125rem; color:var(--text-light);">Any hire who leaves in their first 30 days is covered. Use "Request replacement" on the hire above. <a href="pricing#guarantee" style="color:var(--primary); font-weight:600;">How it works</a></p>
+<p class="form-hint">Any hire who leaves in their first 30 days is covered. Use "Request replacement" on the hire above. <a href="pricing#guarantee" class="link-primary">How it works</a></p>
     </main>
   </div>
 </div>
@@ -79,15 +112,15 @@
     const due = client.invoices.filter(i => i.status === 'due');
     const stat = (label, num, icon, color, sub) => `
       <div class="stat-card">
-        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}" aria-hidden="true"></i></div></div>
         <div class="stat-card-num">${num}</div>
-        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+        <div class="stat-card-change">${sub}</div>
       </div>`;
     $('clientStats').innerHTML =
       stat('Active hires', client.hires.length, 'fa-user-check', '#4F46E5', `${client.hires.reduce((h, x) => h + x.hoursWeek, 0)} hrs this week`) +
       stat('Paid trials', client.trials.filter(t => t.status !== 'done' && t.status !== 'ended').length, 'fa-flask', '#10B981', 'in escrow') +
       stat('To approve', money(due.reduce((s, i) => s + i.hours * i.rate, 0)), 'fa-file-invoice-dollar', '#F59E0B', `${due.length} invoice${due.length === 1 ? '' : 's'}`) +
-      stat('New applicants', client.applicants.filter(a => a.status === 'new').length, 'fa-user-plus', '#EC4899', '<a href="applicants" style="color:var(--primary); font-weight:600;">Review now</a>');
+      stat('New applicants', client.applicants.filter(a => a.status === 'new').length, 'fa-user-plus', '#EC4899', '<a href="applicants" class="link-primary">Review now</a>');
 
     const todos = [];
     const doneTrials = client.trials.filter(t => t.status === 'submitted');
@@ -108,7 +141,7 @@
       return `
         <div class="item-card">
           <div class="item-head">
-            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="${esc(va.name)}" />
             <div class="grow">
               <h3>${esc(va.name)} ${va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''}</h3>
               <p>${esc(h.role)} · $${h.rate}/hr · Started ${fmtDay(h.start)}</p>
@@ -118,25 +151,25 @@
           <div class="item-meta">
             <span>This week <strong>${h.hoursWeek} hrs</strong></span>
             <span>Cost this week <strong>${money(h.hoursWeek * h.rate)}</strong></span>
-            <span><i class="fas fa-circle" style="color:var(--success); font-size:0.5rem;"></i> Online · last EOD report today</span>
+            <span><i class="fas fa-circle text-success-dot" aria-hidden="true"></i> Online · last EOD report today</span>
           </div>
           <div class="item-actions">
-            <a href="messages?as=client&to=${h.vaId}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Message</a>
-            <a href="compliance" class="btn btn-ghost btn-sm"><i class="fas fa-file-contract"></i> Contract &amp; NDA</a>
-            ${left > 0 && !requested ? `<button class="btn btn-ghost btn-sm" data-replace="${i}"><i class="fas fa-sync-alt"></i> Request replacement</button>` : ''}
-            <button class="btn btn-ghost btn-sm" data-end="${i}" style="color:var(--danger);"><i class="fas fa-door-open"></i> End contract</button>
+            <a href="messages?as=client&to=${h.vaId}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment" aria-hidden="true"></i> Message</a>
+            <a href="compliance" class="btn btn-ghost btn-sm"><i class="fas fa-file-contract" aria-hidden="true"></i> Contract &amp; NDA</a>
+            ${left > 0 && !requested ? `<button class="btn btn-ghost btn-sm" data-replace="${i}"><i class="fas fa-sync-alt" aria-hidden="true"></i> Request replacement</button>` : ''}
+            <button class="btn btn-ghost btn-ghost-danger btn-sm" data-end="${i}"><i class="fas fa-door-open" aria-hidden="true"></i> End contract</button>
           </div>
           <div class="inline-panel" data-replace-form="${i}" hidden>
-            <strong style="font-size:0.875rem; color:var(--dark);">Why do you need a replacement?</strong>
+            <strong class="inline-panel-title">Why do you need a replacement?</strong>
             <div class="option-grid" style="margin:0.75rem 0;">
               <label class="option-tile"><input type="radio" name="rr${i}" value="VA resigned" checked /><span><strong>VA resigned</strong></span></label>
               <label class="option-tile"><input type="radio" name="rr${i}" value="VA stopped responding" /><span><strong>Stopped responding (3+ days)</strong></span></label>
               <label class="option-tile"><input type="radio" name="rr${i}" value="VA didn't show up" /><span><strong>Didn't show up for shifts</strong></span></label>
             </div>
-            <div style="display:flex; gap:0.5rem;"><button class="btn btn-primary btn-sm" data-replace-submit="${i}">Request free replacement</button><button class="btn btn-ghost btn-sm" data-replace-cancel="${i}">Cancel</button></div>
+            <div class="btn-group"><button class="btn btn-primary btn-sm" data-replace-submit="${i}">Request free replacement</button><button class="btn btn-ghost btn-sm" data-replace-cancel="${i}">Cancel</button></div>
           </div>
         </div>`;
-    }).join('') || '<div class="empty-state"><i class="fas fa-user-check"></i>No active hires yet.</div>';
+    }).join('') || '<div class="empty-state"><i class="fas fa-user-check" aria-hidden="true"></i>No active hires yet. Post a job to start receiving applicants.</div>';
   }
 
   function renderTrials() {
@@ -150,21 +183,21 @@
       return `
         <div class="item-card">
           <div class="item-head">
-            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="${esc(va.name)}" />
             <div class="grow"><h3>${esc(va.name)}</h3><p>${esc(t.role)} · ${t.days} days × ${t.hours} hrs × $${t.rate}/hr</p></div>
             <span class="status-pill ${pill}">${lbl}</span>
           </div>
           <p class="item-quote">${esc(t.scope)}</p>
-          ${t.status === 'in-progress' ? `<div style="margin-top:0.75rem;"><div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-light);"><span>Day ${t.day} of ${t.days}</span><span>${money(cost)} in escrow</span></div><div class="progress-bar"><div class="progress-fill" style="width:${t.day / t.days * 100}%"></div></div></div>` : `<div class="item-meta"><span>Escrow <strong>${money(cost)}</strong></span></div>`}
+          ${t.status === 'in-progress' ? `<div class="trial-progress"><div class="trial-progress-meta"><span>Day ${t.day} of ${t.days}</span><span>${money(cost)} in escrow</span></div><div class="progress-bar"><div class="progress-fill" style="width:${t.day / t.days * 100}%"></div></div></div>` : `<div class="item-meta"><span>Escrow <strong>${money(cost)}</strong></span></div>`}
           <div class="item-actions">
-            ${t.status === 'in-progress' ? `<button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-act="simulate"><i class="fas fa-forward"></i> Mark trial delivered (demo)</button>` : ''}
-            ${t.status === 'submitted' ? `<button class="btn btn-primary btn-sm" data-trial="${t.id}" data-act="approve"><i class="fas fa-check"></i> Approve &amp; release ${money(cost)}</button>` : ''}
-            ${t.status === 'done' ? `<button class="btn btn-primary btn-sm" data-trial="${t.id}" data-act="hire"><i class="fas fa-handshake"></i> Hire ${esc(va.name.split(' ')[0])}</button><button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-act="pass">Not a fit</button>` : ''}
-            ${t.status === 'pending-accept' ? `<button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-act="cancel" style="color:var(--danger);">Cancel offer &amp; refund</button>` : ''}
-            <a href="messages?as=client&to=${t.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
+            ${t.status === 'in-progress' ? `<button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-act="simulate"><i class="fas fa-forward" aria-hidden="true"></i> Mark trial delivered (demo)</button>` : ''}
+            ${t.status === 'submitted' ? `<button class="btn btn-primary btn-sm" data-trial="${t.id}" data-act="approve"><i class="fas fa-check" aria-hidden="true"></i> Approve &amp; release ${money(cost)}</button>` : ''}
+            ${t.status === 'done' ? `<button class="btn btn-primary btn-sm" data-trial="${t.id}" data-act="hire"><i class="fas fa-handshake" aria-hidden="true"></i> Hire ${esc(va.name.split(' ')[0])}</button><button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-act="pass">Not a fit</button>` : ''}
+            ${t.status === 'pending-accept' ? `<button class="btn btn-ghost btn-ghost-danger btn-sm" data-trial="${t.id}" data-act="cancel">Cancel offer &amp; refund</button>` : ''}
+            <a href="messages?as=client&to=${t.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment" aria-hidden="true"></i> Message</a>
           </div>
         </div>`;
-    }).join('') || '<div class="empty-state"><i class="fas fa-flask"></i>No trials running. Offer one from <a href="applicants" style="color:var(--primary); font-weight:600;">Applicants</a>.</div>';
+    }).join('') || '<div class="empty-state"><i class="fas fa-flask" aria-hidden="true"></i>No trials running. Offer one from <a href="applicants" class="link-primary">Applicants</a>.</div>';
   }
 
   function renderInvoices() {
@@ -175,12 +208,12 @@
       const va = vaById(inv.vaId);
       const [lbl, cls] = pill[inv.status];
       return `<tr>
-        <td><strong style="color:var(--dark);">${inv.id}</strong>${inv.note ? `<div style="font-size:0.72rem; color:#B45309;"><i class="fas fa-exclamation-triangle"></i> ${esc(inv.note)}</div>` : ''}</td>
+        <td><strong class="text-dark">${inv.id}</strong>${inv.note ? `<div class="text-warn-sm"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ${esc(inv.note)}</div>` : ''}</td>
         <td>${esc(va.name)}</td><td>${inv.period}</td>
-        <td style="text-align:right;">${inv.hours}</td>
-        <td style="text-align:right; font-weight:700;">${money(inv.hours * inv.rate)}</td>
+        <td class="num">${inv.hours}</td>
+        <td class="num strong">${money(inv.hours * inv.rate)}</td>
         <td><span class="status-pill ${cls}">${lbl}</span></td>
-        <td style="text-align:right; white-space:nowrap;">${inv.status === 'due' ? `<button class="btn btn-primary btn-xs" data-inv="${inv.id}" data-act="pay">Approve &amp; pay</button> <button class="btn btn-ghost btn-xs" data-inv="${inv.id}" data-act="dispute">Dispute</button>` : ''}</td>
+        <td class="num nowrap">${inv.status === 'due' ? `<button class="btn btn-primary btn-xs" data-inv="${inv.id}" data-act="pay">Approve &amp; pay</button> <button class="btn btn-ghost btn-xs" data-inv="${inv.id}" data-act="dispute">Dispute</button>` : ''}</td>
       </tr>`;
     }).join('');
   }
@@ -193,16 +226,16 @@
       return `
         <div class="item-card">
           <div class="item-head">
-            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="${esc(va.name)}" />
             <div class="grow"><h3>Replacing ${esc(va.name)}</h3><p>${esc(r.role)} · ${esc(r.reason)} · Requested ${fmtDay(r.date)}</p></div>
             <span class="status-pill ${ready ? 'hired' : 'pending'}">${ready ? 'Shortlist ready' : 'Building shortlist (≤48h)'}</span>
           </div>
-          ${ready ? `<div class="grid-3" style="margin-top:1rem;">${picks.map(p => `
-            <div class="inline-panel" style="margin:0; display:flex; gap:0.625rem; align-items:center;">
-              <img src="https://i.pravatar.cc/80?img=${p.img}" alt="" style="width:40px; height:40px; border-radius:50%;" />
-              <div style="flex:1; min-width:0;"><strong style="font-size:0.85rem; color:var(--dark);">${esc(p.name)}</strong><div style="font-size:0.75rem; color:var(--text-light);">$${p.rate}/hr · ${p.rating.toFixed(1)}★</div></div>
+          ${ready ? `<div class="shortlist-grid">${picks.map(p => `
+            <div class="shortlist-card">
+              <img src="https://i.pravatar.cc/80?img=${p.img}" alt="${esc(p.name)}" class="avatar-sm" />
+              <div class="meta-stack"><strong class="meta-name">${esc(p.name)}</strong><div class="meta-sub">$${p.rate}/hr · ${p.rating.toFixed(1)}★</div></div>
               <a href="messages?as=client&to=${p.id}" class="btn btn-outline-primary btn-xs">Message</a>
-            </div>`).join('')}</div>` : '<p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.75rem;"><i class="fas fa-circle-notch fa-spin"></i> AI Match and a recruiter are picking VAs with the same role, shift and budget. No new job post or fee needed.</p>'}
+            </div>`).join('')}</div>` : '<p class="form-hint shortlist-loading"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> AI Match and a recruiter are picking VAs with the same role, shift and budget. No new job post or fee needed.</p>'}
         </div>`;
     }).join('');
   }
@@ -257,19 +290,35 @@
         $('disputeInv').textContent = inv.id;
         $('disputeForm').hidden = false;
         $('disputeNote').value = inv.note || '';
+        $('disputeNote').classList.remove('error');
+        $('disputeNoteError').hidden = true;
         $('disputeForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
     }
 
-    if (t.id === 'disputeCancel') { $('disputeForm').hidden = true; return; }
+    if (t.id === 'disputeCancel') {
+      $('disputeForm').hidden = true;
+      $('disputeNote').classList.remove('error');
+      $('disputeNoteError').hidden = true;
+      return;
+    }
     if (t.id === 'disputeSubmit' && disputeTarget) {
+      const note = $('disputeNote').value.trim();
+      if (!note) {
+        $('disputeNote').classList.add('error');
+        $('disputeNoteError').hidden = false;
+        $('disputeNote').focus();
+        return;
+      }
+      $('disputeNote').classList.remove('error');
+      $('disputeNoteError').hidden = true;
       disputeTarget.status = 'disputed';
       // Send it to the admin Trust & Safety queue
       const admin = Store.get('jsph-admin', seedAdmin);
       admin.disputes.unshift({
         id: 'd' + Date.now(), client: 'Carter Digital Agency', va: vaById(disputeTarget.vaId).name,
-        amount: disputeTarget.hours * disputeTarget.rate, reason: `${$('disputeReason').value}. ${$('disputeNote').value.trim()}`,
+        amount: disputeTarget.hours * disputeTarget.rate, reason: `${$('disputeReason').value}. ${note}`,
         evidence: `${disputeTarget.hours}h invoiced for ${disputeTarget.period} · contract and time log attached`, status: 'open', date: Date.now(),
       });
       Store.set('jsph-admin', admin);

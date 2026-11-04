@@ -1,6 +1,8 @@
 /* ================================
-   Jobseekers.ph - Sample VA data
-   Shared by AI Match (and later, by search once a backend exists).
+   Jobseekers.ph — shared vocabulary for AI Match
+   SHIFTS and SKILL_SYNONYMS are consumed by ai-match.html to parse the
+   client's role description. The actual VA directory lives server-side
+   (data/vas.json via /api/vas) — there is no hardcoded VA array here.
    ================================ */
 
 // Client time zones, and the Philippine hours a VA works to cover them
@@ -12,46 +14,7 @@ const SHIFTS = {
   'ph':      { label: 'PH / Asia daytime', ph: 'PH day, 8AM–5PM', cls: '', icon: 'fa-sun' },
 };
 
-const VAS = [
-  { id: 'maria-santos', name: 'Maria Santos', img: 47, title: 'Executive Virtual Assistant', rate: 8, rating: 5.0, reviews: 84, years: 6, location: 'Cebu City',
-    skills: ['admin', 'calendar', 'email', 'crm', 'travel', 'data entry', 'project management'], tools: ['hubspot', 'slack', 'asana', 'google workspace'],
-    shifts: ['us-east', 'us-west'], english: 95, brownout: true, trial: true, responseHrs: 1, certs: ['Executive Assistant Pro'] },
-  { id: 'jessa-cruz', name: 'Jessa Cruz', img: 5, title: 'Social Media Manager', rate: 10, rating: 4.9, reviews: 61, years: 5, location: 'Manila',
-    skills: ['social media', 'content creation', 'graphic design', 'analytics', 'copywriting'], tools: ['instagram', 'tiktok', 'canva', 'meta business suite', 'later'],
-    shifts: ['us-east', 'uk'], english: 91, brownout: true, trial: true, responseHrs: 2, certs: ['Social Media Manager'] },
-  { id: 'ramon-dela-cruz', name: 'Ramon Dela Cruz', img: 12, title: 'Online Bookkeeper & Accountant', rate: 12, rating: 5.0, reviews: 103, years: 8, location: 'Davao City',
-    skills: ['bookkeeping', 'accounting', 'payroll', 'reconciliation', 'financial reports', 'invoicing'], tools: ['quickbooks', 'xero', 'gusto', 'excel'],
-    shifts: ['us-east', 'au'], english: 89, brownout: true, trial: false, responseHrs: 3, certs: ['QuickBooks Bookkeeping'] },
-  { id: 'anna-reyes', name: 'Anna Reyes', img: 9, title: 'Content Writer & Copywriter', rate: 9, rating: 4.8, reviews: 47, years: 4, location: 'Quezon City',
-    skills: ['content writing', 'seo', 'copywriting', 'blog', 'email marketing', 'research'], tools: ['wordpress', 'surferseo', 'grammarly', 'google docs'],
-    shifts: ['uk', 'ph', 'au'], english: 97, brownout: false, trial: true, responseHrs: 4, certs: [] },
-  { id: 'carlo-mendoza', name: 'Carlo Mendoza', img: 16, title: 'Graphic Designer & Video Editor', rate: 11, rating: 4.9, reviews: 38, years: 5, location: 'Makati',
-    skills: ['graphic design', 'video editing', 'branding', 'social media', 'content creation'], tools: ['photoshop', 'illustrator', 'premiere', 'canva', 'figma', 'capcut'],
-    shifts: ['us-west', 'us-east'], english: 85, brownout: true, trial: true, responseHrs: 2, certs: [] },
-  { id: 'grace-villanueva', name: 'Grace Villanueva', img: 25, title: 'Customer Support Specialist', rate: 7, rating: 5.0, reviews: 56, years: 4, location: 'Iloilo',
-    skills: ['customer support', 'live chat', 'email', 'phone support', 'ticketing'], tools: ['zendesk', 'freshdesk', 'gorgias', 'intercom'],
-    shifts: ['us-east', 'us-west'], english: 94, brownout: true, trial: true, responseHrs: 1, certs: ['Customer Support Excellence'] },
-  { id: 'leo-bautista', name: 'Leo Bautista', img: 32, title: 'Digital Marketing Specialist', rate: 13, rating: 4.7, reviews: 29, years: 6, location: 'BGC, Taguig',
-    skills: ['digital marketing', 'paid ads', 'seo', 'analytics', 'email marketing', 'lead generation'], tools: ['google ads', 'facebook ads', 'ga4', 'semrush', 'klaviyo'],
-    shifts: ['us-east', 'uk', 'au'], english: 90, brownout: false, trial: false, responseHrs: 5, certs: [] },
-  { id: 'diana-flores', name: 'Diana Flores', img: 41, title: 'eCommerce VA & Shopify Expert', rate: 10, rating: 4.9, reviews: 72, years: 5, location: 'Cagayan de Oro',
-    skills: ['ecommerce', 'product listings', 'inventory', 'order processing', 'customer support', 'data entry'], tools: ['shopify', 'amazon', 'helium 10', 'gorgias', 'excel'],
-    shifts: ['us-east', 'au'], english: 88, brownout: true, trial: true, responseHrs: 2, certs: ['Shopify Store Ops'] },
-  { id: 'paolo-garcia', name: 'Paolo Garcia', img: 53, title: 'Real Estate VA & Cold Caller', rate: 7, rating: 4.8, reviews: 22, years: 3, location: 'Bacolod',
-    skills: ['real estate', 'cold calling', 'lead generation', 'admin', 'crm', 'appointment setting', 'phone support'], tools: ['podio', 'follow up boss', 'ringcentral', 'batchleads'],
-    shifts: ['us-east', 'us-west'], english: 92, brownout: true, trial: true, responseHrs: 1, certs: [] },
-  { id: 'kim-navarro', name: 'Kim Navarro', img: 44, title: 'Admin & Data Entry Assistant', rate: 5, rating: 4.9, reviews: 6, years: 1, location: 'Batangas',
-    skills: ['data entry', 'admin', 'research', 'email', 'calendar'], tools: ['google workspace', 'excel', 'trello', 'slack'],
-    shifts: ['au', 'ph', 'us-east'], english: 90, brownout: true, trial: true, responseHrs: 1, certs: ['VA Foundations', 'Google Workspace Pro'], rising: true },
-  { id: 'jomar-lim', name: 'Jomar Lim', img: 59, title: 'Web Developer (WordPress & Shopify)', rate: 15, rating: 4.9, reviews: 34, years: 7, location: 'Pasig',
-    skills: ['web development', 'wordpress', 'shopify', 'seo', 'landing pages'], tools: ['wordpress', 'elementor', 'shopify', 'figma', 'html', 'css', 'javascript'],
-    shifts: ['us-west', 'uk'], english: 86, brownout: false, trial: false, responseHrs: 6, certs: [] },
-  { id: 'bea-ocampo', name: 'Bea Ocampo', img: 38, title: 'Medical VA & Scheduler', rate: 9, rating: 5.0, reviews: 18, years: 3, location: 'Baguio',
-    skills: ['medical admin', 'appointment setting', 'insurance verification', 'email', 'phone support', 'calendar'], tools: ['ehr', 'kareo', 'simplepractice', 'google workspace'],
-    shifts: ['us-east'], english: 96, brownout: true, trial: true, responseHrs: 1, certs: ['HIPAA Basics'], rising: true },
-];
-
-// Words a client might type, mapped to the skill/tool vocabulary above
+// Words a client might type → canonical skill vocabulary used by the matcher
 const SKILL_SYNONYMS = {
   'admin': ['admin', 'administrative', 'assistant', 'ea', 'executive', 'virtual assistant', 'general va', 'errands'],
   'calendar': ['calendar', 'schedule', 'scheduling', 'meetings', 'appointments'],

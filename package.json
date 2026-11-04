@@ -5,9 +5,14 @@
   "description": "Jobseekers.ph VA marketplace static site + Node server",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --env-file=.env server.js"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.23.1",
+    "resend": "^4.0.0"
   }
 }

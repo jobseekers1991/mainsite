@@ -200,17 +200,27 @@
   });
 
   const titleCase = s => s.replace(/\b\w/g, c => c.toUpperCase());
-  const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const mentions = (text, term) => new RegExp('(^|[^a-z])' + escapeRe(term) + '([^a-z]|$)').test(text);
+  const escapeRe  = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const esc       = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const mentions  = (text, term) => new RegExp('(^|[^a-z])' + escapeRe(term) + '([^a-z]|$)').test(text);
 
-  // Skills the client asked for, plus specific tools they named
-  function readRequirements(text) {
+  function nameHue(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h % 360;
+  }
+  function initials(name) {
+    const parts = String(name || '').trim().split(/\s+/).slice(0, 2);
+    return parts.map(p => p[0] || '').join('').toUpperCase() || '?';
+  }
+
+  // Pull canonical skill keys from the client's description. These get sent
+  // to /api/match where the server scores every real VA against them.
+  function extractKeywords(text) {
     const lower = text.toLowerCase();
-    const skills = Object.keys(SKILL_SYNONYMS).filter(key => SKILL_SYNONYMS[key].some(term => mentions(lower, term)));
-    const allTools = [...new Set(VAS.flatMap(v => v.tools))];
-    // Skip tools already counted as a skill (e.g. "shopify") so nothing is listed twice
-    const tools = allTools.filter(tool => mentions(lower, tool) && !skills.includes(tool));
-    return { skills, tools };
+    return Object.keys(SKILL_SYNONYMS).filter(key =>
+      SKILL_SYNONYMS[key].some(term => mentions(lower, term))
+    );
   }
 
   function detectShift(text) {
@@ -223,123 +233,111 @@
     return null;
   }
 
-  function scoreVA(va, req, shift, budget) {
-    const vaTerms = new Set([...va.skills, ...va.tools]);
-    const hasSkill = key => vaTerms.has(key) || SKILL_SYNONYMS[key].some(term => vaTerms.has(term));
-    const matchedSkills = req.skills.filter(hasSkill);
-    const missingSkills = req.skills.filter(k => !hasSkill(k));
-    const matchedTools = req.tools.filter(t => va.tools.includes(t));
-    const missingTools = req.tools.filter(t => !va.tools.includes(t));
-
-    const wanted = req.skills.length + req.tools.length;
-    const skillFit = wanted ? (matchedSkills.length + matchedTools.length) / wanted : 0.5;
-    const shiftFit = !shift || va.shifts.includes(shift) ? 1 : 0;
-    const budgetFit = !budget || va.rate <= budget ? 1 : Math.max(0, 1 - ((va.rate - budget) / budget) * 2);
-    let quality = Math.max(0, (va.rating - 4)) * 0.7 + Math.min(va.reviews, 100) / 100 * 0.3;
-    if (va.rising) quality = Math.max(quality, 0.65); // certified newcomers aren't buried
-    const reliability = (va.brownout ? 0.5 : 0) + (va.responseHrs <= 2 ? 0.5 : va.responseHrs <= 4 ? 0.25 : 0);
-
-    const score = Math.round(45 * skillFit + 20 * shiftFit + 15 * budgetFit + 10 * quality + 10 * reliability);
-
-    const reasons = [];
-    if (matchedSkills.length || matchedTools.length) {
-      const names = [...matchedSkills, ...matchedTools].map(titleCase).join(', ');
-      reasons.push({ ok: true, text: `Has ${matchedSkills.length + matchedTools.length} of ${wanted} things you asked for: <strong>${names}</strong>` });
-    }
-    if (shift && shiftFit) reasons.push({ ok: true, text: `Already works <strong>${SHIFTS[shift].label}</strong> (${SHIFTS[shift].ph})` });
-    if (budget && va.rate <= budget) reasons.push({ ok: true, text: `<strong>$${va.rate}/hr</strong>, within your $${budget}/hr budget` });
-    if (va.rising) reasons.push({ ok: true, text: `<strong>Rising Talent</strong>: newer to the platform but passed ${va.certs.join(' + ')}` });
-    else reasons.push({ ok: true, text: `<strong>${va.rating.toFixed(1)}★</strong> from ${va.reviews} reviews · ${va.years} yrs experience` });
-    if (va.brownout) reasons.push({ ok: true, text: '<strong>Brownout-ready ⚡</strong>: backup power &amp; internet verified' });
-    if (va.responseHrs <= 2) reasons.push({ ok: true, text: `Usually replies within ${va.responseHrs} hr${va.responseHrs > 1 ? 's' : ''}` });
-
-    const misses = [...missingSkills, ...missingTools].map(titleCase);
-    if (misses.length) reasons.push({ ok: false, text: `Not listed: ${misses.join(', ')}` });
-    if (shift && !shiftFit) reasons.push({ ok: false, text: `Doesn't currently list ${SHIFTS[shift].label} hours` });
-    if (budget && va.rate > budget) reasons.push({ ok: false, text: `$${va.rate}/hr is above your $${budget}/hr budget` });
-
-    return { va, score, reasons };
-  }
-
-  function renderResults(matches, shift, detected) {
-    summaryEl.innerHTML += `
+  function renderResults(matches, keywords, shift, detected, totalCandidates) {
+    const shiftLine = shift
+      ? ` matched against VAs who could work <strong>${SHIFTS[shift].label}</strong>${detected ? ' (detected from your description)' : ''}`
+      : '';
+    summaryEl.innerHTML = `
       <div class="alert alert-info" style="margin-bottom:1.5rem;">
         <i class="fas fa-magic" style="margin-top:0.2rem;"></i>
-        <div>Your top ${matches.length} matches${shift ? ` for <strong>${SHIFTS[shift].label}</strong>${detected ? ' (detected from your description)' : ''}` : ''}.
-        Not quite right? Add tools or details to your description and search again.</div>
+        <div>Found <strong>${totalCandidates.toLocaleString()}</strong> VAs matching your keywords${shiftLine}. Showing top ${matches.length}. Not quite right? Add tools or tasks to your description and search again.</div>
       </div>`;
 
-    resultsEl.innerHTML = matches.map((m, i) => `
-      <div class="match-result" style="animation-delay:${i * 0.08}s">
-        <div class="match-rank">${i + 1}</div>
-        <div>
-          <div class="match-who">
-            <img src="https://i.pravatar.cc/150?img=${m.va.img}" alt="${m.va.name}" />
-            <div>
-              <h3>${m.va.name}</h3>
-              <p>${m.va.title} · ${m.va.location} · $${m.va.rate}/hr</p>
+    resultsEl.innerHTML = matches.map((m, i) => {
+      const v = m.va;
+      const loc = [v.city, v.state].filter(Boolean).join(', ') || 'Philippines';
+      const hue = nameHue(v.name || v.slug);
+      const matchedList = (m.matched || []).map(titleCase).join(', ');
+      const missingList = (m.missing || []).map(titleCase).join(', ');
+      const reasons = [];
+      if (matchedList) reasons.push({ ok: true, text: `Matches <strong>${esc(matchedList)}</strong> — ${m.matched.length} of ${keywords.length} skills you asked for` });
+      if (v.certs && v.certs.length) reasons.push({ ok: true, text: `Training-center certified · ${esc(v.certs.slice(0, 3).join(', '))}` });
+      if (v.featured) reasons.push({ ok: true, text: `Featured graduate` });
+      if ((v.services || []).length >= 3) reasons.push({ ok: true, text: `Lists ${v.services.length} active services` });
+      reasons.push({ ok: true, text: `Based in <strong>${esc(loc)}</strong> · Email verified` });
+      if (missingList) reasons.push({ ok: false, text: `Not listed: ${esc(missingList)}` });
+
+      return `
+        <div class="match-result" style="animation-delay:${i * 0.08}s">
+          <div class="match-rank">${i + 1}</div>
+          <div>
+            <div class="match-who">
+              <div style="width:60px;height:60px;border-radius:50%;background:hsl(${hue},62%,52%);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.125rem;border:3px solid var(--border);">${esc(initials(v.name))}</div>
+              <div>
+                <h3>${esc(v.name)}</h3>
+                <p>${esc(v.title)} · ${esc(loc)}</p>
+              </div>
+            </div>
+            <div class="va-badges">
+              ${v.featured ? '<span class="feat-badge cert"><i class="fas fa-crown"></i> Featured</span>' : ''}
+              ${v.certs && v.certs.length ? '<span class="feat-badge cert"><i class="fas fa-certificate"></i> Training-center certified</span>' : ''}
+              <span class="verified"><i class="fas fa-check-circle"></i> Email verified</span>
+            </div>
+            <ul class="match-reasons">
+              ${reasons.map(r => `<li class="${r.ok ? '' : 'miss'}"><i class="fas ${r.ok ? 'fa-check' : 'fa-exclamation'}"></i><span>${r.text}</span></li>`).join('')}
+            </ul>
+          </div>
+          <div class="match-score">
+            <div class="match-score-ring" style="--pct:${m.score}"><span>${m.score}%</span></div>
+            <small>match</small>
+            <div style="display:flex; flex-direction:column; gap:0.375rem;">
+              <a href="/${encodeURIComponent(v.slug)}" class="btn btn-primary btn-sm">View Profile</a>
+              <a href="messages?as=client&to=${encodeURIComponent(v.slug)}" class="btn btn-outline-primary btn-sm"><i class="fas fa-paper-plane"></i> Message</a>
             </div>
           </div>
-          <div class="va-badges">
-            ${m.va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''}
-            ${m.va.trial ? '<span class="feat-badge trial"><i class="fas fa-flask"></i> Paid trial</span>' : ''}
-            ${m.va.rising ? '<span class="feat-badge rising"><i class="fas fa-seedling"></i> Rising Talent</span>' : ''}
-            ${m.va.certs.map(c => `<span class="feat-badge cert"><i class="fas fa-certificate"></i> ${c}</span>`).join('')}
-          </div>
-          <ul class="match-reasons">
-            ${m.reasons.map(r => `<li class="${r.ok ? '' : 'miss'}"><i class="fas ${r.ok ? 'fa-check' : 'fa-exclamation'}"></i><span>${r.text}</span></li>`).join('')}
-          </ul>
-        </div>
-        <div class="match-score">
-          <div class="match-score-ring" style="--pct:${m.score}"><span>${m.score}%</span></div>
-          <small>match</small>
-          <div style="display:flex; flex-direction:column; gap:0.375rem;">
-            <a href="va-profile" class="btn btn-primary btn-sm">View Profile</a>
-            ${m.va.trial ? '<a href="va-profile#trial" class="btn btn-outline-primary btn-sm">Start Paid Trial</a>' : ''}
-          </div>
-        </div>
-      </div>`).join('');
-    applyLanguage(currentLang);
+        </div>`;
+    }).join('');
+    if (typeof applyLanguage === 'function' && typeof currentLang !== 'undefined') applyLanguage(currentLang);
   }
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = desc.value.trim();
     if (!text) { desc.focus(); return; }
 
-    const req = readRequirements(text);
+    const keywords = extractKeywords(text);
     const chosen = document.getElementById('clientTz').value;
     const detected = chosen === 'any' ? detectShift(text) : null;
     const shift = chosen === 'any' ? detected : chosen;
-    const budget = parseFloat(document.getElementById('budget').value) || null;
-    const mustBrownout = document.getElementById('mustBrownout').checked;
-    const mustTrial = document.getElementById('mustTrial').checked;
-    const mustEnglish = document.getElementById('mustEnglish').checked;
-
-    const matches = VAS
-      .filter(v => (!mustBrownout || v.brownout) && (!mustTrial || v.trial) && (!mustEnglish || v.english >= 90))
-      .map(v => scoreVA(v, req, shift, budget))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
 
     resultsEl.innerHTML = '';
     summaryEl.innerHTML = '';
     loadingEl.classList.add('show');
-    const steps = ['Reading your role description…', 'Comparing skills and tools…', 'Checking shifts and budgets…'];
+    const steps = ['Reading your role description…', 'Scanning 31,000+ real VAs…', 'Scoring matches on skills, services and certs…'];
     steps.forEach((s, i) => setTimeout(() => { document.getElementById('loadingText').textContent = s; }, i * 350));
 
+    if (!keywords.length) {
+      setTimeout(() => {
+        loadingEl.classList.remove('show');
+        summaryEl.innerHTML = '<div class="alert alert-warn"><i class="fas fa-info-circle"></i> We couldn\'t spot specific skills in your description. Mention tasks or tools (e.g. "QuickBooks", "Instagram", "cold calling") for sharper matches.</div>';
+      }, 400);
+      return;
+    }
+
+    let data;
+    try {
+      const res = await fetch('/api/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords, text, shift }),
+      });
+      data = await res.json();
+    } catch (err) {
+      loadingEl.classList.remove('show');
+      summaryEl.innerHTML = '<div class="alert alert-warn"><i class="fas fa-exclamation-triangle"></i> Couldn\'t reach the matching service. Try again.</div>';
+      return;
+    }
+
+    // Short artificial delay so the loading step UI doesn't flash past
     setTimeout(() => {
       loadingEl.classList.remove('show');
-      if (!matches.length) {
-        summaryEl.innerHTML = '<div class="alert alert-warn"><i class="fas fa-info-circle"></i> No VAs meet all your must-haves yet. Try unticking one.</div>';
+      if (!data.ok || !data.matches || !data.matches.length) {
+        summaryEl.innerHTML = `<div class="alert alert-warn"><i class="fas fa-info-circle"></i> ${esc(data.error || 'No VAs matched those keywords yet. Try different terms.')}</div>`;
         return;
       }
-      if (!req.skills.length && !req.tools.length) {
-        summaryEl.innerHTML = '<div class="alert alert-warn"><i class="fas fa-info-circle"></i> We couldn\'t spot specific skills in your description. Mention tasks or tools (e.g. "QuickBooks", "Instagram", "cold calling") for sharper matches.</div>';
-      }
-      renderResults(matches, shift, !!detected);
-      if (req.skills.length || req.tools.length) resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 1100);
+      renderResults(data.matches, keywords, shift, !!detected, data.totalCandidates || data.matches.length);
+      resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 900);
   });
 
   // Searches from elsewhere (e.g. the 404 page) arrive as ai-match?q=...

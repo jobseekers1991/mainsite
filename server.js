@@ -2,9 +2,52 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('./mail');
+const db = require('./db');
 
 const PORT = process.env.PORT || 3004;
 const ROOT = __dirname;
+// Set NOINDEX=1 while the site is on a staging/preview domain. Sends
+// X-Robots-Tag on every response and serves a disallow-all robots.txt.
+// Remove the env var (or set to 0) once we're on the production domain.
+const NOINDEX = process.env.NOINDEX === '1' || process.env.NOINDEX === 'true';
+const DATA_DIR = path.join(ROOT, 'data');
+const VAS_FILE      = path.join(DATA_DIR, 'vas.json');
+const VAS_FULL_FILE = path.join(DATA_DIR, 'vas-full.json');
+const SESSION_DAYS = 30;
+const VERIFY_TTL_HOURS = 48;
+const RESET_TTL_HOURS = 2;
+
+fs.mkdirSync(DATA_DIR, { recursive: true });
+
+// Load the training-center VA directory once at boot. Imported from the SQL
+// dump via scripts/import-sql.js — see data/vas.json. ~15 MB / 31k rows, fine
+// to keep in memory. If the file is missing we just serve an empty list.
+let VAS = [];
+try {
+  VAS = JSON.parse(fs.readFileSync(VAS_FILE, 'utf8'));
+  console.log(`  VA directory: ${VAS.length.toLocaleString()} profiles loaded from data/vas.json`);
+} catch (e) {
+  console.warn('  VA directory: data/vas.json missing — run `node scripts/import-sql.js`');
+}
+const VAS_BY_SLUG = new Map(VAS.map(v => [v.slug, v]));
+
+// Deep profiles (work history / education / portfolio / testimonials / socials)
+// are kept in a separate file to keep the list endpoint light. Loaded lazily
+// the first time /api/vas/:slug is hit so startup stays fast when a dev isn't
+// browsing profiles.
+let VAS_FULL = null;
+function loadFullProfiles() {
+  if (VAS_FULL) return VAS_FULL;
+  try {
+    VAS_FULL = JSON.parse(fs.readFileSync(VAS_FULL_FILE, 'utf8'));
+    console.log(`  VA deep profiles: ${Object.keys(VAS_FULL).length.toLocaleString()} loaded from data/vas-full.json`);
+  } catch (e) {
+    VAS_FULL = {};
+    console.warn('  VA deep profiles: data/vas-full.json missing — run `node scripts/import-sql.js`');
+  }
+  return VAS_FULL;
+}
 
 const MIME = {
   '.html': 'text/html',
@@ -36,6 +79,483 @@ function tryServe(res, filePath) {
     res.writeHead(200, { 'Content-Type': mime });
     res.end(data);
   });
+}
+
+// ============================================================
+// Auth: register / login / verify-email / forgot/reset-password / me / logout
+// Backed by Postgres (see db.js + schema.sql). Passwords are scrypt(pw,salt,64).
+// Verify and reset tokens are stored as sha256 hashes — the raw token lives
+// only inside the email we send out.
+// ============================================================
+
+function hashPassword(password, salt) {
+  salt = salt || crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return { salt, hash };
+}
+function verifyPassword(password, salt, expected) {
+  const { hash } = hashPassword(password, salt);
+  const a = Buffer.from(hash, 'hex');
+  const b = Buffer.from(expected, 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function hashToken(raw) {
+  return crypto.createHash('sha256').update(String(raw)).digest('hex');
+}
+
+function parseCookies(req) {
+  const header = req.headers.cookie || '';
+  const out = {};
+  header.split(';').forEach(part => {
+    const i = part.indexOf('=');
+    if (i < 0) return;
+    out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+  });
+  return out;
+}
+
+function readBody(req, limit) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let total = 0;
+    req.on('data', chunk => {
+      total += chunk.length;
+      if (total > (limit || 32 * 1024)) { req.destroy(); reject(new Error('payload too large')); return; }
+      chunks.push(chunk);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('error', reject);
+  });
+}
+
+function sendJson(res, status, body, extraHeaders) {
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...(extraHeaders || {}) });
+  res.end(JSON.stringify(body));
+  return true;
+}
+
+// Trust x-forwarded-proto on Railway so Secure cookies kick in behind the proxy.
+function isHttps(req) {
+  const xf = (req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  return xf === 'https' || req.socket.encrypted === true;
+}
+
+function sessionCookie(id, req, maxAgeSeconds) {
+  const value = id === '' ? '' : encodeURIComponent(id);
+  const maxAge = id === '' ? 0 : (maxAgeSeconds || SESSION_DAYS * 86400);
+  const secure = isHttps(req) ? '; Secure' : '';
+  return `jsph_session=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+}
+
+// Rough client identifier for rate-limit buckets. Prefers the forwarded IP
+// so we don't key everything to Railway's load balancer address.
+function clientKey(req) {
+  const xf = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return xf || req.socket.remoteAddress || 'unknown';
+}
+
+// In-memory sliding window: Map<bucket, number[] of timestamps>. Fine for a
+// single-process Node server; swap for Redis if we ever scale horizontally.
+const rateBuckets = new Map();
+function rateLimit(bucket, max, windowMs) {
+  const now = Date.now();
+  const arr = rateBuckets.get(bucket) || [];
+  const fresh = arr.filter(t => now - t < windowMs);
+  if (fresh.length >= max) {
+    rateBuckets.set(bucket, fresh);
+    return false;
+  }
+  fresh.push(now);
+  rateBuckets.set(bucket, fresh);
+  return true;
+}
+
+// Occasional cleanup so the map doesn't grow forever on a busy server.
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, arr] of rateBuckets) {
+    const fresh = arr.filter(t => now - t < 60 * 60 * 1000);
+    if (fresh.length === 0) rateBuckets.delete(k);
+    else rateBuckets.set(k, fresh);
+  }
+}, 10 * 60 * 1000).unref();
+
+const ACCOUNT_COLUMNS = `id, role, email, password_hash AS "passwordHash", password_salt AS "passwordSalt",
+  first_name AS "firstName", last_name AS "lastName", verified,
+  verify_token_hash AS "verifyTokenHash", verify_expires AS "verifyExpires",
+  company_name AS "companyName", company_size AS "companySize", source,
+  mobile, city, skill, years, created_at AS "createdAt"`;
+
+async function findAccountByEmail(email) {
+  const r = await db.query(`SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE email = $1`, [email]);
+  return r.rows[0] || null;
+}
+async function findAccountById(id) {
+  const r = await db.query(`SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE id = $1`, [id]);
+  return r.rows[0] || null;
+}
+
+async function currentUser(req) {
+  const sid = parseCookies(req).jsph_session;
+  if (!sid) return null;
+  const r = await db.query(
+    `SELECT ${ACCOUNT_COLUMNS}, s.expires AS session_expires
+     FROM sessions s JOIN accounts a ON a.id = s.account_id
+     WHERE s.id = $1`,
+    [sid]
+  );
+  const row = r.rows[0];
+  if (!row || Number(row.session_expires) < Date.now()) return null;
+  const { session_expires, ...acc } = row;
+  return { ...acc, sessionId: sid };
+}
+
+async function issueSession(accountId) {
+  // Opportunistically purge expired sessions while we're here.
+  await db.query('DELETE FROM sessions WHERE expires < $1', [Date.now()]);
+  const sid = 'sess_' + crypto.randomBytes(24).toString('hex');
+  await db.query(
+    'INSERT INTO sessions (id, account_id, expires) VALUES ($1, $2, $3)',
+    [sid, accountId, Date.now() + SESSION_DAYS * 86400 * 1000]
+  );
+  return sid;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateRegister(body) {
+  const errors = {};
+  const role = body.role === 'client' || body.role === 'va' ? body.role : null;
+  if (!role) errors.role = 'Choose whether you want to hire a VA or work as a VA.';
+  const firstName = String(body.firstName || '').trim();
+  const lastName  = String(body.lastName  || '').trim();
+  const email     = String(body.email     || '').trim().toLowerCase();
+  const password  = String(body.password  || '');
+  if (!firstName) errors.firstName = 'First name is required.';
+  if (!lastName)  errors.lastName  = 'Last name is required.';
+  if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.';
+  if (password.length < 8)   errors.password = 'Use at least 8 characters.';
+  if (role === 'client') {
+    if (!String(body.companyName || '').trim()) errors.companyName = 'Company name is required.';
+    if (!String(body.companySize || '').trim()) errors.companySize = 'Pick a company size.';
+  } else if (role === 'va') {
+    if (!String(body.mobile || '').trim()) errors.mobile = 'Mobile number is required for GCash payouts.';
+    if (!String(body.city   || '').trim()) errors.city   = 'City or province is required.';
+    if (!String(body.skill  || '').trim()) errors.skill  = 'Pick your primary skill.';
+  }
+  return {
+    errors, role, firstName, lastName, email, password,
+    companyName: String(body.companyName || '').trim(),
+    companySize: String(body.companySize || '').trim(),
+    source:      String(body.source || '').trim(),
+    mobile:      String(body.mobile || '').trim(),
+    city:        String(body.city || '').trim(),
+    skill:       String(body.skill || '').trim(),
+    years:       String(body.years || '').trim(),
+  };
+}
+
+async function handleAuth(req, res, urlPath) {
+  if (urlPath === '/api/register' && req.method === 'POST') {
+    if (!rateLimit('register:' + clientKey(req), 5, 60 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many signup attempts. Try again in an hour.' });
+    }
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const v = validateRegister(body);
+    if (Object.keys(v.errors).length) return sendJson(res, 400, { ok: false, errors: v.errors });
+
+    const existing = await findAccountByEmail(v.email);
+    if (existing) return sendJson(res, 409, { ok: false, errors: { email: 'An account with this email already exists.' } });
+
+    const { salt, hash } = hashPassword(v.password);
+    const verifyToken = crypto.randomBytes(24).toString('hex');
+    const accountId = 'u_' + crypto.randomBytes(8).toString('hex');
+    await db.query(
+      `INSERT INTO accounts (id, role, email, password_hash, password_salt, first_name, last_name,
+         verified, verify_token_hash, verify_expires,
+         company_name, company_size, source, mobile, city, skill, years, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,FALSE,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+      [
+        accountId, v.role, v.email, hash, salt, v.firstName, v.lastName,
+        hashToken(verifyToken), Date.now() + VERIFY_TTL_HOURS * 3600 * 1000,
+        v.role === 'client' ? v.companyName : null,
+        v.role === 'client' ? v.companySize : null,
+        v.role === 'client' ? v.source : null,
+        v.role === 'va' ? v.mobile : null,
+        v.role === 'va' ? v.city : null,
+        v.role === 'va' ? v.skill : null,
+        v.role === 'va' ? v.years : null,
+        Date.now(),
+      ]
+    );
+
+    const link = `/verify-email?token=${verifyToken}`;
+    sendVerificationEmail({ to: v.email, firstName: v.firstName, role: v.role, verifyPath: link })
+      .catch(err => console.error('[register] mail error:', err));
+
+    const sid = await issueSession(accountId);
+    sendJson(res, 200, { ok: true, role: v.role, email: v.email, verifyLink: link }, { 'Set-Cookie': sessionCookie(sid, req) });
+    return true;
+  }
+
+  if (urlPath === '/api/login' && req.method === 'POST') {
+    if (!rateLimit('login:' + clientKey(req), 10, 15 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many login attempts. Try again in 15 minutes.' });
+    }
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const email = String(body.email || '').trim().toLowerCase();
+    const password = String(body.password || '');
+    if (!email || !password) return sendJson(res, 400, { ok: false, error: 'Email and password are required.' });
+    const account = await findAccountByEmail(email);
+    if (!account || !verifyPassword(password, account.passwordSalt, account.passwordHash)) {
+      return sendJson(res, 401, { ok: false, error: 'Email or password is incorrect.' });
+    }
+    const sid = await issueSession(account.id);
+    sendJson(res, 200, { ok: true, role: account.role, verified: !!account.verified }, { 'Set-Cookie': sessionCookie(sid, req) });
+    return true;
+  }
+
+  if (urlPath === '/api/verify-email' && req.method === 'POST') {
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const token = String(body.token || '').trim();
+    if (!token) return sendJson(res, 400, { ok: false, error: 'Missing token.' });
+    const tokenHash = hashToken(token);
+    const r = await db.query(
+      `SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE verify_token_hash = $1`,
+      [tokenHash]
+    );
+    const account = r.rows[0];
+    if (!account) {
+      // Fall back: maybe already verified. We can't look it up without the raw
+      // token though, so just return the standard invalid message.
+      return sendJson(res, 404, { ok: false, error: 'This verification link is invalid or already used.' });
+    }
+    if (account.verified) return sendJson(res, 200, { ok: true, role: account.role, alreadyVerified: true });
+    if (account.verifyExpires && Number(account.verifyExpires) < Date.now()) {
+      return sendJson(res, 410, { ok: false, error: 'This verification link has expired. Request a new one.' });
+    }
+    await db.query(
+      'UPDATE accounts SET verified = TRUE, verify_token_hash = NULL, verify_expires = NULL WHERE id = $1',
+      [account.id]
+    );
+    const sid = await issueSession(account.id);
+    sendJson(res, 200, { ok: true, role: account.role }, { 'Set-Cookie': sessionCookie(sid, req) });
+    return true;
+  }
+
+  if (urlPath === '/api/resend-verification' && req.method === 'POST') {
+    if (!rateLimit('resend:' + clientKey(req), 5, 60 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many resends. Try again in an hour.' });
+    }
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.verified) return sendJson(res, 200, { ok: true, alreadyVerified: true });
+    const verifyToken = crypto.randomBytes(24).toString('hex');
+    await db.query(
+      'UPDATE accounts SET verify_token_hash = $1, verify_expires = $2 WHERE id = $3',
+      [hashToken(verifyToken), Date.now() + VERIFY_TTL_HOURS * 3600 * 1000, user.id]
+    );
+    const link = `/verify-email?token=${verifyToken}`;
+    sendVerificationEmail({ to: user.email, firstName: user.firstName, role: user.role, verifyPath: link })
+      .catch(err => console.error('[resend] mail error:', err));
+    sendJson(res, 200, { ok: true, verifyLink: link });
+    return true;
+  }
+
+  if (urlPath === '/api/forgot-password' && req.method === 'POST') {
+    if (!rateLimit('forgot:' + clientKey(req), 5, 60 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many reset attempts. Try again in an hour.' });
+    }
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const email = String(body.email || '').trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) return sendJson(res, 400, { ok: false, error: 'Enter a valid email address.' });
+
+    const account = await findAccountByEmail(email);
+    // Always return 200 to avoid leaking which emails are registered.
+    if (account) {
+      const resetToken = crypto.randomBytes(24).toString('hex');
+      await db.query(
+        'INSERT INTO password_resets (token_hash, account_id, expires, used) VALUES ($1, $2, $3, FALSE)',
+        [hashToken(resetToken), account.id, Date.now() + RESET_TTL_HOURS * 3600 * 1000]
+      );
+      const link = `/forgot-password?token=${resetToken}`;
+      sendPasswordResetEmail({ to: account.email, firstName: account.firstName, resetPath: link })
+        .catch(err => console.error('[forgot] mail error:', err));
+    }
+    sendJson(res, 200, { ok: true });
+    return true;
+  }
+
+  if (urlPath === '/api/reset-password' && req.method === 'POST') {
+    if (!rateLimit('reset:' + clientKey(req), 10, 60 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many reset attempts. Try again in an hour.' });
+    }
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const token = String(body.token || '').trim();
+    const password = String(body.password || '');
+    if (!token) return sendJson(res, 400, { ok: false, error: 'Missing token.' });
+    if (password.length < 8) return sendJson(res, 400, { ok: false, errors: { password: 'Use at least 8 characters.' } });
+
+    const r = await db.query(
+      'SELECT account_id, expires, used FROM password_resets WHERE token_hash = $1',
+      [hashToken(token)]
+    );
+    const row = r.rows[0];
+    if (!row || row.used) return sendJson(res, 404, { ok: false, error: 'This reset link is invalid or already used.' });
+    if (Number(row.expires) < Date.now()) return sendJson(res, 410, { ok: false, error: 'This reset link has expired. Request a new one.' });
+
+    const { salt, hash } = hashPassword(password);
+    await db.query('UPDATE accounts SET password_hash = $1, password_salt = $2 WHERE id = $3', [hash, salt, row.account_id]);
+    await db.query('UPDATE password_resets SET used = TRUE WHERE token_hash = $1', [hashToken(token)]);
+    // Invalidate every other session for this account — a password change should
+    // log out anyone who might have a stolen cookie.
+    await db.query('DELETE FROM sessions WHERE account_id = $1', [row.account_id]);
+    const sid = await issueSession(row.account_id);
+    const account = await findAccountById(row.account_id);
+    sendJson(res, 200, { ok: true, role: account.role }, { 'Set-Cookie': sessionCookie(sid, req) });
+    return true;
+  }
+
+  if (urlPath === '/api/me' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false });
+    const { passwordHash, passwordSalt, verifyTokenHash, verifyExpires, ...safe } = user;
+    sendJson(res, 200, { ok: true, user: safe });
+    return true;
+  }
+
+  if (urlPath === '/api/logout' && req.method === 'POST') {
+    const sid = parseCookies(req).jsph_session;
+    if (sid) await db.query('DELETE FROM sessions WHERE id = $1', [sid]);
+    sendJson(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie('', req, 0) });
+    return true;
+  }
+
+  return false;
+}
+
+// ============================================================
+// VA directory: /api/vas (list + filter + paginate), /api/vas/:slug
+// Reads from the in-memory VAS array loaded above.
+// ============================================================
+
+function handleVaDirectory(req, res, urlPath) {
+  if (urlPath === '/api/vas' && req.method === 'GET') {
+    const url = new URL(req.url, 'http://localhost');
+    const q      = (url.searchParams.get('q')     || '').trim().toLowerCase();
+    const skill  = (url.searchParams.get('skill') || '').trim().toLowerCase();
+    const city   = (url.searchParams.get('city')  || '').trim().toLowerCase();
+    const page   = Math.max(1, parseInt(url.searchParams.get('page')  || '1', 10) || 1);
+    const limit  = Math.min(60, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10) || 20));
+
+    let filtered = VAS;
+    if (q || skill || city) {
+      filtered = VAS.filter(v => {
+        if (q) {
+          const hay = (v.name + ' ' + v.title + ' ' + (v.skills || []).join(' ')).toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        if (skill) {
+          if (!(v.skills || []).some(s => s.toLowerCase().includes(skill))) return false;
+        }
+        if (city) {
+          if (!(v.city || '').toLowerCase().includes(city)) return false;
+        }
+        return true;
+      });
+    }
+
+    const total = filtered.length;
+    const start = (page - 1) * limit;
+    const slice = filtered.slice(start, start + limit);
+    return sendJson(res, 200, { ok: true, total, page, limit, pages: Math.ceil(total / limit), vas: slice });
+  }
+
+  const match = urlPath.match(/^\/api\/vas\/([a-z0-9-]+)$/);
+  if (match && req.method === 'GET') {
+    const slug = match[1];
+    const full = loadFullProfiles()[slug];
+    if (full) return sendJson(res, 200, { ok: true, va: full });
+    const lean = VAS_BY_SLUG.get(slug);
+    if (lean) return sendJson(res, 200, { ok: true, va: lean });
+    return sendJson(res, 404, { ok: false, error: 'Not found' });
+  }
+
+  return false;
+}
+
+// ============================================================
+// AI Match: POST /api/match { keywords: [], text: '' } → top 5 VAs with reasons.
+// Client extracts keywords from the role description using SKILL_SYNONYMS
+// (shared vocabulary in js/va-data.js) and sends them here. We score every
+// VA against name + title + skills + services and return the top 5.
+// ============================================================
+
+function scoreVa(v, keywords, textLower) {
+  const hay = (
+    (v.title    || '') + ' ' +
+    (v.skills   || []).join(' ') + ' ' +
+    (v.services || []).join(' ')
+  ).toLowerCase();
+
+  const matched = [];
+  for (const kw of keywords) {
+    if (hay.includes(kw)) matched.push(kw);
+  }
+  const skillFit    = keywords.length ? matched.length / keywords.length : 0;
+  const titleHit    = keywords.some(kw => (v.title || '').toLowerCase().includes(kw)) ? 1 : 0;
+  const serviceDepth= Math.min((v.services || []).length, 4) / 4;
+  const certBonus   = (v.certs || []).length ? 1 : 0;
+  const featured    = v.featured ? 1 : 0;
+  const cityHit     = textLower && v.city && textLower.includes(v.city.toLowerCase()) ? 1 : 0;
+
+  const score = Math.round(
+    55 * skillFit +
+    15 * titleHit +
+    10 * serviceDepth +
+     8 * certBonus +
+     7 * featured +
+     5 * cityHit
+  );
+  return { score, matched };
+}
+
+function handleAiMatch(req, res, urlPath) {
+  if (urlPath !== '/api/match' || req.method !== 'POST') return false;
+  readBody(req, 8 * 1024).then(raw => {
+    let body;
+    try { body = JSON.parse(raw); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const keywords = (Array.isArray(body.keywords) ? body.keywords : [])
+      .map(k => String(k || '').trim().toLowerCase())
+      .filter(Boolean)
+      .slice(0, 15);
+    const textLower = String(body.text || '').toLowerCase().slice(0, 2000);
+    if (!keywords.length) return sendJson(res, 400, { ok: false, error: 'No skill keywords detected. Mention tasks or tools in your description.' });
+
+    const scored = [];
+    for (const v of VAS) {
+      const s = scoreVa(v, keywords, textLower);
+      if (s.score >= 25) scored.push({ v, score: s.score, matched: s.matched });
+    }
+    scored.sort((a, b) => b.score - a.score || (b.v.featured - a.v.featured));
+    const top = scored.slice(0, 5).map(m => ({
+      va: m.v,
+      score: m.score,
+      matched: m.matched,
+      missing: keywords.filter(k => !m.matched.includes(k)),
+    }));
+    sendJson(res, 200, { ok: true, matches: top, totalCandidates: scored.length, keywords });
+  }).catch(err => {
+    console.error('[match]', err);
+    sendJson(res, 500, { ok: false, error: 'Server error' });
+  });
+  return true;
 }
 
 // Speed test endpoints for setup-check.html
@@ -82,25 +602,71 @@ function handleSpeedTest(req, res, urlPath) {
   return false;
 }
 
-http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   let urlPath = req.url.split('?')[0];
+  if (NOINDEX) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+    if (urlPath === '/robots.txt') {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('User-agent: *\nDisallow: /\n');
+      return;
+    }
+  }
   if (handleSpeedTest(req, res, urlPath)) return;
+  if (urlPath.startsWith('/api/')) {
+    try {
+      if (handleVaDirectory(req, res, urlPath)) return;
+      if (handleAiMatch(req, res, urlPath)) return;
+      const handled = await handleAuth(req, res, urlPath);
+      if (handled) return;
+    } catch (err) {
+      console.error('[api error]', err);
+      if (!res.headersSent) sendJson(res, 500, { ok: false, error: 'Server error' });
+      return;
+    }
+    return sendJson(res, 404, { ok: false, error: 'Unknown endpoint' });
+  }
   if (urlPath === '/') urlPath = '/index.html';
 
   const filePath = path.join(ROOT, urlPath);
   // Never serve files from outside the site folder (e.g. /../secret)
   if (!filePath.startsWith(ROOT + path.sep)) return notFound(res);
 
-  // Try exact path first; if no extension, try appending .html
+  // Try exact path first; if no extension, try appending .html; and finally
+  // treat the path as a VA slug (/leimarzona → va-profile.html for Lei).
+  // The slug lookup only runs when nothing else matched, so static files and
+  // page .html files always win.
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (!err) {
       tryServe(res, filePath);
-    } else if (path.extname(urlPath) === '') {
-      tryServe(res, filePath + '.html');
-    } else {
-      notFound(res);
+      return;
     }
+    if (path.extname(urlPath) !== '') {
+      notFound(res);
+      return;
+    }
+    fs.access(filePath + '.html', fs.constants.F_OK, (htmlErr) => {
+      if (!htmlErr) {
+        tryServe(res, filePath + '.html');
+        return;
+      }
+      const maybeSlug = urlPath.slice(1); // strip leading '/'
+      if (/^[a-z0-9][a-z0-9-]*$/i.test(maybeSlug) && VAS_BY_SLUG.has(maybeSlug.toLowerCase())) {
+        tryServe(res, path.join(ROOT, 'va-profile.html'));
+        return;
+      }
+      notFound(res);
+    });
   });
-}).listen(PORT, '0.0.0.0', () => {
-  console.log(`\n  Jobseekers.ph running on port ${PORT}\n`);
 });
+
+db.initSchema()
+  .then(() => {
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`\n  Jobseekers.ph running on port ${PORT}\n`);
+    });
+  })
+  .catch(err => {
+    console.error('[boot] schema init failed:', err);
+    process.exit(1);
+  });

@@ -1575,6 +1575,88 @@ textarea.form-control { resize: vertical; min-height: 120px; }
 .role-card h4 { font-size: 0.9rem; font-weight: 700; color: var(--dark); margin-bottom: 0.125rem; }
 .role-card p { font-size: 0.75rem; color: var(--text-light); }
 
+/* Register panel: role-branched field blocks + password strength + ToS. */
+.auth-ask { font-size: 0.875rem; font-weight: 600; color: var(--dark); margin-bottom: 0.75rem; }
+.auth-ask-sub { font-size: 0.78rem; color: var(--text-light); font-weight: 400; display: block; margin-top: 0.125rem; }
+
+.role-fields { display: block; margin-bottom: 0.25rem; }
+.role-fields[hidden] { display: none; }
+
+.pw-wrap { position: relative; }
+.pw-wrap .pw-toggle { position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-light); font-size: 0.9rem; padding: 0.25rem; }
+.pw-wrap .pw-toggle:hover { color: var(--primary); }
+.pw-wrap .form-control { padding-right: 2.75rem; }
+
+.pw-strength { margin-top: 0.5rem; }
+.pw-strength-bars { display: flex; gap: 0.25rem; margin-bottom: 0.25rem; }
+.pw-strength-bar { height: 3px; flex: 1; background: var(--border); border-radius: var(--radius-full); transition: background 0.2s; }
+.pw-strength[data-score="1"] .pw-strength-bar:nth-child(-n+1) { background: var(--danger); }
+.pw-strength[data-score="2"] .pw-strength-bar:nth-child(-n+2) { background: #F59E0B; }
+.pw-strength[data-score="3"] .pw-strength-bar:nth-child(-n+3) { background: #10B981; }
+.pw-strength[data-score="4"] .pw-strength-bar { background: #10B981; }
+.pw-strength-label { font-size: 0.75rem; color: var(--text-light); }
+.pw-strength[data-score="1"] .pw-strength-label { color: var(--danger); }
+.pw-strength[data-score="2"] .pw-strength-label { color: #B45309; }
+.pw-strength[data-score="3"] .pw-strength-label,
+.pw-strength[data-score="4"] .pw-strength-label { color: #047857; }
+
+/* Confirm-password match feedback. */
+.confirm-match { font-size: 0.75rem; margin-top: 0.375rem; display: inline-flex; align-items: center; gap: 0.375rem; }
+.confirm-match.ok   { color: #047857; }
+.confirm-match.bad  { color: var(--danger); }
+
+/* Terms-of-service checkbox block. */
+.auth-terms { background: rgba(79,70,229,0.04); border: 1px solid rgba(79,70,229,0.12); border-radius: var(--radius-md); padding: 0.875rem; margin-bottom: 1.5rem; }
+.auth-terms-label { display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; }
+.auth-terms-label input[type="checkbox"] { accent-color: var(--primary); margin-top: 0.125rem; width: 16px; height: 16px; flex-shrink: 0; }
+.auth-terms-label span { font-size: 0.8125rem; color: var(--text); line-height: 1.6; }
+
+/* Top-level form error banner (e.g. "That email is already in use"). */
+.auth-form-error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-md); padding: 0.625rem 0.875rem; margin-bottom: 1rem; }
+
+/* Register panel bottom: perks row + full-width button. */
+.btn-block { width: 100%; }
+.auth-perks-row { text-align: center; font-size: 0.75rem; color: var(--text-light); margin-top: 1rem; line-height: 1.6; }
+.auth-perks-row i { color: var(--success); }
+
+/* Remember-me row on sign-in. */
+.auth-remember { display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text); }
+.auth-remember input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; }
+.auth-remember label { cursor: pointer; }
+
+/* Password label row (label on left, "Forgot?" link on right). */
+.auth-pw-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.auth-pw-row .form-label { margin: 0; }
+.auth-pw-row a { font-size: 0.8125rem; color: var(--primary); font-weight: 500; }
+
+/* Verify-email page: single centered card over a soft gradient. */
+.verify-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1.25rem; background: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%); }
+.verify-card { background: #fff; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); padding: 2.5rem 2rem; max-width: 480px; width: 100%; text-align: center; border: 1px solid var(--border); }
+.verify-logo { color: var(--dark); margin-bottom: 1.5rem; justify-content: center; display: inline-flex; }
+.verify-state h1 { font-size: 1.5rem; color: var(--dark); margin-bottom: 0.5rem; }
+.verify-sub { color: var(--text-light); font-size: 0.9375rem; margin-bottom: 1.5rem; line-height: 1.6; }
+.verify-icon { width: 72px; height: 72px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1.25rem; }
+.verify-icon-primary { background: rgba(79,70,229,0.1); color: var(--primary); }
+.verify-icon-success { background: rgba(16,185,129,0.12); color: var(--success); }
+.verify-icon-danger  { background: rgba(239,68,68,0.1); color: var(--danger); }
+.verify-spin i { animation: btn-spin 0.9s linear infinite; }
+.verify-mailboxes { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1.5rem; }
+.verify-footer-row { display: flex; gap: 0.5rem; justify-content: center; align-items: center; flex-wrap: wrap; }
+.verify-resend { background: none; border: none; cursor: pointer; font: inherit; padding: 0; }
+.verify-footer-sub { text-align: center; margin-top: 0.5rem; }
+.verify-error { margin-top: 1.25rem; text-align: left; color: var(--danger); font-size: 0.8125rem; }
+.verify-success-banner { margin-top: 1rem; background: rgba(16,185,129,0.12); color: #047857; border: 1px solid rgba(16,185,129,0.2); border-radius: var(--radius-md); padding: 0.625rem 0.875rem; font-size: 0.8125rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.375rem; }
+.verify-error-actions { justify-content: center; margin-top: 0.5rem; }
+
+/* Loading spinner inside a button while submitting. */
+.btn[aria-busy="true"] { opacity: 0.75; pointer-events: none; position: relative; }
+.btn[aria-busy="true"] > * { visibility: hidden; }
+.btn[aria-busy="true"]::after { content: ''; position: absolute; top: 50%; left: 50%; width: 1rem; height: 1rem; margin: -0.5rem 0 0 -0.5rem; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: btn-spin 0.7s linear infinite; }
+.btn-outline-primary[aria-busy="true"]::after,
+.btn-ghost[aria-busy="true"]::after,
+.btn-white[aria-busy="true"]::after { border-color: rgba(79,70,229,0.3); border-top-color: var(--primary); }
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+
 .divider {
   display: flex;
   align-items: center;
@@ -3752,3 +3834,105 @@ a.value-card { display: block; color: inherit; }
   .legal-body { padding: 1.5rem; }
 }
 .doc-builder > * { min-width: 0; }
+
+/* ========================
+   Polish utilities (shared across client dashboard pages)
+   ======================== */
+
+/* Page header: title block on the left, actions on the right. */
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+
+/* Grouped buttons (header actions, card actions, modal footers). */
+.btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.btn-group-end { justify-content: flex-end; }
+
+/* Modal + backdrop. Use .modal-backdrop as the overlay and .modal as the centered card. */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 99; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal { background: #fff; border-radius: var(--radius-lg); padding: 1.5rem; max-width: 480px; width: 100%; box-shadow: var(--shadow-xl); max-height: calc(100vh - 2rem); overflow-y: auto; }
+.modal-lg { max-width: 640px; }
+.modal-title { font-size: 1.0625rem; color: var(--dark); margin-bottom: 0.25rem; }
+.modal-sub { font-size: 0.8125rem; color: var(--text-light); margin-bottom: 1rem; }
+
+/* Form error states (replaces imperative style.borderColor in page JS). */
+.form-control.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(239,68,68,0.12); }
+.form-error-message { display: flex; align-items: center; gap: 0.375rem; font-size: 0.78rem; color: var(--danger); margin-top: 0.375rem; font-weight: 500; }
+
+/* Section-title icons use these in place of inline color overrides. */
+.section-icon-primary   { color: var(--primary); }
+.section-icon-success   { color: var(--success); }
+.section-icon-accent    { color: var(--accent); }
+.section-icon-secondary { color: var(--secondary); }
+.section-icon-danger    { color: var(--danger); }
+.section-icon-pink      { color: #EC4899; }
+
+/* Accessible keyboard focus for buttons and icon-only controls. */
+.btn:focus-visible,
+.dash-icon-btn:focus-visible,
+.dash-topbar-toggle:focus-visible,
+.dash-avatar-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Status pill: a few more semantic variants used by invoice/trial/dispute flows. */
+.status-pill.success { background: rgba(16,185,129,0.12); color: #047857; }
+.status-pill.warn    { background: rgba(245,158,11,0.12); color: #B45309; }
+.status-pill.info    { background: rgba(14,165,233,0.12); color: #0369A1; }
+
+/* Inline-panel variant that sits on top of a card (white instead of --bg) and a title line. */
+.inline-panel-light { background: #fff; }
+.inline-panel-title { font-size: 0.9375rem; color: var(--dark); display: inline-flex; align-items: center; gap: 0.375rem; }
+
+/* Inline link reinforcement (replaces style="color:var(--primary); font-weight:600;"). */
+.link-primary { color: var(--primary); font-weight: 600; }
+.link-primary:hover { text-decoration: underline; }
+
+/* Avatar sizes reused in card lists, modals and shortlists. */
+.avatar-sm { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.avatar-xs { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+
+/* Compact meta rows (name + sub-line) commonly used next to an avatar. */
+.meta-stack { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.meta-stack .meta-name { font-size: 0.85rem; font-weight: 700; color: var(--dark); line-height: 1.3; }
+.meta-stack .meta-sub { font-size: 0.75rem; color: var(--text-light); }
+
+/* Destructive ghost button (End contract, Cancel offer). */
+.btn-ghost.btn-ghost-danger,
+.btn-ghost-danger { color: var(--danger); }
+.btn-ghost.btn-ghost-danger:hover,
+.btn-ghost-danger:hover { background: rgba(239,68,68,0.1); }
+
+/* Small text helpers used inside dense card/table cells. */
+.text-dark { color: var(--dark); }
+.text-light { color: var(--text-light); }
+.text-warn-sm { font-size: 0.72rem; color: #B45309; display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.125rem; }
+.text-success-dot { color: var(--success); font-size: 0.5rem; }
+
+/* Dash-table cell alignment helpers (replace repeated inline style="text-align:right;..."). */
+.dash-table td.num, .dash-table th.num { text-align: right; }
+.dash-table td.num.strong { font-weight: 700; }
+.dash-table td.nowrap, .dash-table th.nowrap { white-space: nowrap; }
+
+/* Trial progress block (dashboard-client paid trials). */
+.trial-progress { margin-top: 0.75rem; }
+.trial-progress-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-light); margin-bottom: 0.25rem; }
+
+/* Replacement-guarantee shortlist cards. */
+.shortlist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+.shortlist-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.75rem; display: flex; gap: 0.625rem; align-items: center; }
+
+/* Verify-email banner shown at the top of a dashboard until the account's email is confirmed. */
+.verify-banner {
+  display: flex; align-items: center; gap: 1rem;
+  background: #FEF3C7; border: 1px solid #FCD34D; color: #78350F;
+  padding: 0.875rem 1.125rem; border-radius: var(--radius-lg);
+  margin: 0 0 1.25rem;
+}
+.verify-banner-icon { width: 2.25rem; height: 2.25rem; border-radius: 50%; background: #FBBF24; color: #78350F; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1rem; }
+.verify-banner-body { flex: 1; min-width: 0; }
+.verify-banner-body strong { display: block; font-size: 0.9375rem; color: #78350F; margin-bottom: 0.125rem; }
+.verify-banner-body p { font-size: 0.8125rem; color: #92400E; margin: 0; line-height: 1.5; }
+.verify-banner-actions { flex-shrink: 0; }
+@media (max-width: 640px) {
+  .verify-banner { flex-wrap: wrap; }
+  .verify-banner-actions { width: 100%; }
+  .verify-banner-actions .btn { width: 100%; }
+}
+.shortlist-loading { margin-top: 0.75rem; }

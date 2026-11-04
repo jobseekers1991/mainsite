@@ -122,6 +122,36 @@
     <!-- Content -->
     <main class="dash-content">
 
+<div id="verifyBanner" class="verify-banner" hidden>
+  <div class="verify-banner-icon"><i class="fas fa-envelope" aria-hidden="true"></i></div>
+  <div class="verify-banner-body">
+    <strong>Verify your email to unlock everything.</strong>
+    <p>We sent a link to <span id="verifyBannerEmail">your inbox</span>. Clients post jobs and VAs apply once email is confirmed.</p>
+  </div>
+  <div class="verify-banner-actions">
+    <button type="button" class="btn btn-primary btn-sm" id="verifyBannerResend">Resend link</button>
+  </div>
+</div>
+<script>
+(function(){
+  fetch('/api/me').then(r => r.json()).then(d => {
+    if (!d.ok || !d.user || d.user.verified) return;
+    const b = document.getElementById('verifyBanner');
+    document.getElementById('verifyBannerEmail').textContent = d.user.email || 'your inbox';
+    b.hidden = false;
+    document.getElementById('verifyBannerResend').addEventListener('click', async (e) => {
+      e.target.setAttribute('aria-busy', 'true');
+      try {
+        const res = await fetch('/api/resend-verification', { method: 'POST' });
+        const p = await res.json().catch(() => ({}));
+        e.target.textContent = (res.ok && p.ok) ? 'Link sent — check inbox' : 'Could not send — try again';
+      } catch (_) { e.target.textContent = 'Could not send — try again'; }
+      finally { e.target.setAttribute('aria-busy', 'false'); }
+    });
+  }).catch(() => {});
+})();
+</script>
+
       <!-- Page header -->
       <div class="dash-page-header">
         <h1>Good morning, Maria 👋</h1>
