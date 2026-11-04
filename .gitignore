@@ -1,5 +1,6 @@
 node_modules/
-data/
+data/*
+!data/vas.json
 db/
 *.log
 .DS_Store
