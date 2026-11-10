@@ -76,7 +76,12 @@ function tryServe(res, filePath) {
     }
     const ext = path.extname(filePath).toLowerCase();
     const mime = MIME[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': mime });
+    // Keep HTML/JS/CSS fresh in dev so edits show up without a hard refresh.
+    // Fonts/images can still be cached normally.
+    const dynamic = ext === '.html' || ext === '.js' || ext === '.css';
+    const headers = { 'Content-Type': mime };
+    if (dynamic) headers['Cache-Control'] = 'no-cache';
+    res.writeHead(200, headers);
     res.end(data);
   });
 }
@@ -185,7 +190,15 @@ const ACCOUNT_COLUMNS = `id, role, email, password_hash AS "passwordHash", passw
   first_name AS "firstName", last_name AS "lastName", verified,
   verify_token_hash AS "verifyTokenHash", verify_expires AS "verifyExpires",
   company_name AS "companyName", company_size AS "companySize", source,
-  mobile, city, skill, years, created_at AS "createdAt"`;
+  mobile, city, skill, years, title, tagline, profile_data AS "profileData", created_at AS "createdAt"`;
+
+// Same column list, but qualified with the accounts alias — needed whenever
+// we JOIN another table that also has an `id` column (e.g. sessions).
+const ACCOUNT_COLUMNS_A = `a.id, a.role, a.email, a.password_hash AS "passwordHash", a.password_salt AS "passwordSalt",
+  a.first_name AS "firstName", a.last_name AS "lastName", a.verified,
+  a.verify_token_hash AS "verifyTokenHash", a.verify_expires AS "verifyExpires",
+  a.company_name AS "companyName", a.company_size AS "companySize", a.source,
+  a.mobile, a.city, a.skill, a.years, a.title, a.tagline, a.profile_data AS "profileData", a.created_at AS "createdAt"`;
 
 async function findAccountByEmail(email) {
   const r = await db.query(`SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE email = $1`, [email]);
@@ -200,7 +213,7 @@ async function currentUser(req) {
   const sid = parseCookies(req).jsph_session;
   if (!sid) return null;
   const r = await db.query(
-    `SELECT ${ACCOUNT_COLUMNS}, s.expires AS session_expires
+    `SELECT ${ACCOUNT_COLUMNS_A}, s.expires AS session_expires
      FROM sessions s JOIN accounts a ON a.id = s.account_id
      WHERE s.id = $1`,
     [sid]
@@ -430,6 +443,105 @@ async function handleAuth(req, res, urlPath) {
     return true;
   }
 
+  if (urlPath === '/api/me' && req.method === 'PATCH') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+
+    let body;
+    try { body = JSON.parse(await readBody(req)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+
+    // Only these fields are editable from the profile form. Trim and cap each.
+    const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+    const fields = {
+      first_name:   str(body.firstName, 80),
+      last_name:    str(body.lastName, 80),
+      title:        str(body.title, 150) || null,
+      tagline:      str(body.tagline, 160) || null,
+      city:         str(body.city, 80) || null,
+      mobile:       str(body.mobile, 40) || null,
+      skill:        str(body.skill, 80) || null,
+      years:        str(body.years, 10) || null,
+    };
+    if (!fields.first_name) return sendJson(res, 400, { ok: false, errors: { firstName: 'First name is required.' } });
+    if (!fields.last_name)  return sendJson(res, 400, { ok: false, errors: { lastName:  'Last name is required.' } });
+
+    // Extended profile data — stored as a single JSONB blob so we don't need
+    // a new table per section. Shape-check and trim each top-level field.
+    if (body.profileData !== undefined) {
+      const pd = body.profileData || {};
+      const bio = str(pd.bio, 4000) || null;
+      const skills = Array.isArray(pd.skills)
+        ? pd.skills.map(s => String(s || '').trim()).filter(Boolean).slice(0, 20).map(s => s.slice(0, 60))
+        : [];
+      const socials = pd.socials && typeof pd.socials === 'object'
+        ? Object.fromEntries(
+            Object.entries(pd.socials)
+              .filter(([k, v]) => /^[a-z0-9_]{1,24}$/i.test(k))
+              .map(([k, v]) => [k, str(v, 500)])
+              .filter(([, v]) => v)
+          )
+        : {};
+
+      const experience = Array.isArray(pd.experience)
+        ? pd.experience.slice(0, 15).map(e => ({
+            title:       str(e && e.title, 120),
+            company:     str(e && e.company, 120),
+            type:        str(e && e.type, 40),
+            location:    str(e && e.location, 120),
+            startDate:   str(e && e.startDate, 20),
+            endDate:     str(e && e.endDate, 20),
+            current:     !!(e && e.current),
+            description: str(e && e.description, 2000),
+          })).filter(e => e.title || e.company)
+        : [];
+
+      const education = Array.isArray(pd.education)
+        ? pd.education.slice(0, 10).map(e => ({
+            school: str(e && e.school, 150),
+            degree: str(e && e.degree, 120),
+            field:  str(e && e.field, 120),
+            year:   str(e && e.year, 10),
+          })).filter(e => e.school || e.degree)
+        : [];
+
+      const languages = Array.isArray(pd.languages)
+        ? pd.languages.slice(0, 15).map(l => ({
+            name:  str(l && l.name, 60),
+            level: str(l && l.level, 30),
+          })).filter(l => l.name)
+        : [];
+
+      const tools = Array.isArray(pd.tools)
+        ? pd.tools.map(t => String(t || '').trim()).filter(Boolean).slice(0, 60).map(t => t.slice(0, 60))
+        : [];
+
+      const prefs = pd.preferences && typeof pd.preferences === 'object' ? pd.preferences : {};
+      const preferences = {
+        hourlyRate:     str(prefs.hourlyRate, 10),
+        hoursPerWeek:   str(prefs.hoursPerWeek, 40),
+        availability:   str(prefs.availability, 30),
+        workSchedule:   str(prefs.workSchedule, 60),
+        timezone:       str(prefs.timezone, 60),
+        responseTime:   str(prefs.responseTime, 60),
+      };
+
+      fields.profile_data = JSON.stringify({
+        bio, skills, socials, experience, education, languages, tools, preferences,
+      });
+    }
+
+    const sets = Object.keys(fields).map((k, i) => `${k} = $${i + 1}`).join(', ');
+    const values = Object.values(fields);
+    values.push(user.id);
+    await db.query(`UPDATE accounts SET ${sets} WHERE id = $${values.length}`, values);
+
+    const updated = await findAccountById(user.id);
+    const { passwordHash, passwordSalt, verifyTokenHash, verifyExpires, ...safe } = updated;
+    sendJson(res, 200, { ok: true, user: safe });
+    return true;
+  }
+
   if (urlPath === '/api/logout' && req.method === 'POST') {
     const sid = parseCookies(req).jsph_session;
     if (sid) await db.query('DELETE FROM sessions WHERE id = $1', [sid]);
@@ -558,6 +670,400 @@ function handleAiMatch(req, res, urlPath) {
   return true;
 }
 
+// ============================================================
+// VA Certificates: /api/certificates (list/create), /:id/image (view),
+// /:id (delete), /api/academy/complete (auto-issue from VA Academy quiz)
+//
+// Images are kept in the DB as BYTEA so they survive redeploys on Railway
+// (no persistent filesystem). Uploads come in as base64 JSON — avoids pulling
+// in a multipart parser for the hand-rolled http server. 2 MB cap.
+// ============================================================
+
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+const UPLOAD_JSON_LIMIT = Math.round(MAX_UPLOAD_BYTES * 1.5) + 8 * 1024;
+
+// Deliberately narrow: only JPG and PDF. PNG/WEBP/GIF/SVG are rejected, and
+// anything HTML-like (<!doctype, <html, <script, <svg) will fail the magic-byte
+// check below even if the attacker claims application/pdf.
+const ALLOWED_UPLOAD_MIME = new Set(['image/jpeg', 'application/pdf']);
+
+// Keep legacy name alive for the cert handler further down.
+const MAX_CERT_IMAGE_BYTES = MAX_UPLOAD_BYTES;
+const CERT_UPLOAD_JSON_LIMIT = UPLOAD_JSON_LIMIT;
+const ALLOWED_CERT_MIME = ALLOWED_UPLOAD_MIME;
+
+// Sniff the actual file type from its first bytes. Returns the canonical MIME
+// we trust, or null if the signature doesn't match something we allow.
+// Client-sent Content-Type is spoofable — this is the real gate.
+function sniffUploadMime(buf) {
+  if (!buf || buf.length < 4) return null;
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'image/jpeg';
+  // PDF: "%PDF-"
+  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46 && buf[4] === 0x2D) return 'application/pdf';
+  return null;
+}
+
+// Defence in depth: even once the magic bytes say PDF, scan the first ~2 KB
+// for anything that looks like embedded HTML/JS so we don't ship a hybrid
+// polyglot file (a valid PDF header followed by <script>). Browsers won't
+// render a .pdf as HTML with nosniff, but this keeps the file itself clean
+// before it ever reaches storage.
+function containsHtmlInjection(buf) {
+  const head = buf.slice(0, Math.min(buf.length, 2048)).toString('latin1').toLowerCase();
+  return /<\s*(script|iframe|html|!doctype\s+html|svg|object|embed|meta\s+http-equiv)/.test(head);
+}
+
+// Serve a stored upload with the strictest headers we can: exact MIME,
+// nosniff so the browser can't reinterpret it, and attachment Content-
+// Disposition so it downloads rather than executes inline. Also blocks any
+// embedding and Flash-era policy escapes.
+function writeSecureFileHeaders(res, mime, length, downloadName) {
+  const safeName = String(downloadName || 'file').replace(/[^\w.\- ]+/g, '_').slice(0, 80);
+  res.writeHead(200, {
+    'Content-Type': mime,
+    'Content-Length': length,
+    'Content-Disposition': `attachment; filename="${safeName}"`,
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+    'Referrer-Policy': 'no-referrer',
+    'Cache-Control': 'private, max-age=86400',
+  });
+}
+
+// Known academy courses and their canonical titles. Keeps the auto-issue
+// endpoint from accepting arbitrary course keys and lets us render a nice
+// badge label even if the client sends just the key.
+const ACADEMY_COURSES = {
+  foundations: { title: 'VA Foundations',           issuer: 'Jobseekers.ph Academy' },
+  exec:        { title: 'Executive Assistant Pro',  issuer: 'Jobseekers.ph Academy' },
+  shopify:     { title: 'Shopify Store Ops',        issuer: 'Jobseekers.ph Academy' },
+  qbo:         { title: 'QuickBooks Bookkeeping',   issuer: 'Jobseekers.ph Academy' },
+  smm:         { title: 'Social Media Manager',     issuer: 'Jobseekers.ph Academy' },
+  support:     { title: 'Customer Support Excellence', issuer: 'Jobseekers.ph Academy' },
+};
+
+function certRowToJson(row) {
+  return {
+    id: row.id,
+    source: row.source,
+    title: row.title,
+    issuer: row.issuer,
+    issueDate: row.issue_date,
+    credentialUrl: row.credential_url,
+    academyCourse: row.academy_course,
+    academyScore: row.academy_score,
+    hasImage: !!row.has_image,
+    imageUrl: row.has_image ? `/api/certificates/${row.id}/image` : null,
+    createdAt: Number(row.created_at),
+  };
+}
+
+async function handleCertificates(req, res, urlPath) {
+  // GET /api/certificates — list current user's certificates
+  if (urlPath === '/api/certificates' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'Only VA accounts have certificates.' });
+    const r = await db.query(
+      `SELECT id, source, title, issuer, issue_date, credential_url, academy_course, academy_score,
+              (image_data IS NOT NULL) AS has_image, created_at
+         FROM va_certificates WHERE account_id = $1 ORDER BY created_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, { ok: true, certificates: r.rows.map(certRowToJson) });
+  }
+
+  // POST /api/certificates — upload an external certificate
+  if (urlPath === '/api/certificates' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'Only VA accounts can add certificates.' });
+
+    let body;
+    try { body = JSON.parse(await readBody(req, CERT_UPLOAD_JSON_LIMIT)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON or file too large (2 MB max).' }); }
+
+    const title = String(body.title || '').trim().slice(0, 150);
+    const issuer = String(body.issuer || '').trim().slice(0, 150) || null;
+    const issueDate = String(body.issueDate || '').trim().slice(0, 20) || null;
+    const credentialUrl = String(body.credentialUrl || '').trim().slice(0, 500) || null;
+    if (!title) return sendJson(res, 400, { ok: false, errors: { title: 'Certification name is required.' } });
+    if (credentialUrl && !/^https?:\/\//i.test(credentialUrl)) {
+      return sendJson(res, 400, { ok: false, errors: { credentialUrl: 'Must be a full https:// URL.' } });
+    }
+
+    let imageBuf = null;
+    let imageMime = null;
+    if (body.imageBase64) {
+      const declared = String(body.imageMime || '').toLowerCase();
+      if (!ALLOWED_UPLOAD_MIME.has(declared)) {
+        return sendJson(res, 400, { ok: false, errors: { image: 'Only JPG or PDF files are allowed.' } });
+      }
+      try { imageBuf = Buffer.from(String(body.imageBase64), 'base64'); }
+      catch (e) { return sendJson(res, 400, { ok: false, errors: { image: 'Could not decode uploaded file.' } }); }
+      if (imageBuf.length === 0) {
+        return sendJson(res, 400, { ok: false, errors: { image: 'Uploaded file is empty.' } });
+      }
+      if (imageBuf.length > MAX_UPLOAD_BYTES) {
+        return sendJson(res, 400, { ok: false, errors: { image: 'File is larger than 2 MB.' } });
+      }
+      // Magic-byte sniff — the declared MIME is not trusted on its own. Prevents
+      // an attacker from uploading an HTML or script file disguised as a PDF.
+      const sniffed = sniffUploadMime(imageBuf);
+      if (!sniffed || sniffed !== declared) {
+        return sendJson(res, 400, { ok: false, errors: { image: 'File contents are not a valid JPG or PDF.' } });
+      }
+      if (containsHtmlInjection(imageBuf)) {
+        return sendJson(res, 400, { ok: false, errors: { image: 'File rejected: contains disallowed markup.' } });
+      }
+      imageMime = sniffed;
+    }
+
+    const id = 'cert_' + crypto.randomBytes(8).toString('hex');
+    await db.query(
+      `INSERT INTO va_certificates
+         (id, account_id, source, title, issuer, issue_date, credential_url, image_data, image_mime, created_at)
+       VALUES ($1,$2,'external',$3,$4,$5,$6,$7,$8,$9)`,
+      [id, user.id, title, issuer, issueDate, credentialUrl, imageBuf, imageMime, Date.now()]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      certificate: {
+        id, source: 'external', title, issuer, issueDate, credentialUrl,
+        academyCourse: null, academyScore: null,
+        hasImage: !!imageBuf,
+        imageUrl: imageBuf ? `/api/certificates/${id}/image` : null,
+        createdAt: Date.now(),
+      },
+    });
+  }
+
+  // GET /api/certificates/:id/image — stream the stored image bytes
+  const imgMatch = urlPath.match(/^\/api\/certificates\/([a-z0-9_]+)\/image$/);
+  if (imgMatch && req.method === 'GET') {
+    const id = imgMatch[1];
+    const r = await db.query(
+      'SELECT account_id, image_data, image_mime, title FROM va_certificates WHERE id = $1',
+      [id]
+    );
+    const row = r.rows[0];
+    if (!row || !row.image_data) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    // Re-sniff at serve time too — trust the stored bytes, not what we think
+    // we stored. If the DB is ever mutated out-of-band this stays safe.
+    const mime = sniffUploadMime(row.image_data) === row.image_mime
+      ? row.image_mime
+      : 'application/octet-stream';
+    const ext = mime === 'image/jpeg' ? '.jpg' : (mime === 'application/pdf' ? '.pdf' : '');
+    writeSecureFileHeaders(res, mime, row.image_data.length, (row.title || 'certificate') + ext);
+    res.end(row.image_data);
+    return true;
+  }
+
+  // DELETE /api/certificates/:id — only external certs, only by the owner
+  const delMatch = urlPath.match(/^\/api\/certificates\/([a-z0-9_]+)$/);
+  if (delMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const id = delMatch[1];
+    const r = await db.query(
+      'SELECT account_id, source FROM va_certificates WHERE id = $1',
+      [id]
+    );
+    const row = r.rows[0];
+    if (!row || row.account_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    if (row.source === 'academy') {
+      return sendJson(res, 403, { ok: false, error: 'Academy certificates cannot be removed manually.' });
+    }
+    await db.query('DELETE FROM va_certificates WHERE id = $1', [id]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // POST /api/academy/complete — auto-issue a certificate when a logged-in VA
+  // passes an Academy quiz. Course key must be a known one. Re-passing the same
+  // course is idempotent thanks to the partial unique index on (account_id, academy_course).
+  if (urlPath === '/api/academy/complete' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'Only VA accounts can earn Academy certificates.' });
+
+    let body;
+    try { body = JSON.parse(await readBody(req)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+
+    const course = String(body.course || '').trim().toLowerCase();
+    const score = String(body.score || '').trim().slice(0, 20) || null;
+    const meta = ACADEMY_COURSES[course];
+    if (!meta) return sendJson(res, 400, { ok: false, error: 'Unknown course key.' });
+
+    const existing = await db.query(
+      'SELECT id FROM va_certificates WHERE account_id = $1 AND academy_course = $2 AND source = $3',
+      [user.id, course, 'academy']
+    );
+    if (existing.rows.length) {
+      return sendJson(res, 200, { ok: true, alreadyIssued: true, certificateId: existing.rows[0].id });
+    }
+
+    const id = 'cert_' + crypto.randomBytes(8).toString('hex');
+    const today = new Date().toISOString().slice(0, 10);
+    await db.query(
+      `INSERT INTO va_certificates
+         (id, account_id, source, title, issuer, issue_date, academy_course, academy_score, created_at)
+       VALUES ($1,$2,'academy',$3,$4,$5,$6,$7,$8)`,
+      [id, user.id, meta.title, meta.issuer, today, course, score, Date.now()]
+    );
+    return sendJson(res, 200, { ok: true, certificateId: id, title: meta.title });
+  }
+
+  return false;
+}
+
+// ============================================================
+// VA Portfolio / Work Samples: /api/portfolio (list/create),
+// /:id/file (view), /:id (delete). Uses the same JPG/PDF-only
+// policy as certificates with full magic-byte validation.
+// ============================================================
+
+const PORTFOLIO_CATEGORIES = new Set([
+  'Admin / Operations', 'Social Media', 'Content Writing',
+  'Design', 'Data / Research', 'eCommerce', 'Other',
+]);
+
+function portfolioRowToJson(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    description: row.description,
+    linkUrl: row.link_url,
+    role: row.role || null,
+    completedOn: row.completed_on || null,
+    skillsUsed: Array.isArray(row.skills_used) ? row.skills_used : [],
+    hasFile: !!row.has_file,
+    fileUrl: row.has_file ? `/api/portfolio/${row.id}/file` : null,
+    fileMime: row.file_mime || null,
+    createdAt: Number(row.created_at),
+  };
+}
+
+async function handlePortfolio(req, res, urlPath) {
+  if (urlPath === '/api/portfolio' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'Only VA accounts have a portfolio.' });
+    const r = await db.query(
+      `SELECT id, title, category, description, link_url, role, completed_on, skills_used, file_mime,
+              (file_data IS NOT NULL) AS has_file, created_at
+         FROM va_portfolio WHERE account_id = $1 ORDER BY created_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, { ok: true, samples: r.rows.map(portfolioRowToJson) });
+  }
+
+  if (urlPath === '/api/portfolio' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'Only VA accounts can add work samples.' });
+
+    let body;
+    try { body = JSON.parse(await readBody(req, UPLOAD_JSON_LIMIT)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON or file too large (2 MB max).' }); }
+
+    const title = String(body.title || '').trim().slice(0, 150);
+    const category = String(body.category || '').trim().slice(0, 50);
+    const description = String(body.description || '').trim().slice(0, 2000) || null;
+    const linkUrl = String(body.linkUrl || '').trim().slice(0, 500) || null;
+    const role = String(body.role || '').trim().slice(0, 120) || null;
+    const completedOn = String(body.completedOn || '').trim().slice(0, 20) || null;
+    const skillsUsed = Array.isArray(body.skillsUsed)
+      ? body.skillsUsed.map(s => String(s || '').trim()).filter(Boolean).slice(0, 15).map(s => s.slice(0, 60))
+      : [];
+
+    if (!title) return sendJson(res, 400, { ok: false, errors: { title: 'Title is required.' } });
+    if (category && !PORTFOLIO_CATEGORIES.has(category)) {
+      return sendJson(res, 400, { ok: false, errors: { category: 'Invalid category.' } });
+    }
+    if (linkUrl && !/^https?:\/\//i.test(linkUrl)) {
+      return sendJson(res, 400, { ok: false, errors: { linkUrl: 'Must be a full https:// URL.' } });
+    }
+
+    let fileBuf = null;
+    let fileMime = null;
+    if (body.fileBase64) {
+      const declared = String(body.fileMime || '').toLowerCase();
+      if (!ALLOWED_UPLOAD_MIME.has(declared)) {
+        return sendJson(res, 400, { ok: false, errors: { file: 'Only JPG or PDF files are allowed.' } });
+      }
+      try { fileBuf = Buffer.from(String(body.fileBase64), 'base64'); }
+      catch (e) { return sendJson(res, 400, { ok: false, errors: { file: 'Could not decode uploaded file.' } }); }
+      if (fileBuf.length === 0) return sendJson(res, 400, { ok: false, errors: { file: 'Uploaded file is empty.' } });
+      if (fileBuf.length > MAX_UPLOAD_BYTES) return sendJson(res, 400, { ok: false, errors: { file: 'File is larger than 2 MB.' } });
+      const sniffed = sniffUploadMime(fileBuf);
+      if (!sniffed || sniffed !== declared) {
+        return sendJson(res, 400, { ok: false, errors: { file: 'File contents are not a valid JPG or PDF.' } });
+      }
+      if (containsHtmlInjection(fileBuf)) {
+        return sendJson(res, 400, { ok: false, errors: { file: 'File rejected: contains disallowed markup.' } });
+      }
+      fileMime = sniffed;
+    }
+
+    const id = 'wk_' + crypto.randomBytes(8).toString('hex');
+    await db.query(
+      `INSERT INTO va_portfolio
+         (id, account_id, title, category, description, link_url, role, completed_on, skills_used,
+          file_data, file_mime, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [id, user.id, title, category || null, description, linkUrl, role, completedOn,
+       JSON.stringify(skillsUsed), fileBuf, fileMime, Date.now()]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      sample: {
+        id, title, category: category || null, description, linkUrl,
+        role, completedOn, skillsUsed,
+        hasFile: !!fileBuf,
+        fileUrl: fileBuf ? `/api/portfolio/${id}/file` : null,
+        fileMime,
+        createdAt: Date.now(),
+      },
+    });
+  }
+
+  const fileMatch = urlPath.match(/^\/api\/portfolio\/([a-z0-9_]+)\/file$/);
+  if (fileMatch && req.method === 'GET') {
+    const id = fileMatch[1];
+    const r = await db.query(
+      'SELECT file_data, file_mime, title FROM va_portfolio WHERE id = $1',
+      [id]
+    );
+    const row = r.rows[0];
+    if (!row || !row.file_data) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    const mime = sniffUploadMime(row.file_data) === row.file_mime
+      ? row.file_mime
+      : 'application/octet-stream';
+    const ext = mime === 'image/jpeg' ? '.jpg' : (mime === 'application/pdf' ? '.pdf' : '');
+    writeSecureFileHeaders(res, mime, row.file_data.length, (row.title || 'sample') + ext);
+    res.end(row.file_data);
+    return true;
+  }
+
+  const delMatch = urlPath.match(/^\/api\/portfolio\/([a-z0-9_]+)$/);
+  if (delMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const id = delMatch[1];
+    const r = await db.query('SELECT account_id FROM va_portfolio WHERE id = $1', [id]);
+    const row = r.rows[0];
+    if (!row || row.account_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    await db.query('DELETE FROM va_portfolio WHERE id = $1', [id]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  return false;
+}
+
 // Speed test endpoints for setup-check.html
 const SPEED_CHUNK = crypto.randomBytes(1024 * 1024); // random so it can't be compressed
 const MAX_TEST_BYTES = 50 * 1024 * 1024;
@@ -617,6 +1123,10 @@ const server = http.createServer(async (req, res) => {
     try {
       if (handleVaDirectory(req, res, urlPath)) return;
       if (handleAiMatch(req, res, urlPath)) return;
+      const handledCerts = await handleCertificates(req, res, urlPath);
+      if (handledCerts) return;
+      const handledPortfolio = await handlePortfolio(req, res, urlPath);
+      if (handledPortfolio) return;
       const handled = await handleAuth(req, res, urlPath);
       if (handled) return;
     } catch (err) {

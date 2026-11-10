@@ -9,7 +9,129 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
-</head>
+  <style>
+    /* ── Course cards (new) ── */
+    .ac-card { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:var(--radius-lg); background:#fff; overflow:hidden; transition:transform 0.18s ease, box-shadow 0.18s ease; }
+    .ac-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); }
+    .ac-card-cover { height:120px; display:flex; align-items:center; justify-content:center; color:#fff; position:relative; font-size:2.5rem; }
+    .ac-card-cover .ac-badge { position:absolute; top:0.75rem; left:0.75rem; background:rgba(255,255,255,0.18); color:#fff; font-size:0.7rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:999px; text-transform:uppercase; letter-spacing:0.05em; border:1px solid rgba(255,255,255,0.3); }
+    .ac-card-cover .ac-passed { position:absolute; top:0.75rem; right:0.75rem; background:#16A34A; color:#fff; font-size:0.72rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:999px; display:inline-flex; align-items:center; gap:0.25rem; }
+    .ac-card-body { padding:1.1rem 1.1rem 1.25rem; display:flex; flex-direction:column; gap:0.55rem; flex:1; }
+    .ac-card-body h3 { font-size:1.05rem; font-weight:800; color:var(--dark); margin:0; font-family:'Poppins', sans-serif; }
+    .ac-card-body p { font-size:0.825rem; color:var(--text-light); margin:0; line-height:1.55; }
+    .ac-card-meta { display:flex; flex-wrap:wrap; gap:0.5rem 0.875rem; font-size:0.72rem; color:var(--text-light); margin-top:0.1rem; }
+    .ac-card-meta i { color:var(--primary); margin-right:0.25rem; }
+    .ac-card-cta { display:flex; gap:0.5rem; margin-top:auto; padding-top:0.5rem; }
+    .ac-card-cta .btn { flex:1; justify-content:center; }
+
+    /* ── Test modal ── */
+    .test-modal { position:fixed; inset:0; background:#F8FAFC; z-index:9000; display:none; overflow-y:auto; }
+    .test-modal.open { display:block; }
+    .test-modal-inner { max-width:900px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; padding:1.5rem 1rem 3rem; }
+    .test-stage { flex:1; display:flex; flex-direction:column; }
+    .test-stage[hidden] { display:none !important; }
+    .test-stage-card { background:#fff; border-radius:var(--radius-lg); box-shadow:0 1px 3px rgba(15,23,42,0.08); padding:2rem; }
+
+    /* Intro */
+    .test-intro-cover { width:72px; height:72px; border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.75rem; margin:0 auto 1rem; }
+    .test-intro-title { text-align:center; font-family:'Poppins',sans-serif; font-size:1.625rem; font-weight:800; color:var(--dark); margin:0 0 0.5rem; }
+    .test-intro-sub { text-align:center; color:var(--text-light); font-size:0.9rem; margin:0 0 1.75rem; max-width:560px; margin-left:auto; margin-right:auto; }
+    .test-intro-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; margin-bottom:1.75rem; }
+    .test-intro-grid > div { background:var(--bg); border-radius:var(--radius-md); padding:0.85rem 0.75rem; text-align:center; }
+    .test-intro-grid strong { display:block; font-size:1.25rem; font-weight:800; color:var(--dark); font-family:'Poppins',sans-serif; }
+    .test-intro-grid span { font-size:0.72rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; }
+    .test-intro-rules { list-style:none; padding:0; margin:0 0 1.5rem; display:flex; flex-direction:column; gap:0.625rem; font-size:0.85rem; color:var(--text); }
+    .test-intro-rules li { display:flex; align-items:flex-start; gap:0.625rem; }
+    .test-intro-rules i { color:var(--primary); width:16px; margin-top:0.2rem; flex-shrink:0; }
+    .test-intro-actions { display:flex; gap:0.75rem; justify-content:flex-end; flex-wrap:wrap; }
+    @media (max-width: 640px) {
+      .test-intro-grid { grid-template-columns:repeat(2, 1fr); }
+    }
+
+    /* Topbar */
+    .test-topbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.875rem 1.1rem; background:#fff; border-radius:var(--radius-lg); margin-bottom:0.5rem; box-shadow:0 1px 3px rgba(15,23,42,0.06); }
+    .test-topbar-left { display:flex; flex-direction:column; gap:0.1rem; min-width:0; }
+    .test-topbar-course { font-weight:700; color:var(--dark); font-size:0.9rem; }
+    .test-topbar-pos { font-size:0.75rem; color:var(--text-light); }
+    .test-topbar-timer { font-family:'Poppins', sans-serif; font-size:1.25rem; font-weight:800; color:var(--dark); background:var(--bg); padding:0.4rem 0.9rem; border-radius:var(--radius-md); min-width:96px; text-align:center; }
+    .test-topbar-timer.warning { color:#D97706; background:rgba(245,158,11,0.08); }
+    .test-topbar-timer.critical { color:#DC2626; background:rgba(239,68,68,0.08); }
+    .test-topbar-exit { background:transparent; border:none; color:var(--text-light); font-size:1.1rem; padding:0.3rem 0.5rem; cursor:pointer; border-radius:var(--radius-md); }
+    .test-topbar-exit:hover { background:var(--bg); color:var(--dark); }
+    .test-progress-bar { height:4px; background:var(--border); border-radius:999px; overflow:hidden; margin-bottom:1rem; }
+    .test-progress-fill { height:100%; background:var(--primary); border-radius:999px; transition:width 0.2s ease; }
+
+    /* Navigator strip */
+    .test-navigator { display:flex; flex-wrap:wrap; gap:0.375rem; margin-bottom:1rem; padding:0.75rem; background:#fff; border-radius:var(--radius-lg); box-shadow:0 1px 3px rgba(15,23,42,0.06); }
+    .test-nav-btn { width:34px; height:34px; border-radius:var(--radius-md); border:1.5px solid var(--border); background:#fff; font-weight:700; font-size:0.78rem; cursor:pointer; color:var(--text-light); transition:all 0.15s ease; position:relative; }
+    .test-nav-btn:hover { border-color:var(--primary); color:var(--primary); }
+    .test-nav-btn.answered { background:rgba(79,70,229,0.08); color:var(--primary); border-color:rgba(79,70,229,0.4); }
+    .test-nav-btn.flagged { border-color:#F59E0B; color:#B45309; }
+    .test-nav-btn.flagged.answered { background:rgba(245,158,11,0.1); }
+    .test-nav-btn.current { background:var(--primary); color:#fff; border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,70,229,0.15); }
+    .test-nav-btn.flagged::after { content:''; position:absolute; top:2px; right:2px; width:6px; height:6px; background:#F59E0B; border-radius:50%; }
+    .test-nav-btn.current.flagged::after { background:#fff; }
+
+    /* Question card */
+    .test-card { background:#fff; border-radius:var(--radius-lg); padding:1.75rem; box-shadow:0 1px 3px rgba(15,23,42,0.06); }
+    .test-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; }
+    .test-qnum { font-size:0.75rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.08em; background:rgba(79,70,229,0.08); padding:0.25rem 0.625rem; border-radius:999px; }
+    .test-flag-btn { background:transparent; border:1.5px solid var(--border); color:var(--text-light); font-size:0.78rem; font-weight:600; padding:0.4rem 0.75rem; border-radius:var(--radius-md); cursor:pointer; display:inline-flex; align-items:center; gap:0.375rem; transition:all 0.15s ease; }
+    .test-flag-btn:hover { border-color:#F59E0B; color:#B45309; }
+    .test-flag-btn[aria-pressed="true"] { background:rgba(245,158,11,0.1); border-color:#F59E0B; color:#B45309; }
+    .test-qtext { font-size:1.05rem; color:var(--dark); line-height:1.6; margin:0 0 1.25rem; font-weight:500; }
+    .test-options { display:flex; flex-direction:column; gap:0.625rem; }
+    .test-option {
+      display:flex; align-items:center; gap:0.75rem; padding:0.875rem 1rem;
+      border:1.5px solid var(--border); border-radius:var(--radius-md);
+      cursor:pointer; background:#fff; transition:all 0.15s ease; font-size:0.9rem; color:var(--text);
+    }
+    .test-option:hover { border-color:var(--primary); background:rgba(79,70,229,0.03); }
+    .test-option.selected { border-color:var(--primary); background:rgba(79,70,229,0.08); color:var(--dark); font-weight:600; }
+    .test-option .test-option-mark {
+      width:22px; height:22px; border-radius:50%; border:2px solid var(--border);
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      font-size:0.7rem; font-weight:800; color:var(--text-light); background:#fff;
+    }
+    .test-option.selected .test-option-mark { border-color:var(--primary); background:var(--primary); color:#fff; }
+    .test-option input[type="radio"] { display:none; }
+    .test-footer { display:flex; align-items:center; gap:0.75rem; justify-content:space-between; margin-top:1rem; padding:0.875rem; background:#fff; border-radius:var(--radius-lg); box-shadow:0 1px 3px rgba(15,23,42,0.06); }
+    .test-footer-hint { font-size:0.78rem; color:var(--text-light); text-align:center; flex:1; }
+
+    /* Results */
+    .test-result-seal { width:88px; height:88px; border-radius:50%; margin:0 auto 1rem; display:flex; align-items:center; justify-content:center; font-size:2.25rem; color:#fff; background:var(--grad-primary); box-shadow:0 10px 30px rgba(79,70,229,0.35); }
+    .test-result-seal.fail { background:linear-gradient(135deg,#F59E0B,#DC2626); box-shadow:0 10px 30px rgba(239,68,68,0.25); }
+    .test-result-title { text-align:center; font-family:'Poppins',sans-serif; font-size:1.75rem; font-weight:800; color:var(--dark); margin:0 0 0.375rem; }
+    .test-result-sub { text-align:center; color:var(--text-light); font-size:0.9rem; margin:0 0 1.5rem; }
+    .test-result-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem; margin-bottom:1.5rem; }
+    .test-result-grid > div { background:var(--bg); border-radius:var(--radius-md); padding:0.85rem 0.75rem; text-align:center; }
+    .test-result-grid strong { display:block; font-size:1.25rem; font-weight:800; color:var(--dark); font-family:'Poppins',sans-serif; }
+    .test-result-grid span { font-size:0.72rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; }
+    .test-review { margin-top:1.5rem; }
+    .test-review summary { cursor:pointer; font-weight:700; color:var(--dark); padding:0.625rem 0.875rem; background:var(--bg); border-radius:var(--radius-md); list-style:none; display:flex; align-items:center; gap:0.5rem; }
+    .test-review summary::-webkit-details-marker { display:none; }
+    .test-review summary i { color:var(--primary); }
+    .test-review-item { padding:0.875rem 0; border-bottom:1px solid var(--border); }
+    .test-review-item:last-child { border-bottom:none; }
+    .test-review-item .r-q { font-weight:600; color:var(--dark); margin-bottom:0.375rem; font-size:0.9rem; }
+    .test-review-item .r-ans { font-size:0.825rem; margin:0.2rem 0; }
+    .test-review-item .r-ans.correct { color:#15803D; }
+    .test-review-item .r-ans.wrong { color:#B91C1C; }
+    .test-review-item .r-explain { font-size:0.78rem; color:var(--text-light); margin-top:0.375rem; padding:0.5rem 0.75rem; background:var(--bg); border-radius:var(--radius-md); }
+    @media (max-width: 640px) {
+      .test-result-grid { grid-template-columns:repeat(2, 1fr); }
+    }
+
+    @media print {
+      body > *:not(.test-modal) { display:none !important; }
+      .test-modal { position:static; background:#fff; }
+      .test-modal-inner { max-width:none; padding:0; }
+      .test-stage-card { box-shadow:none; padding:0; }
+      .test-result-seal, .test-result-title, .test-result-sub, .test-result-grid,
+      .test-review, .test-intro-actions, .no-print { display:none !important; }
+      #testCert { display:block !important; border:none; box-shadow:none; }
+    }
+  </style>
 <body>
 
 <!-- NAVBAR -->
@@ -114,102 +236,113 @@
 <section class="section" id="courses" style="background:#fff;">
   <div class="container">
     <div class="section-header">
-      <span class="section-badge"><i class="fas fa-graduation-cap"></i> Courses</span>
-      <h2 class="section-title" data-tl="Pumili ng course">Pick a course</h2>
-      <p class="section-sub">Every course ends in a certificate that becomes a badge on your profile.</p>
+      <span class="section-badge"><i class="fas fa-graduation-cap"></i> Skill assessments</span>
+      <h2 class="section-title" data-tl="Pumili ng pagsusulit">Pick an assessment</h2>
+      <p class="section-sub">Each test is timed, randomized, and scored. Pass with 80% to earn the badge on your public profile.</p>
     </div>
 
-    <div class="grid-3" id="courseGrid">
-      <div class="course-card" data-course="foundations">
-        <div class="course-cover" style="background:var(--grad-primary);"><i class="fas fa-rocket"></i><span class="feat-badge cert">Start here</span></div>
-        <div class="course-body">
-          <h3>VA Foundations</h3>
-          <p>Time zones, client communication, EOD reports, account security, and spotting scams. Required for Rising Talent.</p>
-          <div class="course-meta"><span><i class="fas fa-play"></i>8 lessons</span><span><i class="fas fa-clock"></i>2.5 hrs</span><span><i class="fas fa-signal"></i>Beginner</span></div>
-          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-primary btn-sm enroll-btn" style="flex:1;">Enroll Free</button>
-            <button class="btn btn-outline-primary btn-sm" id="openQuiz"><i class="fas fa-clipboard-check"></i> Start Test</button>
+    <div class="grid-3" id="courseGrid"></div>
+  </div>
+</section>
+
+<!-- TEST ENGINE (fullscreen modal) -->
+<div class="test-modal" id="testModal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="test-modal-inner">
+    <!-- Stage: intro -->
+    <div class="test-stage" data-stage="intro">
+      <div class="test-stage-card">
+        <div class="test-intro-cover" id="testIntroCover"></div>
+        <h2 class="test-intro-title" id="testIntroTitle">Course title</h2>
+        <p class="test-intro-sub" id="testIntroSub">Short description.</p>
+        <div class="test-intro-grid">
+          <div><strong id="testIntroQCount">—</strong><span>Questions</span></div>
+          <div><strong id="testIntroTime">—</strong><span>Time limit</span></div>
+          <div><strong id="testIntroPass">80%</strong><span>To pass</span></div>
+          <div><strong id="testIntroDiff">—</strong><span>Difficulty</span></div>
+        </div>
+        <ul class="test-intro-rules">
+          <li><i class="fas fa-random"></i> Questions are randomized from a larger bank each attempt.</li>
+          <li><i class="fas fa-clock"></i> The timer auto-submits your answers when it reaches zero.</li>
+          <li><i class="fas fa-flag"></i> You can flag questions for review and jump between them.</li>
+          <li><i class="fas fa-shield-alt"></i> Passing grants a verified certificate on your public profile.</li>
+        </ul>
+        <div class="test-intro-actions">
+          <button type="button" class="btn btn-ghost btn-sm" data-test-close>Cancel</button>
+          <button type="button" class="btn btn-primary btn-lg" id="testStartBtn"><i class="fas fa-play"></i> Start assessment</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stage: in-progress -->
+    <div class="test-stage" data-stage="active" hidden>
+      <div class="test-topbar">
+        <div class="test-topbar-left">
+          <span class="test-topbar-course" id="testActiveCourse">Course title</span>
+          <span class="test-topbar-pos">Question <strong id="testQCur">1</strong> of <strong id="testQTotal">10</strong></span>
+        </div>
+        <div class="test-topbar-timer" id="testTimer" aria-live="polite">25:00</div>
+        <button type="button" class="test-topbar-exit" data-test-close title="Exit test"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="test-progress-bar"><div class="test-progress-fill" id="testProgressFill" style="width:0%"></div></div>
+
+      <div class="test-body">
+        <div class="test-navigator" id="testNavigator"></div>
+
+        <div class="test-card">
+          <div class="test-card-head">
+            <span class="test-qnum">Q<span id="testCardQNum">1</span></span>
+            <button type="button" class="test-flag-btn" id="testFlagBtn" aria-pressed="false">
+              <i class="fas fa-flag"></i> <span id="testFlagLabel">Flag for review</span>
+            </button>
           </div>
+          <p class="test-qtext" id="testQText">Question text goes here.</p>
+          <div class="test-options" id="testOptions"></div>
+        </div>
+
+        <div class="test-footer">
+          <button type="button" class="btn btn-ghost" id="testPrevBtn"><i class="fas fa-chevron-left"></i> Previous</button>
+          <span class="test-footer-hint" id="testFooterHint"></span>
+          <button type="button" class="btn btn-primary" id="testNextBtn">Next <i class="fas fa-chevron-right"></i></button>
         </div>
       </div>
+    </div>
 
-      <div class="course-card" data-course="exec">
-        <div class="course-cover" style="background:linear-gradient(135deg,#0F172A,#312E81);"><i class="fas fa-user-tie"></i></div>
-        <div class="course-body">
-          <h3>Executive Assistant Pro</h3>
-          <p>Inbox zero, calendar triage, travel booking, and managing a CEO's priorities across time zones.</p>
-          <div class="course-meta"><span><i class="fas fa-play"></i>12 lessons</span><span><i class="fas fa-clock"></i>4 hrs</span><span><i class="fas fa-signal"></i>Intermediate</span></div>
-          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
-          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
+    <!-- Stage: results -->
+    <div class="test-stage" data-stage="results" hidden>
+      <div class="test-stage-card">
+        <div class="test-result-seal" id="testResultSeal"><i class="fas fa-award"></i></div>
+        <h2 class="test-result-title" id="testResultTitle">You passed!</h2>
+        <p class="test-result-sub" id="testResultSub">—</p>
+        <div class="test-result-grid">
+          <div><strong id="testResultScore">—</strong><span>Score</span></div>
+          <div><strong id="testResultCorrect">—</strong><span>Correct</span></div>
+          <div><strong id="testResultTime">—</strong><span>Time taken</span></div>
+          <div><strong id="testResultThreshold">80%</strong><span>Threshold</span></div>
         </div>
-      </div>
 
-      <div class="course-card" data-course="shopify">
-        <div class="course-cover" style="background:linear-gradient(135deg,#059669,#10B981);"><i class="fab fa-shopify"></i></div>
-        <div class="course-body">
-          <h3>Shopify Store Ops</h3>
-          <p>Product listings, inventory, order processing, returns, and Gorgias support for e-commerce brands.</p>
-          <div class="course-meta"><span><i class="fas fa-play"></i>10 lessons</span><span><i class="fas fa-clock"></i>3.5 hrs</span><span><i class="fas fa-signal"></i>Beginner</span></div>
-          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
-          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
+        <div class="cert-preview print-area" id="testCert" hidden>
+          <div class="seal"><i class="fas fa-award"></i></div>
+          <p style="font-size:0.8rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-light);">Certificate of Completion</p>
+          <h3 style="font-size:1.75rem; color:var(--dark); margin:0.5rem 0;" id="testCertName">Your Name</h3>
+          <p style="color:var(--text-light);">has passed the <strong style="color:var(--primary);" id="testCertCourse">Course</strong> assessment with <span id="testCertScore"></span></p>
+          <p style="font-size:0.8rem; color:var(--text-light); margin-top:1rem;">Jobseekers.ph VA Academy · <span id="testCertDate"></span></p>
         </div>
-      </div>
 
-      <div class="course-card" data-course="qbo">
-        <div class="course-cover" style="background:linear-gradient(135deg,#0EA5E9,#2563EB);"><i class="fas fa-calculator"></i></div>
-        <div class="course-body">
-          <h3>QuickBooks Bookkeeping</h3>
-          <p>Bank reconciliation, AP/AR, month-end close, and the reports US small businesses actually ask for.</p>
-          <div class="course-meta"><span><i class="fas fa-play"></i>14 lessons</span><span><i class="fas fa-clock"></i>6 hrs</span><span><i class="fas fa-signal"></i>Intermediate</span></div>
-          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
-          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
-        </div>
-      </div>
+        <details class="test-review" id="testReview">
+          <summary><i class="fas fa-list-ul"></i> Review your answers</summary>
+          <div id="testReviewBody"></div>
+        </details>
 
-      <div class="course-card" data-course="smm">
-        <div class="course-cover" style="background:linear-gradient(135deg,#EC4899,#F59E0B);"><i class="fas fa-hashtag"></i></div>
-        <div class="course-body">
-          <h3>Social Media Manager</h3>
-          <p>Content calendars, Canva design systems, short-form video, and monthly reports clients love.</p>
-          <div class="course-meta"><span><i class="fas fa-play"></i>11 lessons</span><span><i class="fas fa-clock"></i>4 hrs</span><span><i class="fas fa-signal"></i>Beginner</span></div>
-          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
-          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
-        </div>
-      </div>
-
-      <div class="course-card" data-course="support">
-        <div class="course-cover" style="background:linear-gradient(135deg,#7C3AED,#A855F7);"><i class="fas fa-headset"></i></div>
-        <div class="course-body">
-          <h3>Customer Support Excellence</h3>
-          <p>Ticket etiquette, de-escalation, macros, and CSAT habits for Zendesk, Freshdesk and live chat.</p>
-          <div class="course-meta"><span><i class="fas fa-play"></i>9 lessons</span><span><i class="fas fa-clock"></i>3 hrs</span><span><i class="fas fa-signal"></i>Beginner</span></div>
-          <div class="course-progress" hidden><span>Progress: <strong class="pct">0%</strong></span><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>
-          <button class="btn btn-primary btn-sm enroll-btn">Enroll Free</button>
+        <div class="test-intro-actions no-print" id="testResultActions">
+          <button type="button" class="btn btn-ghost" data-test-close>Close</button>
+          <button type="button" class="btn btn-outline-primary" id="testRetakeBtn"><i class="fas fa-redo"></i> Retake</button>
+          <button type="button" class="btn btn-outline-primary" id="testPrintBtn"><i class="fas fa-print"></i> Print certificate</button>
+          <a href="edit-profile" class="btn btn-primary" id="testToProfileLink"><i class="fas fa-user-circle"></i> View on profile</a>
         </div>
       </div>
     </div>
   </div>
-</section>
-
-<!-- ASSESSMENT -->
-<section class="section" id="assessment" style="background:var(--bg);" hidden>
-  <div class="container" style="max-width:760px;">
-    <div class="section-header" style="margin-bottom:2rem;">
-      <span class="section-badge"><i class="fas fa-clipboard-check"></i> VA Foundations assessment</span>
-      <h2 class="section-title" style="font-size:1.75rem;">5 questions · pass with 4 correct</h2>
-    </div>
-    <form id="quizForm" class="sidebar-card" style="padding:2rem;">
-      <div class="form-group">
-        <label class="form-label" for="quizName">Name for your certificate <span class="form-required">*</span></label>
-        <input id="quizName" class="form-control" placeholder="e.g. Juan Dela Cruz" required />
-      </div>
-      <div id="quizQuestions"></div>
-      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;"><i class="fas fa-check"></i> Submit Answers</button>
-    </form>
-    <div id="quizResult" style="margin-top:1.5rem;"></div>
-  </div>
-</section>
+</div>
 
 <!-- RISING TALENT -->
 <section class="section" id="rising" style="background:#fff;">
@@ -282,98 +415,593 @@
 
 <script src="js/main.js"></script>
 <script>
-  // Enrollment progress is remembered in this browser until accounts are wired to a backend
-  const STORE_KEY = 'jsph-academy';
-  let progress = {};
-  try { progress = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) {}
-  const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(progress)); } catch (e) {} };
+  // ============================================================
+  // VA Academy — course config + question banks + test engine
+  // Every bank has more questions than the test needs; we shuffle
+  // and sample on each attempt so retakes aren't identical.
+  // ============================================================
 
-  function renderCourse(card) {
-    const id = card.dataset.course;
-    const pct = progress[id];
-    const bar = card.querySelector('.course-progress');
-    const btn = card.querySelector('.enroll-btn');
-    if (pct === undefined) return;
-    bar.hidden = false;
-    bar.querySelector('.pct').textContent = pct + '%';
-    bar.querySelector('.progress-fill').style.width = pct + '%';
-    btn.innerHTML = pct >= 100 ? '<i class="fas fa-check"></i> Lessons done' : '<i class="fas fa-play"></i> Continue';
+  const COURSES = {
+    foundations: {
+      title: 'VA Foundations',
+      subtitle: 'Time zones, client communication, security, and professional habits every VA needs.',
+      icon: 'fas fa-rocket',
+      cover: 'var(--grad-primary)',
+      badge: 'Start here',
+      difficulty: 'Beginner',
+      lessons: 8, hours: 2.5,
+      testQuestions: 10, timeMinutes: 15, passPercent: 80,
+    },
+    exec: {
+      title: 'Executive Assistant Pro',
+      subtitle: 'Inbox zero, calendar triage, travel booking, and managing a CEO\'s priorities across time zones.',
+      icon: 'fas fa-user-tie',
+      cover: 'linear-gradient(135deg,#0F172A,#312E81)',
+      difficulty: 'Intermediate',
+      lessons: 12, hours: 4,
+      testQuestions: 10, timeMinutes: 18, passPercent: 80,
+    },
+    shopify: {
+      title: 'Shopify Store Ops',
+      subtitle: 'Product listings, inventory, order processing, returns, and Gorgias support for ecommerce brands.',
+      icon: 'fab fa-shopify',
+      cover: 'linear-gradient(135deg,#059669,#10B981)',
+      difficulty: 'Beginner',
+      lessons: 10, hours: 3.5,
+      testQuestions: 10, timeMinutes: 15, passPercent: 80,
+    },
+    qbo: {
+      title: 'QuickBooks Bookkeeping',
+      subtitle: 'Bank reconciliation, AP/AR, month-end close, and the reports US small businesses actually ask for.',
+      icon: 'fas fa-calculator',
+      cover: 'linear-gradient(135deg,#0EA5E9,#2563EB)',
+      difficulty: 'Intermediate',
+      lessons: 14, hours: 6,
+      testQuestions: 10, timeMinutes: 20, passPercent: 80,
+    },
+    smm: {
+      title: 'Social Media Manager',
+      subtitle: 'Content calendars, Canva design systems, short-form video, and monthly reports clients love.',
+      icon: 'fas fa-hashtag',
+      cover: 'linear-gradient(135deg,#EC4899,#F59E0B)',
+      difficulty: 'Beginner',
+      lessons: 11, hours: 4,
+      testQuestions: 10, timeMinutes: 15, passPercent: 80,
+    },
+    support: {
+      title: 'Customer Support Excellence',
+      subtitle: 'Ticket etiquette, de-escalation, macros, and CSAT habits for Zendesk, Freshdesk, and live chat.',
+      icon: 'fas fa-headset',
+      cover: 'linear-gradient(135deg,#7C3AED,#A855F7)',
+      difficulty: 'Beginner',
+      lessons: 9, hours: 3,
+      testQuestions: 10, timeMinutes: 15, passPercent: 80,
+    },
+  };
+
+  const BANKS = {
+    foundations: [
+      { q: 'During US daylight-saving time (EDT, UTC-4), your New York client books a 9:00 AM call. What time is that in Manila (UTC+8)?', a: ['9:00 AM', '9:00 PM', '11:00 PM', '6:00 AM'], correct: 1,
+        explain: 'EDT is 12 hours behind Manila. 9:00 AM NY = 9:00 PM Manila.' },
+      { q: 'You realize you won\'t finish a task by the deadline. What\'s the best move?', a: ['Stay silent and submit late', 'Tell the client early, explain why, and give a new ETA', 'Submit it unfinished without a note', 'Ask another VA to do it secretly'], correct: 1,
+        explain: 'Proactive communication builds trust. Early warning + new ETA is always better than a silent miss.' },
+      { q: 'A "client" asks you to pay a ₱1,500 training fee and continue chatting on Telegram. What should you do?', a: ['Pay it — it\'s refundable', 'Move to Telegram to learn more', 'Treat it as a scam: don\'t pay, and report the posting', 'Pay half to be safe'], correct: 2,
+        explain: 'Real clients never charge a fee to hire you. "Pay a fee + move off-platform" is a classic recruiter scam.' },
+      { q: 'Which belongs in an End-of-Day (EOD) report?', a: ['Just the hours you worked', 'Done today, in progress, blockers, and plan for tomorrow', 'Your personal to-do list', 'Screenshots of every email'], correct: 1,
+        explain: 'A good EOD covers completed, in-progress, blockers, and next steps — not a flex, but context.' },
+      { q: 'Your client needs to give you access to their bank and email accounts. Safest approach?', a: ['Send the passwords over chat', 'Store them in a shared Google Doc', 'Share via a password manager (1Password, Bitwarden) with 2FA', 'Reuse the same password everywhere'], correct: 2,
+        explain: 'Password managers encrypt credentials in transit and at rest; 2FA stops reuse attacks.' },
+      { q: 'A client messages you at 2:00 AM Manila time with an urgent request. The task isn\'t truly urgent. What\'s the best response?', a: ['Reply immediately so they know you\'re responsive', 'Do nothing — ignore the message', 'Reply at the start of your agreed working hours, acknowledge, and set an ETA', 'Message back "I\'m sleeping"'], correct: 2,
+        explain: 'Boundaries matter. Respond at your committed window, not at 2 AM — unless a true emergency was pre-agreed.' },
+      { q: 'What should you do before saving a client\'s file to your personal Google Drive?', a: ['Nothing — it\'s your Drive', 'Check with the client — some data is confidential or regulated (HIPAA, PCI)', 'Rename the file', 'Email it to yourself first'], correct: 1,
+        explain: 'Client data often has NDA, HIPAA, or PCI rules. Always confirm storage location with the client.' },
+      { q: 'You\'re billing hourly. The task took 3 hours but felt easy. What do you log?', a: ['1 hour — it felt quick', '3 hours — accurate to the work', '5 hours — padding for revisions', 'Whatever the client expects'], correct: 1,
+        explain: 'Bill accurately. Padding erodes trust; under-billing devalues your work and sets a bad precedent.' },
+      { q: 'Your client is in Sydney (AEST, UTC+10). You agreed to join their 10:00 AM standup. What time is that for you in Manila?', a: ['6:00 AM', '8:00 AM', '10:00 AM', '12:00 PM'], correct: 1,
+        explain: 'Sydney is 2 hours ahead of Manila. 10:00 AM AEST = 8:00 AM Manila.' },
+      { q: 'A new client wants to pay only via a direct bank transfer outside the platform to "save fees". What\'s the professional move?', a: ['Accept — fewer fees is good', 'Insist on the platform for the first contract so you\'re protected', 'Cash in person only', 'Accept, but ask for their ID'], correct: 1,
+        explain: 'On-platform escrow / milestones protect both sides. Off-platform first contracts are the top complaint source.' },
+      { q: 'Which is the BEST subject line for a progress update?', a: ['[Update] Week 42 — 3 tasks done, 1 blocked (need your call)', 'FYI', 'Update', 'hi'], correct: 0,
+        explain: 'Scannable subject lines with status + action win inbox triage.' },
+      { q: 'You find sensitive info (SSN, credit card) in a document the client shared. First step?', a: ['Keep it safe in your downloads folder', 'Ask the client if they meant to share it, and prefer a redacted version', 'Forward it to your accountant friend for review', 'Delete the file silently'], correct: 1,
+        explain: 'Confirm intent + prefer redaction. Never silently delete evidence of a possible leak — flag it.' },
+    ],
+
+    exec: [
+      { q: 'Your CEO\'s inbox has 1,200 unread emails. What\'s the first step to Inbox Zero?', a: ['Reply to each in order', 'Select all and archive', 'Batch-triage with filters/rules and flag only decisions needed from the CEO', 'Delete everything older than 30 days'], correct: 2,
+        explain: 'Inbox Zero = decisions, not deletions. Triage, filter, and surface only what needs the CEO.' },
+      { q: 'A vendor and a VIP client both request a meeting at the same 30-minute slot. The CEO is strict about VIP time. What do you do?', a: ['Book the vendor and apologize to the VIP', 'Decline the VIP', 'Hold the slot for the VIP, propose the next available slot to the vendor, confirm with CEO before locking', 'Double-book both'], correct: 2,
+        explain: 'VIP gets the slot per the stated rule. Always confirm an exec\'s calendar change before locking it.' },
+      { q: 'When booking a last-minute international flight for the CEO, which detail matters MOST?', a: ['Lowest price', 'Airline loyalty points', 'Visa requirements, passport validity (6+ months), and arrival buffer vs. meetings', 'Window seat preference'], correct: 2,
+        explain: 'A $200 saving is worth nothing if they can\'t enter the country. Check visa + passport + arrival buffer first.' },
+      { q: 'Your CEO forwards you a complex thread and says "handle this". What do you do FIRST?', a: ['Reply to everyone immediately', 'Skim quickly and forward to the team', 'Read the full thread, identify the actual decision needed, and draft a short summary + options for CEO to choose', 'Schedule a 30-min meeting with CEO'], correct: 2,
+        explain: 'Make the CEO\'s job easy. Summarize the ask, propose options, flag the decision — then execute.' },
+      { q: 'Best practice when drafting emails on behalf of an executive?', a: ['Copy the CEO\'s tone, keep it concise, and sign "On behalf of [CEO]" or use a shared alias', 'Sign as yourself', 'Write in your own voice', 'Add long disclaimers'], correct: 0,
+        explain: 'Match voice, be concise, be transparent about the delegation (shared alias or "on behalf of").' },
+      { q: 'Your CEO has a 9:00 AM EST meeting but is flying from LA (PST). What\'s the risk you catch before it happens?', a: ['Wrong hotel class', 'They\'ll think the meeting is at 6 AM local and could miss it', 'Flight food options', 'In-flight Wi-Fi speed'], correct: 1,
+        explain: '9 AM EST = 6 AM PST. Time-zone mix-ups are the #1 missed-meeting cause. Confirm in the invite.' },
+      { q: 'A meeting runs 15 minutes over and threatens the next one. Best move?', a: ['Interrupt the CEO mid-sentence', 'Wait silently', 'Send a discreet message: "Next meeting in 5 min — want me to delay or reschedule?"', 'Cancel the next meeting'], correct: 2,
+        explain: 'Give them control. A quiet, actionable prompt protects their day without embarrassing anyone.' },
+      { q: 'You maintain the CEO\'s "decisions log". Which entry is MOST useful months later?', a: ['"Approved budget"', '"Q3 marketing budget set at $45k — approved by CEO 2026-10-14 Slack DM, see thread link"', '"CEO said yes"', 'A screenshot of a chat'], correct: 1,
+        explain: 'Searchable, dated, linked, with context. Future-you will thank present-you.' },
+      { q: 'Best way to protect focus blocks on the CEO\'s calendar?', a: ['Leave them unmarked', 'Block them with "Focus — do not book" and treat as meetings with you as gatekeeper', 'Delete them if someone else wants the time', 'Mark them "tentative"'], correct: 1,
+        explain: 'Hard blocks + a gatekeeper (you) protect deep work time from drift.' },
+      { q: 'The CEO wants you to join every call and take notes. What should your notes ALWAYS include?', a: ['A verbatim transcript', 'Attendees, decisions, action items with owners + due dates, and open questions', 'Only the CEO\'s quotes', 'Only what you personally agreed with'], correct: 1,
+        explain: 'Decisions + owners + dates + open questions are the four pillars of useful meeting notes.' },
+      { q: 'A board member emails your CEO about a sensitive personnel issue. Correct handling?', a: ['Reply as the EA', 'Flag it as high-priority, decline to act without CEO\'s direct instruction, and surface it in the next 1:1', 'Forward to the HR team', 'Ignore it'], correct: 1,
+        explain: 'Sensitive personnel emails require the exec\'s direct read. Flag, protect, and escalate — don\'t handle solo.' },
+      { q: 'Your CEO has back-to-back calls all day. Smart calendar practice?', a: ['Book every slot', 'Build 10-min buffers between meetings and a 30-min protected lunch', 'Add more meetings', 'Schedule travel during meetings'], correct: 1,
+        explain: 'Buffers prevent cascade delays; protected lunch prevents afternoon burnout.' },
+    ],
+
+    shopify: [
+      { q: 'A product page has high traffic but low conversion. First place to check?', a: ['Blog SEO', 'The product description, images, price, and above-the-fold trust elements (reviews, shipping, returns)', 'Email list size', 'Instagram follower count'], correct: 1,
+        explain: 'High traffic + low conversion = PDP problem. Fix clarity, trust, images, and the fold.' },
+      { q: 'A customer orders item X; inventory shows 0 but order went through. Most likely cause?', a: ['Shopify is broken', 'Negative inventory is allowed, or inventory wasn\'t synced after the last sale', 'The customer is lying', 'The product doesn\'t exist'], correct: 1,
+        explain: 'Check "Continue selling when out of stock" and run an inventory sync. Oversells almost always trace here.' },
+      { q: 'Best practice for product image specs on Shopify?', a: ['Any JPG works', 'Square, 2048×2048 px minimum, white background for the main shot, under 300 KB', '600×600 px JPG', 'Transparent PNGs always'], correct: 1,
+        explain: '2048² lets zoom work; white BG passes most marketplace guidelines; <300 KB keeps PageSpeed high.' },
+      { q: 'What does "ATC rate" mean in a Shopify report?', a: ['Average Transaction Cost', 'Add-To-Cart rate — % of sessions that add at least one product', 'Automated Ticket Count', 'Annual Tax Collected'], correct: 1,
+        explain: 'ATC rate is a top-of-funnel health metric. Low ATC = PDP or offer problem, not a checkout problem.' },
+      { q: 'A customer wants to return an item outside the 30-day window. Correct first move?', a: ['Refuse outright', 'Check the store\'s return policy and the specific reason (defect, wrong item, etc.), then propose the best resolution per policy', 'Refund without checking', 'Ignore the ticket'], correct: 1,
+        explain: 'Policy + reason + resolution. Defects and wrong-items usually override the window.' },
+      { q: 'Shopify discount: $10 off orders over $100. What stacking behavior should you check?', a: ['Shipping speed', 'Whether it combines with other discounts (product/order/shipping) and combines with automatic discounts', 'Email subscriber count', 'Tax rate'], correct: 1,
+        explain: 'Shopify discount "combinations" determine stacking. Misconfig = margin leak.' },
+      { q: 'A Gorgias ticket says "Where is my order #1023?" First step?', a: ['Refund immediately', 'Look up order #1023 in Shopify admin, check fulfillment + tracking, then share the tracking number and ETA', 'Mark as spam', 'Ask the customer for their address'], correct: 1,
+        explain: 'Get the facts from the order record first, then respond with concrete info — tracking + ETA.' },
+      { q: 'Which Shopify metafield use case is BEST?', a: ['Storing a customer\'s credit card', 'Storing structured product data like fabric composition or warranty months for theme display', 'Storing the admin password', 'Storing a session cookie'], correct: 1,
+        explain: 'Metafields = structured custom product/customer/order data that templates can read.' },
+      { q: 'Best practice for Klaviyo welcome email automation on Shopify?', a: ['Send 10 emails in the first 24 hours', '3–5 emails over 7–14 days with discount in #2, brand story in #3, UGC in #4', 'Send one email after 60 days', 'Never discount'], correct: 1,
+        explain: 'Spaced, value-driven flows outperform spamming. Discount in #2 after setting context.' },
+      { q: 'A store\'s PageSpeed score drops to 38. Biggest likely culprit?', a: ['Too many products', 'Un-optimized hero image + too many third-party apps injecting JS', 'Too much HTML content', 'Font family choice'], correct: 1,
+        explain: 'Images and third-party scripts dominate Shopify PageSpeed issues. Audit apps + compress hero.' },
+      { q: 'Correct way to handle a chargeback dispute?', a: ['Ignore it', 'Gather proof of fulfillment (tracking + delivery scan), the signed authorization if available, and respond in Shopify Payments within the deadline', 'Refund and move on', 'Call the customer\'s bank'], correct: 1,
+        explain: 'Chargebacks are won with evidence inside the response window. Tracking + authorization + comms.' },
+      { q: 'A new variant isn\'t appearing on the storefront. What do you check FIRST?', a: ['Theme code', 'Whether the variant is published to the "Online Store" sales channel and in stock', 'Shopify core status page', 'DNS settings'], correct: 1,
+        explain: 'Sales channel + inventory availability are 90% of "variant missing" tickets.' },
+    ],
+
+    qbo: [
+      { q: 'In QuickBooks Online, what is the FIRST step of monthly bank reconciliation?', a: ['Deleting old transactions', 'Entering the ending balance and ending date from the bank statement', 'Printing a P&L', 'Emailing the client'], correct: 1,
+        explain: 'You start reconciliation by anchoring to the statement\'s ending balance and date.' },
+      { q: 'A $120 Zoom charge hits the bank feed. Correct categorization?', a: ['Owner\'s equity', 'Dues & Subscriptions or Software Expense', 'Cost of Goods Sold', 'Salaries'], correct: 1,
+        explain: 'SaaS subscriptions go under Dues & Subscriptions or Software — never COGS unless resold.' },
+      { q: 'Accrual vs. Cash basis — what\'s the core difference?', a: ['Accrual uses dollars, cash uses pesos', 'Accrual books revenue/expense when earned/incurred; cash books them when money moves', 'Accrual is for non-profits', 'Cash is for public companies'], correct: 1,
+        explain: 'Accrual = economic reality (when earned); Cash = bank reality (when money moves).' },
+      { q: 'A client wants an AR Aging Report. What does it show?', a: ['Open invoices grouped by how overdue they are (0–30, 31–60, 61–90, 90+)', 'Future revenue projections', 'Fixed asset depreciation', 'Payroll taxes due'], correct: 0,
+        explain: 'AR Aging = who owes you, bucketed by overdue age — collections priority list.' },
+      { q: 'A duplicate expense appears in the bank feed. Correct action?', a: ['Categorize both as expenses', 'Match or exclude the duplicate, keep one entry', 'Delete the bank feed', 'Convert it to a journal entry'], correct: 1,
+        explain: 'Match or exclude — never double-book. Exclusions keep the feed clean without touching the register.' },
+      { q: 'The P&L shows revenue but the balance sheet cash hasn\'t moved. What\'s likely happening?', a: ['QuickBooks is broken', 'Revenue was invoiced (AR) but not yet collected — normal under accrual', 'The books are wrong', 'Fraud'], correct: 1,
+        explain: 'Accrual timing. Revenue → AR → cash when paid. Not a bug.' },
+      { q: 'Which account type is used for owner contributions to the business?', a: ['Revenue', 'Owner\'s Equity (specifically Owner\'s Investment)', 'Expense', 'Liability'], correct: 1,
+        explain: 'Owner money going IN = Owner\'s Equity increase.' },
+      { q: 'Best practice for recording a vendor refund?', a: ['Record as income', 'Record as a Vendor Credit, then apply it to the next bill or deposit it to bank with the original expense account', 'Delete the original bill', 'Record as owner contribution'], correct: 1,
+        explain: 'Vendor Credit preserves the audit trail and keeps expense categories accurate.' },
+      { q: 'The client asks "Why is my net income higher than my bank balance?" Simple correct answer?', a: ['QuickBooks is wrong', 'Net income and cash aren\'t the same — AR, inventory, loan payments, and owner draws all move cash without changing net income', 'You spent too much', 'The bank is wrong'], correct: 1,
+        explain: 'Classic cash-vs-accrual question. Explain AR, inventory, and non-P&L cash movements.' },
+      { q: 'Correct order of operations for month-end close?', a: ['Reconcile banks → close month → file taxes', 'Reconcile all bank/credit accounts → review AR/AP → post adjusting entries → review reports → close the period', 'Close first, review later', 'File taxes first'], correct: 1,
+        explain: 'Reconcile, then review AR/AP, then adjust, then review reports, then lock the period.' },
+      { q: 'A $4,000 purchase for a new laptop — correct booking?', a: ['Expense immediately', 'Capitalize as a Fixed Asset and depreciate (small businesses may expense under Section 179)', 'Owner draw', 'Inventory'], correct: 1,
+        explain: 'Over the capitalization threshold = fixed asset. Section 179 can accelerate deduction if elected.' },
+      { q: 'What does the Statement of Cash Flows reconcile?', a: ['Revenue to expense', 'Net income to actual cash movement across Operating, Investing, and Financing activities', 'AR to AP', 'Taxes to payroll'], correct: 1,
+        explain: 'Cash Flow Statement = bridge from accrual net income to real bank cash.' },
+    ],
+
+    smm: [
+      { q: 'A client asks "what posting schedule should we use?" What\'s the best answer?', a: ['Post 10x per day on every platform', 'Base cadence on platform + audience: e.g., IG 3–5x/wk, TikTok 5–7x/wk, LinkedIn 2–3x/wk, test and iterate on engagement', 'Only post when inspired', 'Post the same content everywhere'], correct: 1,
+        explain: 'Cadence is per-platform and iterative. Start evidence-based, measure engagement, adjust.' },
+      { q: 'Which metric BEST reflects content resonance?', a: ['Reach alone', 'Engagement rate (interactions ÷ reach or ÷ followers) combined with saves/shares', 'Follower count', 'Number of hashtags'], correct: 1,
+        explain: 'Engagement rate + saves/shares show whether content actually lands. Reach alone is vanity.' },
+      { q: 'Best practice for Canva brand kits?', a: ['Freeform — redesign every post', 'Lock brand colors, fonts, logo variants, and 4–6 templates per content type so output is on-brand and scalable', 'Only use default templates', 'Change the logo weekly'], correct: 1,
+        explain: 'Templates + brand kit = consistency + speed. Non-negotiable for scale.' },
+      { q: 'A reel went viral — 2M views, 50K followers gained. What\'s the IMMEDIATE next move?', a: ['Post another identical reel', 'Lean into the format: pin it, run a follow-up within 24–48 hrs, DM-automate a lead magnet, update the bio CTA', 'Change your niche', 'Delete it'], correct: 1,
+        explain: 'Viral windows close fast. Capitalize on momentum with pin, follow-up, DM capture, and bio CTA.' },
+      { q: 'Correct way to use hashtags on Instagram in 2026?', a: ['30 hashtags on every post', '3–5 highly relevant hashtags + descriptive caption; mix of broad + niche; avoid banned tags', '100 hashtags in comments', 'No hashtags ever'], correct: 1,
+        explain: 'Current IG guidance: focused, relevant, mixed-reach. Stuffing has hurt reach for years.' },
+      { q: 'A client wants "viral content". What\'s the honest answer?', a: ['Guarantee virality', 'Virality isn\'t a strategy — build on hooks, pattern-interrupts, consistency, and clear positioning; viral moments emerge', 'Buy followers', 'Only do dances'], correct: 1,
+        explain: 'Repeatable system + fundamentals produces occasional viral hits. "Viral" as a plan is noise.' },
+      { q: 'Best time to schedule a LinkedIn post for US B2B audience?', a: ['Saturday 11 PM', 'Tuesday–Thursday, 8–10 AM EST — but validate with your own analytics', '3 AM any day', 'Only Sunday morning'], correct: 1,
+        explain: 'Default to Tue–Thu AM EST, then override with the account\'s real data within 2 weeks.' },
+      { q: 'A TikTok video has high views but low follows. What does this signal?', a: ['Perfect content', 'The hook attracted broad viewers but the content/profile didn\'t give a reason to follow — revise CTA and series signal', 'Buy more ads', 'Delete the account'], correct: 1,
+        explain: 'Views ≠ follows. Fix the "why follow" — series signal, personality, or clear niche promise.' },
+      { q: 'What should a monthly client report ALWAYS include?', a: ['Just impressions', 'Objectives, top content (with why it worked), KPIs vs. previous month, learnings, and next-month plan', 'Random screenshots', 'Only follower count'], correct: 1,
+        explain: 'Clients pay for insight, not data dumps. Objectives → results → learnings → plan.' },
+      { q: 'Correct image aspect ratio for IG Reels?', a: ['1:1 square', '9:16 vertical (1080×1920)', '16:9 landscape', '4:5 portrait'], correct: 1,
+        explain: 'Reels and Stories: 9:16. Posting horizontal reels is a reach killer.' },
+      { q: 'A client\'s Instagram account got flagged for "spam-like behavior". First step?', a: ['Panic', 'Pause 3rd-party automation, audit DM/follow patterns, remove violating content, and appeal via Meta Business Support', 'Buy followers to look legit', 'Delete the account'], correct: 1,
+        explain: 'Stop automation + clean up + appeal. Most flags reverse with evidence and policy compliance.' },
+      { q: 'Which is a strong KPI for Instagram GROWTH?', a: ['Likes only', 'Net new follows attributable to specific pieces of content + profile visits ÷ reach', 'Number of DMs sent', 'Account age'], correct: 1,
+        explain: 'Attribution + profile-visit-rate measure growth quality, not just vanity.' },
+    ],
+
+    support: [
+      { q: 'A ticket arrives: "Your product is broken and you are thieves!!!" Best first-line response?', a: ['Match the energy', 'Acknowledge frustration, ask one clarifying question, assure you\'ll help, and set an ETA for first substantive reply', 'Close the ticket', 'Argue the point'], correct: 1,
+        explain: 'Acknowledge → clarify → commit to a next step. De-escalation 101.' },
+      { q: 'What does FRT measure?', a: ['Full Refund Total', 'First Response Time — minutes from ticket arrival to first human reply', 'Final Refund Threshold', 'Full Resolution Time'], correct: 1,
+        explain: 'FRT is a core SLA metric. Business hours and after-hours FRTs are tracked separately.' },
+      { q: 'Best practice for using macros (saved replies)?', a: ['Send macros verbatim', 'Use as scaffolds, personalize the opening and any specifics, and always re-read before sending', 'Macros are for lazy agents', 'Send the same macro to every ticket'], correct: 1,
+        explain: 'Macros save time; personalization keeps the human in support.' },
+      { q: 'A customer demands to "speak to your manager". Best handling?', a: ['Refuse', 'Acknowledge the request, try one more de-escalation if genuinely able to resolve, and escalate promptly with full context if not', 'Ignore it', 'Argue'], correct: 1,
+        explain: 'Don\'t gatekeep. One honest attempt, then escalate with full context so the manager is prepared.' },
+      { q: 'Which CSAT follow-up is most useful?', a: ['"Rate 1–5"', '"On a scale of 1–5, how satisfied were you? What\'s one thing we could do better?"', '"Thanks"', 'No follow-up'], correct: 1,
+        explain: 'Pair the score with a qualitative prompt. Themes in open-ended answers drive real improvement.' },
+      { q: 'Zendesk ticket "status" of "Pending" means?', a: ['The agent is pending', 'Waiting on customer — SLA pauses until they reply', 'The ticket is closed', 'The ticket is escalated'], correct: 1,
+        explain: '"Pending" = customer-blocked. Zendesk\'s SLA usually pauses while in this state.' },
+      { q: 'A customer insists on a refund they\'re not entitled to by policy. Best move?', a: ['Refund silently to make them go away', 'Explain the policy with empathy, offer what you can within policy (store credit, exchange, extended window if appropriate), and escalate if they stay unsatisfied', 'Argue harder', 'Close the ticket'], correct: 1,
+        explain: 'Empathy + options within policy + escalation path. Silent policy breaks train bad behavior.' },
+      { q: 'A ticket needs info from engineering. What should you do IN the ticket?', a: ['Just forward and wait', 'Internal-note the engineering ask with full repro info, set the ticket to "pending internal", update the customer with an ETA, and loop back', 'Delete the ticket', 'Ask the customer to email engineering'], correct: 1,
+        explain: 'Internal note + status + customer ETA keeps the ticket moving and the customer informed.' },
+      { q: 'Best practice for tone in written support?', a: ['Overly formal', 'Warm, human, concise, no jargon, and action-oriented ("Here\'s what I\'ll do next…")', 'Match the customer\'s profanity', 'Always use "we"'], correct: 1,
+        explain: 'Warm + concise + action-oriented. Tone sets CSAT more than resolution speed in many categories.' },
+      { q: 'What should a resolution reply ALWAYS contain?', a: ['Just "resolved"', 'What was done, why, any follow-up needed from the customer, and an invitation to reply if anything else', 'Marketing offer', 'Agent\'s personal number'], correct: 1,
+        explain: 'Close the loop: outcome + reason + next step + invite to reply. Prevents re-opens and drives CSAT.' },
+      { q: 'A product bug affects 500 customers. Correct first move?', a: ['Reply to tickets individually', 'Coordinate with engineering on an incident update, send a proactive bulk comms (status page/email), and queue consistent macro responses for inbound tickets', 'Hide the bug', 'Blame engineering'], correct: 1,
+        explain: 'Incidents need coordinated comms + consistent replies. Reactive 1:1 loses trust.' },
+      { q: 'A customer asks for a feature you don\'t have. Best response?', a: ['Say "no" bluntly', 'Thank them, explain the workaround if any, tag the feature request in your product tracker, and let them know if/when there\'s a timeline', 'Promise it ships next week', 'Ignore'], correct: 1,
+        explain: 'Thanks → workaround → log the request → honest timeline. Never fake-promise features.' },
+    ],
+  };
+
+  // ------------------------------------------------------------
+  // Course card rendering + passed-state loader
+  // ------------------------------------------------------------
+  function courseCardHTML(key, c, passed) {
+    const badges = [];
+    if (c.badge) badges.push(`<span class="ac-badge">${c.badge}</span>`);
+    if (passed) badges.push(`<span class="ac-passed"><i class="fas fa-check-circle"></i> Passed</span>`);
+    return `
+      <div class="ac-card" data-course="${key}">
+        <div class="ac-card-cover" style="background:${c.cover};">
+          <i class="${c.icon}"></i>
+          ${badges.join('')}
+        </div>
+        <div class="ac-card-body">
+          <h3>${c.title}</h3>
+          <p>${c.subtitle}</p>
+          <div class="ac-card-meta">
+            <span><i class="fas fa-clipboard-check"></i>${c.testQuestions} questions</span>
+            <span><i class="fas fa-clock"></i>${c.timeMinutes} min</span>
+            <span><i class="fas fa-signal"></i>${c.difficulty}</span>
+          </div>
+          <div class="ac-card-cta">
+            <button class="btn ${passed ? 'btn-outline-primary' : 'btn-primary'} btn-sm" data-start-test="${key}">
+              <i class="fas fa-${passed ? 'redo' : 'play'}"></i> ${passed ? 'Retake test' : 'Start test'}
+            </button>
+          </div>
+        </div>
+      </div>`;
   }
 
-  document.querySelectorAll('.course-card').forEach(card => {
-    renderCourse(card);
-    card.querySelector('.enroll-btn').addEventListener('click', () => {
-      const id = card.dataset.course;
-      if (progress[id] === undefined) { progress[id] = 0; showToast('Enrolled! Your first lesson is ready.'); }
-      else if (progress[id] < 100) { progress[id] = Math.min(100, progress[id] + 25); showToast('Lesson complete. Keep going!'); }
-      save();
-      renderCourse(card);
+  const courseGrid = document.getElementById('courseGrid');
+  const passedCourses = new Set();
+
+  function renderCourses() {
+    courseGrid.innerHTML = Object.entries(COURSES)
+      .map(([key, c]) => courseCardHTML(key, c, passedCourses.has(key)))
+      .join('');
+  }
+
+  async function loadPassedCourses() {
+    try {
+      const res = await fetch('/api/certificates');
+      if (res.status !== 200) return;
+      const data = await res.json();
+      (data.certificates || []).forEach(c => {
+        if (c.academyCourse) passedCourses.add(c.academyCourse);
+      });
+      renderCourses();
+    } catch (e) { /* not signed in — leave as default */ }
+  }
+
+  renderCourses();
+  loadPassedCourses();
+
+  courseGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-start-test]');
+    if (!btn) return;
+    openTest(btn.getAttribute('data-start-test'));
+  });
+
+  // ============================================================
+  // Test engine
+  // ============================================================
+  const testModal = document.getElementById('testModal');
+  let TEST = null; // live test state
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function fmtClock(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  function openTest(courseKey) {
+    const course = COURSES[courseKey];
+    const bank = BANKS[courseKey] || [];
+    if (!course || !bank.length) return;
+
+    // Build intro
+    document.getElementById('testIntroCover').style.background = course.cover;
+    document.getElementById('testIntroCover').innerHTML = `<i class="${course.icon}"></i>`;
+    document.getElementById('testIntroTitle').textContent = course.title;
+    document.getElementById('testIntroSub').textContent = course.subtitle;
+    document.getElementById('testIntroQCount').textContent = course.testQuestions;
+    document.getElementById('testIntroTime').textContent = course.timeMinutes + ' min';
+    document.getElementById('testIntroPass').textContent = course.passPercent + '%';
+    document.getElementById('testIntroDiff').textContent = course.difficulty;
+
+    // Pre-stage test state
+    const sampled = shuffle(bank).slice(0, Math.min(course.testQuestions, bank.length));
+    TEST = {
+      courseKey, course,
+      questions: sampled.map(q => ({
+        q: q.q,
+        options: q.a,
+        correctIndex: q.correct,
+        explain: q.explain || '',
+      })),
+      current: 0,
+      answers: new Array(sampled.length).fill(-1),
+      flagged: new Array(sampled.length).fill(false),
+      startedAt: 0,
+      timerInterval: null,
+      remainingSec: course.timeMinutes * 60,
+    };
+
+    showStage('intro');
+    testModal.classList.add('open');
+    testModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeTest() {
+    if (TEST && TEST.timerInterval) clearInterval(TEST.timerInterval);
+    TEST = null;
+    testModal.classList.remove('open');
+    testModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function showStage(name) {
+    testModal.querySelectorAll('.test-stage').forEach(el => {
+      el.hidden = el.getAttribute('data-stage') !== name;
+    });
+  }
+
+  document.querySelectorAll('[data-test-close]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!TEST) { closeTest(); return; }
+      // If in active test, confirm
+      const stage = Array.from(testModal.querySelectorAll('.test-stage')).find(el => !el.hidden);
+      if (stage && stage.getAttribute('data-stage') === 'active') {
+        if (!confirm('Exit the test? Your progress will be lost.')) return;
+      }
+      closeTest();
     });
   });
 
-  // VA Foundations assessment
-  const QUESTIONS = [
-    { q: 'During US daylight saving time (EDT), your New York client books a 9:00 AM call. What time is that in Manila?',
-      a: ['9:00 AM', '9:00 PM', '11:00 PM', '6:00 AM'], correct: 1 },
-    { q: 'You realize you won\'t finish a task by the deadline. What\'s the best move?',
-      a: ['Say nothing and submit late', 'Tell the client early, explain why, and give a new ETA', 'Submit it unfinished', 'Ask another VA to do it secretly'], correct: 1 },
-    { q: 'A "client" asks you to pay a ₱1,500 training fee and continue the chat on Telegram. What should you do?',
-      a: ['Pay it, since it\'s refundable', 'Move to Telegram first to learn more', 'Treat it as a scam: don\'t pay, and report the post', 'Pay half to be safe'], correct: 2 },
-    { q: 'Which belongs in an End-of-Day (EOD) report?',
-      a: ['Only the hours you worked', 'Done today, in progress, blockers, and plan for tomorrow', 'Your personal to-do list', 'Screenshots of every email'], correct: 1 },
-    { q: 'Your client needs to give you access to their bank and email accounts. What\'s the safest way?',
-      a: ['Send the passwords over chat', 'Write them in a shared Google Doc', 'Use a password manager share (e.g. 1Password, Bitwarden) with 2FA', 'Use the same password for all accounts'], correct: 2 },
-  ];
-
-  const quizSection = document.getElementById('assessment');
-  document.getElementById('quizQuestions').innerHTML = QUESTIONS.map((item, i) => `
-    <div class="form-group">
-      <label class="form-label">${i + 1}. ${item.q}</label>
-      <div style="display:flex; flex-direction:column; gap:0.5rem;">
-        ${item.a.map((ans, j) => `<label class="option-tile"><input type="radio" name="q${i}" value="${j}" required /><span>${ans}</span></label>`).join('')}
-      </div>
-    </div>`).join('');
-
-  document.getElementById('openQuiz').addEventListener('click', () => {
-    quizSection.hidden = false;
-    quizSection.scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('testStartBtn').addEventListener('click', () => {
+    if (!TEST) return;
+    TEST.startedAt = Date.now();
+    showStage('active');
+    document.getElementById('testActiveCourse').textContent = TEST.course.title;
+    document.getElementById('testQTotal').textContent = TEST.questions.length;
+    renderNavigator();
+    renderCurrentQuestion();
+    startTimer();
   });
 
-  document.getElementById('quizForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const score = QUESTIONS.reduce((n, item, i) => n + (Number(form[`q${i}`].value) === item.correct ? 1 : 0), 0);
-    const result = document.getElementById('quizResult');
-    const name = document.getElementById('quizName').value.trim().replace(/[<>&"]/g, '');
-    const date = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+  function startTimer() {
+    const el = document.getElementById('testTimer');
+    const update = () => {
+      el.textContent = fmtClock(TEST.remainingSec);
+      el.classList.toggle('warning', TEST.remainingSec <= 180 && TEST.remainingSec > 60);
+      el.classList.toggle('critical', TEST.remainingSec <= 60);
+      if (TEST.remainingSec <= 0) {
+        clearInterval(TEST.timerInterval);
+        submitTest();
+        return;
+      }
+      TEST.remainingSec--;
+    };
+    update();
+    TEST.timerInterval = setInterval(update, 1000);
+  }
 
-    if (score >= 4) {
-      progress.foundations = 100;
-      progress.foundationsCert = { name, date };
-      save();
-      renderCourse(document.querySelector('[data-course="foundations"]'));
-      result.innerHTML = `
-        <div class="cert-preview print-area">
-          <div class="seal"><i class="fas fa-award"></i></div>
-          <p style="font-size:0.8rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-light);">Certificate of Completion</p>
-          <h3 style="font-size:1.75rem; color:var(--dark); margin:0.5rem 0;">${name}</h3>
-          <p style="color:var(--text-light);">has passed the <strong style="color:var(--primary);">VA Foundations</strong> assessment with ${score}/5</p>
-          <p style="font-size:0.8rem; color:var(--text-light); margin-top:1rem;">Jobseekers.ph VA Academy · ${date}</p>
-          <div class="va-badges" style="justify-content:center; margin-top:1rem;"><span class="feat-badge cert"><i class="fas fa-certificate"></i> VA Foundations</span></div>
-        </div>
-        <div class="alert alert-success" style="margin-top:1rem;"><i class="fas fa-check-circle"></i>
-          <div>Passed! The <strong>VA Foundations</strong> badge has been added to your profile. Earn one more certificate to join <strong>Rising Talent</strong>.</div>
-        </div>
-        <div class="no-print" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-          <button class="btn btn-outline-primary" onclick="window.print()"><i class="fas fa-print"></i> Print / Save as PDF</button>
-          <a href="edit-profile" class="btn btn-primary"><i class="fas fa-user-circle"></i> View on my profile</a>
-        </div>`;
+  function renderNavigator() {
+    const nav = document.getElementById('testNavigator');
+    nav.innerHTML = TEST.questions.map((_, i) => {
+      const cls = ['test-nav-btn'];
+      if (TEST.answers[i] >= 0) cls.push('answered');
+      if (TEST.flagged[i])      cls.push('flagged');
+      if (i === TEST.current)   cls.push('current');
+      return `<button type="button" class="${cls.join(' ')}" data-goto="${i}" aria-label="Go to question ${i + 1}">${i + 1}</button>`;
+    }).join('');
+  }
+
+  document.getElementById('testNavigator').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-goto]');
+    if (!btn) return;
+    TEST.current = Number(btn.getAttribute('data-goto'));
+    renderCurrentQuestion();
+    renderNavigator();
+  });
+
+  function renderCurrentQuestion() {
+    const q = TEST.questions[TEST.current];
+    document.getElementById('testQCur').textContent = TEST.current + 1;
+    document.getElementById('testCardQNum').textContent = TEST.current + 1;
+    document.getElementById('testQText').textContent = q.q;
+
+    const optsEl = document.getElementById('testOptions');
+    optsEl.innerHTML = q.options.map((opt, idx) => {
+      const selected = TEST.answers[TEST.current] === idx;
+      const label = String.fromCharCode(65 + idx); // A, B, C, D
+      return `
+        <label class="test-option ${selected ? 'selected' : ''}" data-opt="${idx}">
+          <span class="test-option-mark">${label}</span>
+          <span>${opt}</span>
+          <input type="radio" name="opt" value="${idx}" ${selected ? 'checked' : ''} />
+        </label>`;
+    }).join('');
+
+    document.getElementById('testProgressFill').style.width =
+      (((TEST.current + 1) / TEST.questions.length) * 100) + '%';
+
+    const flagBtn = document.getElementById('testFlagBtn');
+    const flagged = TEST.flagged[TEST.current];
+    flagBtn.setAttribute('aria-pressed', flagged ? 'true' : 'false');
+    document.getElementById('testFlagLabel').textContent = flagged ? 'Flagged' : 'Flag for review';
+
+    const nextBtn = document.getElementById('testNextBtn');
+    const isLast = TEST.current === TEST.questions.length - 1;
+    nextBtn.innerHTML = isLast
+      ? '<i class="fas fa-check"></i> Submit test'
+      : 'Next <i class="fas fa-chevron-right"></i>';
+
+    document.getElementById('testPrevBtn').disabled = TEST.current === 0;
+
+    const unanswered = TEST.answers.filter(a => a < 0).length;
+    document.getElementById('testFooterHint').textContent =
+      unanswered ? `${unanswered} unanswered` : 'All answered — ready to submit';
+  }
+
+  document.getElementById('testOptions').addEventListener('click', (e) => {
+    const label = e.target.closest('[data-opt]');
+    if (!label) return;
+    TEST.answers[TEST.current] = Number(label.getAttribute('data-opt'));
+    renderCurrentQuestion();
+    renderNavigator();
+  });
+
+  document.getElementById('testFlagBtn').addEventListener('click', () => {
+    TEST.flagged[TEST.current] = !TEST.flagged[TEST.current];
+    renderCurrentQuestion();
+    renderNavigator();
+  });
+
+  document.getElementById('testPrevBtn').addEventListener('click', () => {
+    if (TEST.current > 0) { TEST.current--; renderCurrentQuestion(); renderNavigator(); }
+  });
+
+  document.getElementById('testNextBtn').addEventListener('click', () => {
+    const isLast = TEST.current === TEST.questions.length - 1;
+    if (!isLast) { TEST.current++; renderCurrentQuestion(); renderNavigator(); return; }
+    const unanswered = TEST.answers.filter(a => a < 0).length;
+    const flaggedCount = TEST.flagged.filter(Boolean).length;
+    const msg = unanswered || flaggedCount
+      ? `Submit now? You have ${unanswered} unanswered and ${flaggedCount} flagged question${flaggedCount === 1 ? '' : 's'}.`
+      : 'Submit your answers? This cannot be changed after submission.';
+    if (!confirm(msg)) return;
+    submitTest();
+  });
+
+  function submitTest() {
+    if (TEST.timerInterval) clearInterval(TEST.timerInterval);
+    const correctCount = TEST.questions.reduce((n, q, i) =>
+      n + (TEST.answers[i] === q.correctIndex ? 1 : 0), 0);
+    const total = TEST.questions.length;
+    const pct = Math.round((correctCount / total) * 100);
+    const passed = pct >= TEST.course.passPercent;
+    const timeTaken = Math.max(0, Math.floor((Date.now() - TEST.startedAt) / 1000));
+
+    const seal = document.getElementById('testResultSeal');
+    seal.className = 'test-result-seal' + (passed ? '' : ' fail');
+    seal.innerHTML = passed ? '<i class="fas fa-award"></i>' : '<i class="fas fa-redo"></i>';
+
+    document.getElementById('testResultTitle').textContent = passed
+      ? `You passed — ${TEST.course.title}!`
+      : 'Not quite — try again';
+    document.getElementById('testResultSub').textContent = passed
+      ? `Your certificate has been added to your profile.`
+      : `You need ${TEST.course.passPercent}% to pass. Review the explanations below and retake when you're ready.`;
+
+    document.getElementById('testResultScore').textContent     = pct + '%';
+    document.getElementById('testResultCorrect').textContent   = `${correctCount}/${total}`;
+    document.getElementById('testResultTime').textContent      = fmtClock(timeTaken);
+    document.getElementById('testResultThreshold').textContent = TEST.course.passPercent + '%';
+
+    // Certificate card (shown only on pass)
+    const certEl = document.getElementById('testCert');
+    const retakeBtn = document.getElementById('testRetakeBtn');
+    const printBtn  = document.getElementById('testPrintBtn');
+    const profileLink = document.getElementById('testToProfileLink');
+    if (passed) {
+      certEl.hidden = false;
+      document.getElementById('testCertCourse').textContent = TEST.course.title;
+      document.getElementById('testCertScore').textContent  = `${correctCount}/${total} (${pct}%)`;
+      document.getElementById('testCertDate').textContent   =
+        new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      // Fetch signed-in user's name for the certificate; fall back silently
+      fetch('/api/me').then(r => r.status === 200 ? r.json() : null).then(data => {
+        const u = data && data.user;
+        document.getElementById('testCertName').textContent =
+          u ? `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Your Name' : 'Your Name';
+      }).catch(() => {});
+
+      // Issue the certificate on the account; API is idempotent per course
+      fetch('/api/academy/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ course: TEST.courseKey, score: `${correctCount}/${total}` }),
+      }).then(r => r.ok ? r.json() : null).then(() => {
+        passedCourses.add(TEST.courseKey);
+      }).catch(() => {});
+
+      retakeBtn.style.display   = 'none';
+      printBtn.style.display    = '';
+      profileLink.style.display = '';
     } else {
-      result.innerHTML = `<div class="alert alert-warn"><i class="fas fa-redo"></i>
-        <div>You got <strong>${score}/5</strong>. You need 4 to pass. Review the lessons and try again in 7 days. (For this demo, you can retry right away.)</div></div>`;
+      certEl.hidden = true;
+      retakeBtn.style.display   = '';
+      printBtn.style.display    = 'none';
+      profileLink.style.display = 'none';
     }
-    result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Per-question review
+    const reviewBody = document.getElementById('testReviewBody');
+    reviewBody.innerHTML = TEST.questions.map((q, i) => {
+      const a = TEST.answers[i];
+      const userAns = a >= 0 ? q.options[a] : '(no answer)';
+      const correctAns = q.options[q.correctIndex];
+      const wasRight = a === q.correctIndex;
+      return `
+        <div class="test-review-item">
+          <div class="r-q">Q${i + 1}. ${escapeHtml(q.q)}</div>
+          <div class="r-ans ${wasRight ? 'correct' : 'wrong'}">
+            <i class="fas fa-${wasRight ? 'check-circle' : 'times-circle'}"></i>
+            Your answer: ${escapeHtml(userAns)}
+          </div>
+          ${!wasRight ? `<div class="r-ans correct"><i class="fas fa-check-circle"></i> Correct answer: ${escapeHtml(correctAns)}</div>` : ''}
+          ${q.explain ? `<div class="r-explain"><i class="fas fa-lightbulb" style="color:#D97706;"></i> ${escapeHtml(q.explain)}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    showStage('results');
+    // Re-render the behind-modal course grid so the Passed badge appears
+    if (passed) renderCourses();
+  }
+
+  document.getElementById('testRetakeBtn').addEventListener('click', () => {
+    if (!TEST) return;
+    openTest(TEST.courseKey);
   });
+  document.getElementById('testPrintBtn').addEventListener('click', () => window.print());
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g,
+      c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
 </script>
 </body>
 </html>

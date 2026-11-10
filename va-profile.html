@@ -17,15 +17,80 @@
       font-weight:800; font-size:3.25rem; font-family:'Poppins',sans-serif;
       border:4px solid #fff; box-shadow:var(--shadow-md);
     }
-    .pf-portfolio-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1rem; }
+    /* ── Upwork-style portfolio grid ── */
+    .pf-portfolio-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1.25rem; }
     .pf-portfolio-card {
       border:1px solid var(--border); border-radius:var(--radius-lg);
-      padding:1rem; background:#fff;
+      background:#fff; overflow:hidden; cursor:pointer;
+      transition:transform 0.18s ease, box-shadow 0.18s ease;
+      display:flex; flex-direction:column;
     }
-    .pf-portfolio-card h4 { font-size:0.95rem; font-weight:700; color:var(--dark); margin:0 0 0.5rem; }
-    .pf-portfolio-card .pf-pf-body { font-size:0.825rem; color:var(--text-light); line-height:1.6; max-height:200px; overflow:hidden; }
-    .pf-portfolio-card .pf-pf-body img { max-width:100%; height:auto; border-radius:var(--radius-md); margin:0.5rem 0; }
-    .pf-portfolio-card .pf-pf-body iframe { max-width:100%; border-radius:var(--radius-md); margin:0.5rem 0; }
+    .pf-portfolio-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); }
+    .pf-pc-cover {
+      position:relative; width:100%; aspect-ratio:16/10;
+      background:linear-gradient(135deg, #EEF2FF, #E0E7FF);
+      display:flex; align-items:center; justify-content:center; color:var(--primary);
+      overflow:hidden;
+    }
+    .pf-pc-cover img { width:100%; height:100%; object-fit:cover; display:block; }
+    .pf-pc-cover .pf-pc-icon { font-size:2.5rem; opacity:0.5; }
+    .pf-pc-overlay {
+      position:absolute; inset:0;
+      background:linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.1) 60%, rgba(15,23,42,0) 100%);
+      opacity:0; transition:opacity 0.18s ease;
+      display:flex; align-items:flex-end; padding:0.875rem; color:#fff;
+      font-size:0.8rem; font-weight:600;
+    }
+    .pf-portfolio-card:hover .pf-pc-overlay { opacity:1; }
+    .pf-pc-body { padding:0.875rem 1rem 1rem; display:flex; flex-direction:column; gap:0.5rem; flex:1; }
+    .pf-pc-title { font-size:0.95rem; font-weight:700; color:var(--dark); margin:0; line-height:1.3; }
+    .pf-pc-meta { font-size:0.75rem; color:var(--text-light); display:flex; flex-wrap:wrap; gap:0.5rem 0.75rem; }
+    .pf-pc-skills { display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:auto; }
+    .pf-pc-skills span {
+      font-size:0.68rem; font-weight:600; padding:0.15rem 0.5rem;
+      background:rgba(79,70,229,0.08); color:var(--primary); border-radius:999px;
+    }
+
+    /* ── Portfolio lightbox ── */
+    .pf-modal-backdrop {
+      position:fixed; inset:0; background:rgba(15,23,42,0.75);
+      display:none; align-items:center; justify-content:center;
+      padding:1rem; z-index:9999; backdrop-filter:blur(4px);
+    }
+    .pf-modal-backdrop.open { display:flex; }
+    .pf-modal {
+      background:#fff; border-radius:var(--radius-lg);
+      max-width:860px; width:100%; max-height:calc(100vh - 2rem);
+      overflow:hidden; display:grid; grid-template-rows:auto 1fr;
+      box-shadow:0 24px 60px rgba(0,0,0,0.35);
+    }
+    .pf-modal-head {
+      padding:1rem 1.25rem; border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;
+    }
+    .pf-modal-close {
+      background:transparent; border:none; cursor:pointer;
+      color:var(--text-light); font-size:1.1rem; padding:0.25rem 0.5rem;
+    }
+    .pf-modal-close:hover { color:var(--dark); }
+    .pf-modal-body { overflow-y:auto; padding:1.25rem; }
+    .pf-modal-cover {
+      width:100%; max-height:420px; object-fit:contain;
+      border-radius:var(--radius-md); background:var(--bg); margin-bottom:1rem;
+    }
+    .pf-modal-pdf {
+      padding:3rem; text-align:center; background:var(--bg);
+      border-radius:var(--radius-md); margin-bottom:1rem; color:var(--text-light);
+    }
+    .pf-modal-meta { display:flex; flex-wrap:wrap; gap:0.75rem 1.25rem; font-size:0.8125rem; color:var(--text-light); margin-bottom:0.75rem; }
+    .pf-modal-meta strong { color:var(--dark); margin-right:0.25rem; }
+    .pf-modal-desc { font-size:0.9rem; color:var(--text); line-height:1.65; white-space:pre-line; }
+    .pf-modal-skills { display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:1rem; }
+    .pf-modal-skills span {
+      font-size:0.75rem; font-weight:600; padding:0.25rem 0.625rem;
+      background:rgba(79,70,229,0.08); color:var(--primary); border-radius:999px;
+    }
+    .pf-modal-links { margin-top:1rem; display:flex; gap:0.75rem; flex-wrap:wrap; }
     .pf-social-link {
       display:inline-flex; align-items:center; justify-content:center;
       width:38px; height:38px; border-radius:50%; background:var(--bg);
@@ -208,6 +273,24 @@
             <div id="pfCerts" style="display:flex; flex-direction:column; gap:0.625rem;"></div>
           </div>
 
+          <!-- Languages -->
+          <div class="sidebar-card" id="pfLanguagesCard">
+            <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Languages</h3>
+            <div id="pfLanguages" style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.875rem;"></div>
+          </div>
+
+          <!-- Tools & Software -->
+          <div class="sidebar-card" id="pfToolsCard">
+            <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Tools &amp; Software</h3>
+            <div id="pfTools" style="display:flex; flex-wrap:wrap; gap:0.375rem;"></div>
+          </div>
+
+          <!-- Work Preferences -->
+          <div class="sidebar-card" id="pfPrefsCard">
+            <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Work Preferences</h3>
+            <div id="pfPrefs" style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.875rem;"></div>
+          </div>
+
           <!-- Socials -->
           <div class="sidebar-card" id="pfSocialsCard">
             <h3 style="font-size:1rem; font-weight:700; color:var(--dark); margin-bottom:1rem;">Social Links</h3>
@@ -239,6 +322,20 @@
       </div>
     </div>
   </section>
+
+  <!-- Portfolio lightbox modal -->
+  <div class="pf-modal-backdrop" id="pfModalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="pf-modal">
+      <div class="pf-modal-head">
+        <div style="flex:1; min-width:0;">
+          <h3 style="font-family:'Poppins',sans-serif; font-size:1.25rem; font-weight:800; color:var(--dark); margin:0;" id="pfModalTitle">Project title</h3>
+          <div class="pf-modal-meta" id="pfModalMeta" style="margin-top:0.5rem; margin-bottom:0;"></div>
+        </div>
+        <button class="pf-modal-close" id="pfModalClose" aria-label="Close"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="pf-modal-body" id="pfModalBody"></div>
+    </div>
+  </div>
 
   <!-- Similar VAs -->
   <section style="padding:3rem 1.5rem; background:#fff;" id="pfSimilarCard">
@@ -368,8 +465,8 @@
     text('pfMemberSince', since || '—');
     text('pfShareUrl', `jobseekers.ph/${v.slug}`);
 
-    // About
-    document.getElementById('pfAbout').textContent = buildAbout(v);
+    // About — tagline overrides the generated bio if the VA set one.
+    document.getElementById('pfAbout').textContent = v.tagline || buildAbout(v);
 
     // Services
     const services = v.services || [];
@@ -401,15 +498,31 @@
       hide('pfExperienceCard');
     }
 
-    // Portfolio
+    // Portfolio — Upwork-style card grid + click-to-open lightbox
     const portfolio = v.portfolio || [];
+    PORTFOLIO_CACHE = portfolio;
     if (portfolio.length) {
-      html('pfPortfolio', portfolio.map(p => `
-        <div class="pf-portfolio-card">
-          <h4>${esc(p.title)}</h4>
-          <div class="pf-pf-body">${p.content || '<em style="color:var(--text-light);">No description provided.</em>'}</div>
-        </div>
-      `).join(''));
+      html('pfPortfolio', portfolio.map((p, i) => {
+        const isImage = p.fileUrl && p.fileMime === 'image/jpeg';
+        const cover = isImage
+          ? `<img src="${esc(p.fileUrl)}" alt="" loading="lazy" />`
+          : `<i class="fas fa-${p.fileUrl ? 'file-pdf' : 'folder-open'} pf-pc-icon"></i>`;
+        const meta = [];
+        if (p.role)         meta.push(`<i class="fas fa-user-tie"></i> ${esc(p.role)}`);
+        if (p.completedOn)  meta.push(`<i class="fas fa-calendar-alt"></i> ${esc(formatMonth(p.completedOn))}`);
+        return `
+          <div class="pf-portfolio-card" data-portfolio-index="${i}" tabindex="0" role="button" aria-label="Open ${esc(p.title)} project">
+            <div class="pf-pc-cover">
+              ${cover}
+              <div class="pf-pc-overlay"><span><i class="fas fa-expand"></i> View project</span></div>
+            </div>
+            <div class="pf-pc-body">
+              <p class="pf-pc-title">${esc(p.title)}</p>
+              ${meta.length ? `<div class="pf-pc-meta">${meta.map(m => `<span>${m}</span>`).join('')}</div>` : ''}
+              ${p.skillsUsed && p.skillsUsed.length ? `<div class="pf-pc-skills">${p.skillsUsed.slice(0, 4).map(s => `<span>${esc(s)}</span>`).join('')}${p.skillsUsed.length > 4 ? `<span>+${p.skillsUsed.length - 4}</span>` : ''}</div>` : ''}
+            </div>
+          </div>`;
+      }).join(''));
     } else {
       hide('pfPortfolioCard');
     }
@@ -462,6 +575,41 @@
       `).join(''));
     } else { hide('pfCertsCard'); }
 
+    // Languages
+    const langs = v.languages || [];
+    if (langs.length) {
+      html('pfLanguages', langs.map(l => `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="color:var(--dark);">${esc(l.name)}</strong>
+          <span style="color:var(--text-light);">${esc(l.level || '')}</span>
+        </div>
+      `).join(''));
+    } else { hide('pfLanguagesCard'); }
+
+    // Tools & Software
+    const tools = v.tools || [];
+    if (tools.length) {
+      html('pfTools', tools.map(t => `<span class="skill-tag">${esc(t)}</span>`).join(''));
+    } else { hide('pfToolsCard'); }
+
+    // Work Preferences
+    const prefs = v.preferences || {};
+    const prefRows = [];
+    const availLabels = { fulltime: 'Full-Time', parttime: 'Part-Time', project: 'Project-Based', any: 'Open to Any' };
+    if (prefs.hourlyRate)   prefRows.push(['Hourly rate',   `$${esc(prefs.hourlyRate)}/hr`]);
+    if (prefs.hoursPerWeek) prefRows.push(['Hours / week',  esc(prefs.hoursPerWeek)]);
+    if (prefs.availability) prefRows.push(['Availability',  esc(availLabels[prefs.availability] || prefs.availability)]);
+    if (prefs.workSchedule) prefRows.push(['Schedule',      esc(prefs.workSchedule)]);
+    if (prefs.responseTime) prefRows.push(['Response time', esc(prefs.responseTime)]);
+    if (prefRows.length) {
+      html('pfPrefs', prefRows.map(([k, val]) => `
+        <div style="display:flex; justify-content:space-between; gap:0.5rem;">
+          <span style="color:var(--text-light);">${k}</span>
+          <strong style="color:var(--dark); text-align:right;">${val}</strong>
+        </div>
+      `).join(''));
+    } else { hide('pfPrefsCard'); }
+
     // Socials
     const socials = v.socials || [];
     if (socials.length) {
@@ -509,6 +657,73 @@
     }
   }
 
+  // ------------------------------------------------------------
+  // Portfolio lightbox modal — populated on card click
+  // ------------------------------------------------------------
+  let PORTFOLIO_CACHE = [];
+  function openPortfolioModal(index) {
+    const p = PORTFOLIO_CACHE[index];
+    if (!p) return;
+    const backdrop = document.getElementById('pfModalBackdrop');
+    text('pfModalTitle', p.title);
+
+    const metaParts = [];
+    if (p.role)        metaParts.push(`<span><strong>Role:</strong> ${esc(p.role)}</span>`);
+    if (p.completedOn) metaParts.push(`<span><strong>Completed:</strong> ${esc(formatMonth(p.completedOn))}</span>`);
+    if (p.category)    metaParts.push(`<span><strong>Category:</strong> ${esc(p.category)}</span>`);
+    html('pfModalMeta', metaParts.join(''));
+
+    const isImage = p.fileUrl && p.fileMime === 'image/jpeg';
+    const isPdf   = p.fileUrl && p.fileMime === 'application/pdf';
+    const cover = isImage
+      ? `<img class="pf-modal-cover" src="${esc(p.fileUrl)}" alt="${esc(p.title)}" />`
+      : (isPdf
+          ? `<div class="pf-modal-pdf"><i class="fas fa-file-pdf" style="font-size:2.5rem; color:var(--primary);"></i><p style="margin-top:0.75rem;">PDF attachment — open below</p></div>`
+          : '');
+
+    const skills = (p.skillsUsed && p.skillsUsed.length)
+      ? `<div class="pf-modal-skills">${p.skillsUsed.map(s => `<span>${esc(s)}</span>`).join('')}</div>`
+      : '';
+
+    const links = [];
+    if (p.linkUrl) links.push(`<a class="btn btn-outline-primary btn-sm" href="${esc(p.linkUrl)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Visit project</a>`);
+    if (p.fileUrl) links.push(`<a class="btn btn-primary btn-sm" href="${esc(p.fileUrl)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-${isPdf ? 'file-pdf' : 'image'}"></i> ${isPdf ? 'Open PDF' : 'Open image'}</a>`);
+
+    // Directory-sourced VAs store HTML in `content`; uploaded ones store plain
+    // text in `description`. Keep both paths working.
+    const desc = p.description
+      ? `<p class="pf-modal-desc">${esc(p.description)}</p>`
+      : (p.content
+          ? `<div class="pf-modal-desc">${p.content}</div>`
+          : '<p class="pf-modal-desc" style="color:var(--text-light);"><em>No description provided.</em></p>');
+
+    document.getElementById('pfModalBody').innerHTML = cover + desc + skills + (links.length ? `<div class="pf-modal-links">${links.join('')}</div>` : '');
+    backdrop.classList.add('open');
+    backdrop.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePortfolioModal() {
+    const backdrop = document.getElementById('pfModalBackdrop');
+    backdrop.classList.remove('open');
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('[data-portfolio-index]');
+    if (card) {
+      openPortfolioModal(Number(card.dataset.portfolioIndex));
+      return;
+    }
+    if (e.target.id === 'pfModalBackdrop' || e.target.closest('#pfModalClose')) closePortfolioModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePortfolioModal();
+    if (e.key === 'Enter') {
+      const focused = document.activeElement && document.activeElement.closest('[data-portfolio-index]');
+      if (focused) openPortfolioModal(Number(focused.dataset.portfolioIndex));
+    }
+  });
+
   function copyProfileUrl() {
     const url = document.getElementById('pfShareUrl').textContent;
     navigator.clipboard.writeText('https://' + url).then(() => {
@@ -526,17 +741,126 @@
     });
   }
 
+  // Build a `v` object from the signed-in user's account data so we can
+  // render the same profile layout without a directory slug. Used when a VA
+  // clicks "View Public Profile" from their dashboard before they've been
+  // indexed. Falls back to an empty-ish shape, section-by-section.
+  async function loadFromAccount() {
+    const [meRes, certsRes, folioRes] = await Promise.all([
+      fetch('/api/me').catch(() => null),
+      fetch('/api/certificates').catch(() => null),
+      fetch('/api/portfolio').catch(() => null),
+    ]);
+    if (!meRes || meRes.status !== 200) return null;
+    const me = (await meRes.json()).user;
+    if (!me || me.role !== 'va') return null;
+
+    const certs = (certsRes && certsRes.status === 200)
+      ? (await certsRes.json()).certificates || []
+      : [];
+    const folio = (folioRes && folioRes.status === 200)
+      ? (await folioRes.json()).samples || []
+      : [];
+
+    const name = `${me.firstName || ''} ${me.lastName || ''}`.trim() || 'Your Name';
+    const pd = me.profileData || {};
+    const pdSkills = Array.isArray(pd.skills) ? pd.skills : [];
+    const skillList = pdSkills.length ? pdSkills : (me.skill ? [me.skill] : []);
+
+    // Map persisted socials object → the {url, icon} shape the renderer expects
+    const SOCIAL_ICONS = {
+      linkedin: 'fab fa-linkedin-in',
+      github: 'fab fa-github',
+      instagram: 'fab fa-instagram',
+      whatsapp: 'fab fa-whatsapp',
+      website: 'fas fa-globe',
+      onlinejobs: 'fas fa-briefcase',
+    };
+    const socials = [];
+    if (pd.socials && typeof pd.socials === 'object') {
+      Object.entries(pd.socials).forEach(([key, url]) => {
+        if (!url) return;
+        let href = String(url);
+        if (key === 'whatsapp' && !/^https?:/i.test(href)) {
+          // Treat as phone number → wa.me link
+          href = 'https://wa.me/' + href.replace(/[^0-9]/g, '');
+        }
+        socials.push({ url: href, icon: SOCIAL_ICONS[key] || 'fas fa-link' });
+      });
+    }
+
+    // Map stored experience entries onto what the renderer expects
+    const experience = Array.isArray(pd.experience) ? pd.experience.map(e => ({
+      role: e.title,
+      company: e.company,
+      startDate: e.startDate,
+      endDate: e.current ? 'Present' : e.endDate,
+      content: e.description,
+    })) : [];
+
+    const education = Array.isArray(pd.education) ? pd.education.map(e => ({
+      degree: [e.degree, e.field].filter(Boolean).join(' · ') || e.degree || '',
+      school: e.school,
+      year:   e.year,
+    })) : [];
+
+    return {
+      slug: 'my-profile',
+      name,
+      firstName: me.firstName || '',
+      title: me.title || me.skill || 'Virtual Assistant',
+      tagline: pd.bio || me.tagline || '',
+      city: me.city || '',
+      state: '',
+      createdAt: me.createdAt || Date.now(),
+      skills: skillList,
+      certs: certs.map(c => c.title),
+      portfolio: folio.map(p => ({
+        title:       p.title,
+        role:        p.role || '',
+        completedOn: p.completedOn || '',
+        category:    p.category || '',
+        skillsUsed:  Array.isArray(p.skillsUsed) ? p.skillsUsed : [],
+        description: p.description || '',
+        linkUrl:     p.linkUrl || '',
+        fileUrl:     p.fileUrl || '',
+        fileMime:    p.fileMime || '',
+      })),
+      services: [],
+      experience,
+      testimonials: [],
+      education,
+      socials,
+      languages: Array.isArray(pd.languages) ? pd.languages : [],
+      tools: Array.isArray(pd.tools) ? pd.tools : [],
+      preferences: pd.preferences || {},
+    };
+  }
+
   async function main() {
     // Prefer clean path (/leimarzona). Fall back to ?slug= for old links.
     let slug = '';
     const pathMatch = location.pathname.match(/^\/([a-z0-9][a-z0-9-]*)\/?$/i);
     if (pathMatch && pathMatch[1] !== 'va-profile') slug = pathMatch[1].toLowerCase();
     if (!slug) slug = new URLSearchParams(location.search).get('slug') || '';
+
     if (!slug) {
+      // No slug — try "preview my own profile" using the signed-in account.
+      const previewVa = await loadFromAccount();
+      if (previewVa) {
+        document.getElementById('pfLoading').style.display = 'none';
+        document.getElementById('pfRoot').style.display = 'block';
+        // Hide "Similar VAs" since we don't have a real slug to compare.
+        const similar = document.getElementById('pfSimilarCard');
+        if (similar) similar.style.display = 'none';
+        render(previewVa);
+        return;
+      }
       document.getElementById('pfLoading').style.display = 'none';
       document.getElementById('pfNotFound').style.display = 'block';
       return;
     }
+
     let data;
     try {
       const res = await fetch(`/api/vas/${encodeURIComponent(slug)}`);

@@ -24,8 +24,8 @@
     <div class="dash-user-card">
       <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" class="dash-user-avatar" id="sidebarAvatar" />
       <div>
-        <div class="dash-user-name">Maria Santos</div>
-        <div class="dash-user-role">Virtual Assistant</div>
+        <div class="dash-user-name" id="sidebarUserName">—</div>
+        <div class="dash-user-role" id="sidebarUserRole">Virtual Assistant</div>
       </div>
       <div class="dash-online-dot"></div>
     </div>
@@ -34,7 +34,7 @@
       <div class="dash-nav-section">Main</div>
       <a href="dashboard-va" class="dash-nav-item"><i class="fas fa-th-large"></i> Overview</a>
       <a href="my-applications" class="dash-nav-item"><i class="fas fa-file-alt"></i> My Applications <span class="dash-nav-badge">3</span></a>
-      <a href="browse-jobs" class="dash-nav-item"><i class="fas fa-search"></i> Browse Jobs</a>
+      <a href="browse-jobs" class="dash-nav-item" target="_blank" rel="noopener"><i class="fas fa-search"></i> Browse Jobs</a>
       <a href="messages" class="dash-nav-item"><i class="fas fa-comments"></i> Messages <span class="dash-nav-badge">5</span></a>
 
       <div class="dash-nav-section">My Account</div>
@@ -71,7 +71,7 @@
         <button class="dash-icon-btn"><i class="fas fa-bell"></i><span class="notif-dot"></span></button>
         <button class="dash-avatar-btn">
           <img src="https://i.pravatar.cc/150?img=47" alt="" id="topbarAvatar" />
-          <span>Maria</span>
+          <span id="topbarUserFirst">—</span>
           <i class="fas fa-chevron-down" style="font-size:0.625rem;color:var(--text-light);"></i>
         </button>
       </div>
@@ -110,8 +110,8 @@
             </div>
             <input type="file" id="avatarInput" accept="image/*" style="display:none;" />
             <div class="photo-strip-info">
-              <div class="photo-strip-name">Maria Santos</div>
-              <div class="photo-strip-title">Executive Virtual Assistant</div>
+              <div class="photo-strip-name" id="photoStripName">—</div>
+              <div class="photo-strip-title" id="photoStripTitle">Virtual Assistant</div>
             </div>
             <div style="margin-left:auto;">
               <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('avatarInput').click()">
@@ -134,64 +134,76 @@
           <div class="form-row-2" style="margin-bottom:1rem;">
             <div class="form-group" style="margin:0;">
               <label class="form-label">First Name <span class="form-required">*</span></label>
-              <input type="text" class="form-control" value="Maria" />
+              <input type="text" class="form-control" id="firstNameInput" />
             </div>
             <div class="form-group" style="margin:0;">
               <label class="form-label">Last Name <span class="form-required">*</span></label>
-              <input type="text" class="form-control" value="Santos" />
+              <input type="text" class="form-control" id="lastNameInput" />
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Professional Title <span class="form-required">*</span></label>
-            <input type="text" class="form-control" value="Executive Virtual Assistant · Administrative Support Expert" placeholder="e.g., Executive Virtual Assistant" />
+            <input type="text" class="form-control" id="titleInput" placeholder="e.g., Executive Virtual Assistant" maxlength="150" />
             <p class="form-hint">Shown directly below your name on your public profile.</p>
           </div>
 
           <div class="form-group">
             <label class="form-label">Tagline</label>
-            <input type="text" class="form-control" value="I help busy executives reclaim 15–20 hrs/week through organized, efficient workflows." placeholder="One-sentence pitch about what you do" maxlength="120" id="taglineInput" />
-            <div class="char-counter"><span id="taglineCount">73</span>/120</div>
+            <input type="text" class="form-control" placeholder="One-sentence pitch about what you do" maxlength="120" id="taglineInput" />
+            <div class="char-counter"><span id="taglineCount">0</span>/120</div>
           </div>
 
           <div class="form-row-2" style="margin-bottom:1rem;">
             <div class="form-group" style="margin:0;">
               <label class="form-label">City / Province <span class="form-required">*</span></label>
               <div class="input-icon-wrap"><i class="fas fa-map-marker-alt"></i>
-                <input type="text" class="form-control" value="Cebu City" placeholder="e.g., Cebu City" />
+                <input type="text" class="form-control" id="cityInput" placeholder="e.g., Cebu City" />
               </div>
             </div>
             <div class="form-group" style="margin:0;">
               <label class="form-label">Timezone</label>
-              <select class="form-control">
-                <option selected>UTC+8 (Philippine Standard Time)</option>
-                <option>UTC+7</option>
-                <option>UTC+9</option>
-                <option>UTC+0</option>
-                <option>UTC-5 (Eastern)</option>
-                <option>UTC-8 (Pacific)</option>
+              <select class="form-control" id="timezoneInput">
+                <option value="UTC+8 (Philippine Standard Time)">UTC+8 (Philippine Standard Time)</option>
+                <option value="UTC+7">UTC+7</option>
+                <option value="UTC+9">UTC+9</option>
+                <option value="UTC+0">UTC+0</option>
+                <option value="UTC-5 (Eastern)">UTC-5 (Eastern)</option>
+                <option value="UTC-8 (Pacific)">UTC-8 (Pacific)</option>
               </select>
+            </div>
+          </div>
+
+          <div class="form-row-2" style="margin-bottom:1rem;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Primary Skill</label>
+              <input type="text" class="form-control" id="skillInput" placeholder="e.g., Admin Support" maxlength="80" />
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Mobile</label>
+              <input type="tel" class="form-control" id="mobileInput" placeholder="+63 917 000 0000" maxlength="40" />
             </div>
           </div>
 
           <div class="form-row-2">
             <div class="form-group" style="margin:0;">
               <label class="form-label">Years of Experience</label>
-              <select class="form-control">
-                <option>Less than 1 year</option>
-                <option>1–2 years</option>
-                <option>3–5 years</option>
-                <option selected>6–10 years</option>
-                <option>10+ years</option>
+              <select class="form-control" id="yearsInput">
+                <option value="">Select…</option>
+                <option value="0">Less than 1 year</option>
+                <option value="1">1–2 years</option>
+                <option value="3">3–5 years</option>
+                <option value="6">6–10 years</option>
+                <option value="10">10+ years</option>
               </select>
             </div>
             <div class="form-group" style="margin:0;">
               <label class="form-label">Response Time</label>
-              <select class="form-control">
-                <option selected>Within 1 hour</option>
-                <option>Within a few hours</option>
-                <option>Within 24 hours</option>
-                <option>A few days</option>
+              <select class="form-control" id="responseTimeInput">
+                <option value="Within 1 hour">Within 1 hour</option>
+                <option value="Within a few hours">Within a few hours</option>
+                <option value="Within 24 hours">Within 24 hours</option>
+                <option value="A few days">A few days</option>
               </select>
             </div>
           </div>
@@ -241,13 +253,8 @@
         <div class="edit-section-body">
           <div class="form-group" style="margin:0;">
             <label class="form-label">Bio <span class="form-required">*</span></label>
-            <textarea class="form-control form-textarea" style="min-height:180px;" maxlength="2000" id="bioInput" placeholder="Describe your background, expertise, and what makes you stand out. Be specific about industries you've worked in and tools you're proficient with."
->I'm a seasoned Executive Virtual Assistant with over 6 years of experience supporting C-suite executives, entrepreneurs, and small business owners across the US, UK, and Australia.
-
-My expertise lies in transforming administrative chaos into organized, efficient workflows. I've helped my clients reclaim 15–20 hours per week by managing their inboxes, coordinating complex schedules, and handling day-to-day operational tasks.
-
-I'm highly tech-savvy, proactive, and take pride in anticipating my clients' needs before they even ask. Let's discuss how I can make your workday smoother and more productive!</textarea>
-            <div class="char-counter"><span id="bioCount">494</span>/2000</div>
+            <textarea class="form-control form-textarea" style="min-height:180px;" maxlength="2000" id="bioInput" placeholder="Describe your background, expertise, and what makes you stand out. Be specific about industries you've worked in and tools you're proficient with."></textarea>
+            <div class="char-counter"><span id="bioCount">0</span>/2000</div>
             <p class="form-hint" style="margin-top:0.25rem;">Tip: Mention specific industries, tools, and measurable results (e.g. "saved 15 hrs/week").</p>
           </div>
         </div>
@@ -266,18 +273,19 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
             <div class="form-group" style="margin:0;">
               <label class="form-label">Hourly Rate (USD) <span class="form-required">*</span></label>
               <div class="input-icon-wrap"><i class="fas fa-dollar-sign"></i>
-                <input type="number" class="form-control" value="8" min="1" max="100" placeholder="e.g. 8" />
+                <input type="number" class="form-control" id="hourlyRateInput" min="1" max="100" placeholder="e.g. 8" />
               </div>
               <p class="form-hint">Your displayed rate. You can negotiate per contract.</p>
             </div>
             <div class="form-group" style="margin:0;">
               <label class="form-label">Hours Available Per Week</label>
-              <select class="form-control">
-                <option>Less than 10 hrs</option>
-                <option>10–20 hrs</option>
-                <option>20–30 hrs</option>
-                <option selected>30–40 hrs (Full-Time)</option>
-                <option>40+ hrs</option>
+              <select class="form-control" id="hoursPerWeekInput">
+                <option value="">Select…</option>
+                <option value="Less than 10 hrs">Less than 10 hrs</option>
+                <option value="10–20 hrs">10–20 hrs</option>
+                <option value="20–30 hrs">20–30 hrs</option>
+                <option value="30–40 hrs (Full-Time)">30–40 hrs (Full-Time)</option>
+                <option value="40+ hrs">40+ hrs</option>
               </select>
             </div>
           </div>
@@ -286,7 +294,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
             <label class="form-label">Availability Type <span class="form-required">*</span></label>
             <div class="form-row-2">
               <label class="type-option" style="display:flex;align-items:center;gap:0.75rem;border:1.5px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;cursor:pointer;">
-                <input type="radio" name="avail" value="fulltime" checked style="accent-color:var(--primary);" />
+                <input type="radio" name="avail" value="fulltime" style="accent-color:var(--primary);" />
                 <div><div style="font-weight:600;font-size:0.875rem;color:var(--dark);">Full-Time</div><div style="font-size:0.75rem;color:var(--text-light);">40 hrs/week</div></div>
               </label>
               <label class="type-option" style="display:flex;align-items:center;gap:0.75rem;border:1.5px solid var(--border);border-radius:var(--radius-md);padding:0.875rem;cursor:pointer;">
@@ -306,13 +314,14 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
 
           <div class="form-group" style="margin:0;">
             <label class="form-label">Work Schedule Preference</label>
-            <select class="form-control">
-              <option>Any schedule (flexible)</option>
-              <option selected>US Business Hours (EST/PST)</option>
-              <option>AU Business Hours</option>
-              <option>UK Business Hours</option>
-              <option>Philippine daytime only</option>
-              <option>Overnight / Graveyard shift</option>
+            <select class="form-control" id="workScheduleInput">
+              <option value="">Select…</option>
+              <option value="Any schedule (flexible)">Any schedule (flexible)</option>
+              <option value="US Business Hours (EST/PST)">US Business Hours (EST/PST)</option>
+              <option value="AU Business Hours">AU Business Hours</option>
+              <option value="UK Business Hours">UK Business Hours</option>
+              <option value="Philippine daytime only">Philippine daytime only</option>
+              <option value="Overnight / Graveyard shift">Overnight / Graveyard shift</option>
             </select>
           </div>
         </div>
@@ -330,17 +339,8 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
         <div class="edit-section-body">
           <div class="form-group" style="margin:0;">
             <label class="form-label">Your Skills <span class="form-required">*</span></label>
-            <div class="tag-input-wrap">
-              <span class="input-tag">Admin Support <button type="button">×</button></span>
-              <span class="input-tag">Calendar Management <button type="button">×</button></span>
-              <span class="input-tag">Email Management <button type="button">×</button></span>
-              <span class="input-tag">CRM (HubSpot) <button type="button">×</button></span>
-              <span class="input-tag">Data Entry <button type="button">×</button></span>
-              <span class="input-tag">Travel Coordination <button type="button">×</button></span>
-              <span class="input-tag">Research <button type="button">×</button></span>
-              <span class="input-tag">Slack <button type="button">×</button></span>
-              <span class="input-tag">Asana <button type="button">×</button></span>
-              <input type="text" placeholder="Type a skill and press Enter…" />
+            <div class="tag-input-wrap" id="skillsTagWrap">
+              <input type="text" placeholder="Type a skill and press Enter…" id="skillsTagInput" />
             </div>
             <p class="form-hint">Press Enter or comma to add. These appear on your public profile and help clients find you.</p>
           </div>
@@ -356,104 +356,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
           </span>
         </div>
         <div class="edit-section-body" id="expContainer">
-
-          <!-- Entry 1 -->
-          <div class="entry-card" data-entry="exp">
-            <div class="entry-card-head">
-              <span class="entry-card-label">Experience #1</span>
-              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
-            </div>
-            <div class="form-row-2" style="margin-bottom:0.75rem;">
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Job Title <span class="form-required">*</span></label>
-                <input type="text" class="form-control" value="Executive Virtual Assistant" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Employment Type</label>
-                <select class="form-control">
-                  <option selected>Full-Time</option>
-                  <option>Part-Time</option>
-                  <option>Contract</option>
-                  <option>Freelance</option>
-                  <option>Project-Based</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row-2" style="margin-bottom:0.75rem;">
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Company / Client <span class="form-required">*</span></label>
-                <input type="text" class="form-control" value="Carter Digital Agency" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Location / Mode</label>
-                <input type="text" class="form-control" value="Remote (US Client)" placeholder="e.g., Remote (US) or Manila" />
-              </div>
-            </div>
-            <div class="form-row-2" style="margin-bottom:0.75rem;">
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Start Date</label>
-                <input type="month" class="form-control" value="2021-03" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">End Date</label>
-                <input type="month" class="form-control" placeholder="Leave blank if current" />
-                <label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:var(--text-light);margin-top:0.375rem;cursor:pointer;">
-                  <input type="checkbox" checked style="accent-color:var(--primary);" /> I currently work here
-                </label>
-              </div>
-            </div>
-            <div class="form-group" style="margin:0;">
-              <label class="form-label">Description</label>
-              <textarea class="form-control form-textarea" style="min-height:90px;" placeholder="Describe your responsibilities and key achievements…">Managed executive calendar, coordinated 50+ client meetings per week, handled inbox zero strategy, and produced weekly reports for C-suite review.</textarea>
-            </div>
-          </div>
-
-          <!-- Entry 2 -->
-          <div class="entry-card" data-entry="exp">
-            <div class="entry-card-head">
-              <span class="entry-card-label">Experience #2</span>
-              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
-            </div>
-            <div class="form-row-2" style="margin-bottom:0.75rem;">
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Job Title <span class="form-required">*</span></label>
-                <input type="text" class="form-control" value="Administrative Assistant" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Employment Type</label>
-                <select class="form-control"><option selected>Full-Time</option><option>Part-Time</option><option>Contract</option><option>Freelance</option></select>
-              </div>
-            </div>
-            <div class="form-row-2" style="margin-bottom:0.75rem;">
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Company / Client <span class="form-required">*</span></label>
-                <input type="text" class="form-control" value="BrightMind Solutions" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Location / Mode</label>
-                <input type="text" class="form-control" value="Remote (AU Client)" />
-              </div>
-            </div>
-            <div class="form-row-2" style="margin-bottom:0.75rem;">
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Start Date</label>
-                <input type="month" class="form-control" value="2018-06" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">End Date</label>
-                <input type="month" class="form-control" value="2021-02" />
-                <label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:var(--text-light);margin-top:0.375rem;cursor:pointer;">
-                  <input type="checkbox" style="accent-color:var(--primary);" /> I currently work here
-                </label>
-              </div>
-            </div>
-            <div class="form-group" style="margin:0;">
-              <label class="form-label">Description</label>
-              <textarea class="form-control form-textarea" style="min-height:90px;">Provided comprehensive administrative support, managed client databases in Salesforce, and handled scheduling for a team of 12.</textarea>
-            </div>
-          </div>
-
-          <button class="add-entry-btn" id="addExpBtn">
+          <button class="add-entry-btn" id="addExpBtn" type="button">
             <i class="fas fa-plus-circle"></i> Add Work Experience
           </button>
         </div>
@@ -468,35 +371,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
           </span>
         </div>
         <div class="edit-section-body" id="eduContainer">
-
-          <div class="entry-card" data-entry="edu">
-            <div class="entry-card-head">
-              <span class="entry-card-label">Education #1</span>
-              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
-            </div>
-            <div class="form-row-2" style="margin-bottom:0.75rem;">
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">School / University <span class="form-required">*</span></label>
-                <input type="text" class="form-control" value="University of San Carlos" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Degree / Course</label>
-                <input type="text" class="form-control" value="BS Business Administration" placeholder="e.g., BS Computer Science" />
-              </div>
-            </div>
-            <div class="form-row-2">
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Field of Study</label>
-                <input type="text" class="form-control" value="Business Management" placeholder="e.g., Marketing" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label">Year Graduated</label>
-                <input type="number" class="form-control" value="2018" placeholder="e.g., 2020" min="1990" max="2030" />
-              </div>
-            </div>
-          </div>
-
-          <button class="add-entry-btn" id="addEduBtn">
+          <button class="add-entry-btn" id="addEduBtn" type="button">
             <i class="fas fa-plus-circle"></i> Add Education
           </button>
         </div>
@@ -512,34 +387,54 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
         </div>
         <div class="edit-section-body" id="certContainer">
 
-          <div class="entry-card" data-entry="cert">
+          <p style="font-size:0.8125rem; color:var(--text-light); margin-bottom:0.75rem;">
+            Certificates you earn in the <a href="academy" style="color:var(--primary); font-weight:600;">VA Academy</a>
+            appear here automatically. You can also upload certificates from other training providers.
+          </p>
+
+          <div id="certList" style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1rem;">
+            <div id="certListPlaceholder" style="font-size:0.85rem; color:var(--text-light); padding:0.5rem 0;">
+              <i class="fas fa-spinner fa-spin"></i> Loading your certificates…
+            </div>
+          </div>
+
+          <form id="certUploadForm" class="entry-card" hidden style="margin-bottom:1rem;">
             <div class="entry-card-head">
-              <span class="entry-card-label">Certification #1</span>
-              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+              <span class="entry-card-label">Add Certificate from Other Training</span>
+              <button type="button" class="entry-remove-btn" id="certCancelBtn"><i class="fas fa-times"></i> Cancel</button>
             </div>
             <div class="form-row-2" style="margin-bottom:0.75rem;">
               <div class="form-group" style="margin:0;">
                 <label class="form-label">Certification Name <span class="form-required">*</span></label>
-                <input type="text" class="form-control" value="HubSpot CRM Certification" />
+                <input name="title" type="text" class="form-control" placeholder="e.g., Google Analytics Certification" required maxlength="150" />
               </div>
               <div class="form-group" style="margin:0;">
                 <label class="form-label">Issuing Organization</label>
-                <input type="text" class="form-control" value="HubSpot Academy" />
+                <input name="issuer" type="text" class="form-control" placeholder="e.g., Google" maxlength="150" />
               </div>
             </div>
-            <div class="form-row-2">
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
               <div class="form-group" style="margin:0;">
                 <label class="form-label">Issue Date</label>
-                <input type="month" class="form-control" value="2022-11" />
+                <input name="issueDate" type="month" class="form-control" />
               </div>
               <div class="form-group" style="margin:0;">
                 <label class="form-label">Credential URL</label>
-                <input type="url" class="form-control" value="" placeholder="https://credential.link/..." />
+                <input name="credentialUrl" type="url" class="form-control" placeholder="https://credential.link/..." />
               </div>
             </div>
-          </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Certificate File</label>
+              <input name="image" type="file" accept=".jpg,.jpeg,.pdf,image/jpeg,application/pdf" class="form-control" style="padding:0.5rem;" />
+              <p class="form-hint">Optional. JPG or PDF only, up to 2&nbsp;MB. Other file types are rejected for security.</p>
+            </div>
+            <div id="certFormError" style="color:#DC2626; font-size:0.85rem; margin-top:0.5rem;" hidden></div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+              <button type="submit" class="btn btn-primary btn-sm" id="certSaveBtn"><i class="fas fa-upload"></i> Save Certificate</button>
+            </div>
+          </form>
 
-          <button class="add-entry-btn" id="addCertBtn">
+          <button class="add-entry-btn" id="addCertBtn" type="button">
             <i class="fas fa-plus-circle"></i> Add Certification
           </button>
         </div>
@@ -554,64 +449,8 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
           </span>
         </div>
         <div class="edit-section-body">
-          <div id="langRows">
-
-            <div class="lang-row" data-lang>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label" style="font-size:0.78rem;">Language</label>
-                <input type="text" class="form-control" value="Filipino (Tagalog)" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label" style="font-size:0.78rem;">Proficiency</label>
-                <select class="form-control">
-                  <option>Basic</option>
-                  <option>Conversational</option>
-                  <option>Professional</option>
-                  <option>Fluent</option>
-                  <option selected>Native</option>
-                </select>
-              </div>
-              <button class="entry-remove-btn" style="align-self:flex-end;margin-bottom:0.125rem;" onclick="removeLang(this)"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div class="lang-row" data-lang>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label" style="font-size:0.78rem;">Language</label>
-                <input type="text" class="form-control" value="English" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label" style="font-size:0.78rem;">Proficiency</label>
-                <select class="form-control">
-                  <option>Basic</option>
-                  <option>Conversational</option>
-                  <option>Professional</option>
-                  <option selected>Fluent</option>
-                  <option>Native</option>
-                </select>
-              </div>
-              <button class="entry-remove-btn" style="align-self:flex-end;margin-bottom:0.125rem;" onclick="removeLang(this)"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div class="lang-row" data-lang>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label" style="font-size:0.78rem;">Language</label>
-                <input type="text" class="form-control" value="Cebuano" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label class="form-label" style="font-size:0.78rem;">Proficiency</label>
-                <select class="form-control">
-                  <option>Basic</option>
-                  <option>Conversational</option>
-                  <option>Professional</option>
-                  <option>Fluent</option>
-                  <option selected>Native</option>
-                </select>
-              </div>
-              <button class="entry-remove-btn" style="align-self:flex-end;margin-bottom:0.125rem;" onclick="removeLang(this)"><i class="fas fa-times"></i></button>
-            </div>
-
-          </div>
-          <button class="add-entry-btn" id="addLangBtn">
+          <div id="langRows"></div>
+          <button class="add-entry-btn" id="addLangBtn" type="button">
             <i class="fas fa-plus-circle"></i> Add Language
           </button>
         </div>
@@ -629,9 +468,9 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
         <div class="edit-section-body">
           <p style="font-size:0.8125rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;font-size:0.72rem;">Communication</p>
           <div class="tools-grid" style="margin-bottom:1.25rem;">
-            <label class="tool-check"><input type="checkbox" checked /> Slack</label>
-            <label class="tool-check"><input type="checkbox" checked /> Zoom</label>
-            <label class="tool-check"><input type="checkbox" checked /> Google Meet</label>
+            <label class="tool-check"><input type="checkbox" /> Slack</label>
+            <label class="tool-check"><input type="checkbox" /> Zoom</label>
+            <label class="tool-check"><input type="checkbox" /> Google Meet</label>
             <label class="tool-check"><input type="checkbox" /> Microsoft Teams</label>
             <label class="tool-check"><input type="checkbox" /> Skype</label>
             <label class="tool-check"><input type="checkbox" /> Discord</label>
@@ -639,8 +478,8 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
 
           <p style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;">Project Management</p>
           <div class="tools-grid" style="margin-bottom:1.25rem;">
-            <label class="tool-check"><input type="checkbox" checked /> Asana</label>
-            <label class="tool-check"><input type="checkbox" checked /> Trello</label>
+            <label class="tool-check"><input type="checkbox" /> Asana</label>
+            <label class="tool-check"><input type="checkbox" /> Trello</label>
             <label class="tool-check"><input type="checkbox" /> Monday.com</label>
             <label class="tool-check"><input type="checkbox" /> ClickUp</label>
             <label class="tool-check"><input type="checkbox" /> Notion</label>
@@ -649,7 +488,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
 
           <p style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;">CRM &amp; Sales</p>
           <div class="tools-grid" style="margin-bottom:1.25rem;">
-            <label class="tool-check"><input type="checkbox" checked /> HubSpot</label>
+            <label class="tool-check"><input type="checkbox" /> HubSpot</label>
             <label class="tool-check"><input type="checkbox" /> Salesforce</label>
             <label class="tool-check"><input type="checkbox" /> Zoho CRM</label>
             <label class="tool-check"><input type="checkbox" /> Pipedrive</label>
@@ -659,8 +498,8 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
 
           <p style="font-size:0.72rem;font-weight:600;color:var(--text-light);margin-bottom:0.625rem;text-transform:uppercase;letter-spacing:0.05em;">Google &amp; Productivity</p>
           <div class="tools-grid" style="margin-bottom:1.25rem;">
-            <label class="tool-check"><input type="checkbox" checked /> Google Workspace</label>
-            <label class="tool-check"><input type="checkbox" checked /> Microsoft Office</label>
+            <label class="tool-check"><input type="checkbox" /> Google Workspace</label>
+            <label class="tool-check"><input type="checkbox" /> Microsoft Office</label>
             <label class="tool-check"><input type="checkbox" /> Dropbox</label>
             <label class="tool-check"><input type="checkbox" /> Airtable</label>
             <label class="tool-check"><input type="checkbox" /> Calendly</label>
@@ -689,20 +528,44 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
         </div>
         <div class="edit-section-body" id="portfolioContainer">
 
-          <div class="portfolio-item" data-entry="portfolio">
+          <p style="font-size:0.8125rem; color:var(--text-light); margin-bottom:0.75rem;">
+            Add work samples so clients can see what you can do. Attach a JPG or PDF
+            (up to 2&nbsp;MB) &mdash; other file types are blocked for security.
+          </p>
+
+          <div id="portfolioList" style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1rem;">
+            <div id="portfolioListPlaceholder" style="font-size:0.85rem; color:var(--text-light); padding:0.5rem 0;">
+              <i class="fas fa-spinner fa-spin"></i> Loading your work samples…
+            </div>
+          </div>
+
+          <form id="portfolioUploadForm" class="entry-card" hidden style="margin-bottom:1rem;">
             <div class="entry-card-head">
-              <span class="entry-card-label">Sample #1</span>
-              <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+              <span class="entry-card-label">Add Project to Portfolio</span>
+              <button type="button" class="entry-remove-btn" id="portfolioCancelBtn"><i class="fas fa-times"></i> Cancel</button>
             </div>
+
             <div class="form-group" style="margin-bottom:0.75rem;">
-              <label class="form-label">Title <span class="form-required">*</span></label>
-              <input type="text" class="form-control" value="Executive Inbox Management SOP" placeholder="e.g., Social Media Content Calendar" />
+              <label class="form-label">Project Title <span class="form-required">*</span></label>
+              <input name="title" type="text" class="form-control" placeholder="e.g., Shopify Store Redesign for CleanEarth" required maxlength="150" />
             </div>
+
+            <div class="form-row-2" style="margin-bottom:0.75rem;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Your Role</label>
+                <input name="role" type="text" class="form-control" placeholder="e.g., Store Manager, Lead Designer" maxlength="120" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Completed</label>
+                <input name="completedOn" type="month" class="form-control" />
+              </div>
+            </div>
+
             <div class="form-row-2" style="margin-bottom:0.75rem;">
               <div class="form-group" style="margin:0;">
                 <label class="form-label">Category</label>
-                <select class="form-control">
-                  <option selected>Admin / Operations</option>
+                <select name="category" class="form-control">
+                  <option>Admin / Operations</option>
                   <option>Social Media</option>
                   <option>Content Writing</option>
                   <option>Design</option>
@@ -712,18 +575,38 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
                 </select>
               </div>
               <div class="form-group" style="margin:0;">
-                <label class="form-label">Link (optional)</label>
-                <input type="url" class="form-control" placeholder="https://drive.google.com/..." />
+                <label class="form-label">Project Link</label>
+                <input name="linkUrl" type="url" class="form-control" placeholder="https://..." />
               </div>
             </div>
-            <div class="form-group" style="margin:0;">
-              <label class="form-label">Description</label>
-              <textarea class="form-control form-textarea" style="min-height:70px;" placeholder="Briefly describe what you did and the result…">Created a comprehensive SOP for managing a C-suite executive's inbox, reducing response time by 60%.</textarea>
-            </div>
-          </div>
 
-          <button class="add-entry-btn" id="addPortfolioBtn">
-            <i class="fas fa-plus-circle"></i> Add Work Sample
+            <div class="form-group" style="margin-bottom:0.75rem;">
+              <label class="form-label">Skills Used</label>
+              <div class="tag-input-wrap" id="portfolioSkillsWrap">
+                <input type="text" placeholder="Shopify, Figma, Klaviyo… press Enter" id="portfolioSkillsInput" />
+              </div>
+              <p class="form-hint">Press Enter or comma to add. Up to 15 tags.</p>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0.75rem;">
+              <label class="form-label">Description</label>
+              <textarea name="description" class="form-control form-textarea" style="min-height:90px;" placeholder="Describe the project, your contribution, and the outcome…" maxlength="2000"></textarea>
+            </div>
+
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Cover Image or PDF</label>
+              <input name="file" type="file" accept=".jpg,.jpeg,.pdf,image/jpeg,application/pdf" class="form-control" style="padding:0.5rem;" />
+              <p class="form-hint">JPG or PDF only, up to 2&nbsp;MB. Shown as the cover on your public profile.</p>
+            </div>
+
+            <div id="portfolioFormError" style="color:#DC2626; font-size:0.85rem; margin-top:0.5rem;" hidden></div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+              <button type="submit" class="btn btn-primary btn-sm" id="portfolioSaveBtn"><i class="fas fa-upload"></i> Save Project</button>
+            </div>
+          </form>
+
+          <button class="add-entry-btn" id="addPortfolioBtn" type="button">
+            <i class="fas fa-plus-circle"></i> Add Project
           </button>
         </div>
       </div>
@@ -817,7 +700,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
             </div>
             <div style="flex:1;">
               <label class="form-label" style="margin-bottom:0.375rem;">LinkedIn</label>
-              <input type="url" class="form-control" value="https://linkedin.com/in/mariasantos-va" placeholder="https://linkedin.com/in/your-profile" />
+              <input type="url" class="form-control" id="socialLinkedin" placeholder="https://linkedin.com/in/your-profile" />
             </div>
           </div>
 
@@ -827,7 +710,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
             </div>
             <div style="flex:1;">
               <label class="form-label" style="margin-bottom:0.375rem;">OnlineJobs.ph Profile</label>
-              <input type="url" class="form-control" value="" placeholder="https://onlinejobs.ph/jobseekers/info/..." />
+              <input type="url" class="form-control" id="socialOnlinejobs" placeholder="https://onlinejobs.ph/jobseekers/info/..." />
             </div>
           </div>
 
@@ -837,7 +720,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
             </div>
             <div style="flex:1;">
               <label class="form-label" style="margin-bottom:0.375rem;">GitHub</label>
-              <input type="url" class="form-control" value="" placeholder="https://github.com/yourusername" />
+              <input type="url" class="form-control" id="socialGithub" placeholder="https://github.com/yourusername" />
             </div>
           </div>
 
@@ -847,7 +730,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
             </div>
             <div style="flex:1;">
               <label class="form-label" style="margin-bottom:0.375rem;">Personal Website / Portfolio</label>
-              <input type="url" class="form-control" value="https://mariasantos.notion.site" placeholder="https://yourwebsite.com" />
+              <input type="url" class="form-control" id="socialWebsite" placeholder="https://yourwebsite.com" />
             </div>
           </div>
 
@@ -857,7 +740,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
             </div>
             <div style="flex:1;">
               <label class="form-label" style="margin-bottom:0.375rem;">WhatsApp Number <span style="font-size:0.75rem;color:var(--text-light);font-weight:400;">(optional, visible to clients)</span></label>
-              <input type="tel" class="form-control" value="" placeholder="+63 9XX XXX XXXX" />
+              <input type="tel" class="form-control" id="socialWhatsapp" placeholder="+63 9XX XXX XXXX" />
             </div>
           </div>
 
@@ -867,7 +750,7 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
             </div>
             <div style="flex:1;">
               <label class="form-label" style="margin-bottom:0.375rem;">Instagram <span style="font-size:0.75rem;color:var(--text-light);font-weight:400;">(optional)</span></label>
-              <input type="url" class="form-control" value="" placeholder="https://instagram.com/yourusername" />
+              <input type="url" class="form-control" id="socialInstagram" placeholder="https://instagram.com/yourusername" />
             </div>
           </div>
 
@@ -996,133 +879,724 @@ I'm highly tech-savvy, proactive, and take pride in anticipating my clients' nee
     });
   }
 
-  /* ── Add Experience ── */
-  let expCount = 2;
-  document.getElementById('addExpBtn').addEventListener('click', () => {
-    expCount++;
+  /* ── Experience / Education / Languages: template builders used by both the
+     Add button and the load-from-API path. Each input gets a data-field so
+     collect-on-save can read them without positional guessing. ── */
+
+  const expContainer = document.getElementById('expContainer');
+  const eduContainer = document.getElementById('eduContainer');
+  const langRows     = document.getElementById('langRows');
+
+  function attrEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g,
+      c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function buildExpCard(data) {
+    const d = data || {};
     const div = document.createElement('div');
     div.className = 'entry-card';
     div.dataset.entry = 'exp';
+    const current = d.current ? 'checked' : '';
     div.innerHTML = `
       <div class="entry-card-head">
-        <span class="entry-card-label">Experience #${expCount}</span>
-        <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+        <span class="entry-card-label">Experience</span>
+        <button class="entry-remove-btn" type="button" data-remove-entry><i class="fas fa-trash-alt"></i> Remove</button>
       </div>
       <div class="form-row-2" style="margin-bottom:0.75rem;">
-        <div class="form-group" style="margin:0;"><label class="form-label">Job Title <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., Virtual Assistant" /></div>
-        <div class="form-group" style="margin:0;"><label class="form-label">Employment Type</label><select class="form-control"><option>Full-Time</option><option>Part-Time</option><option>Contract</option><option>Freelance</option><option>Project-Based</option></select></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Job Title <span class="form-required">*</span></label><input type="text" class="form-control" data-field="title" value="${attrEsc(d.title)}" placeholder="e.g., Virtual Assistant" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Employment Type</label><select class="form-control" data-field="type"><option></option><option>Full-Time</option><option>Part-Time</option><option>Contract</option><option>Freelance</option><option>Project-Based</option></select></div>
       </div>
       <div class="form-row-2" style="margin-bottom:0.75rem;">
-        <div class="form-group" style="margin:0;"><label class="form-label">Company / Client <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., ABC Corp" /></div>
-        <div class="form-group" style="margin:0;"><label class="form-label">Location / Mode</label><input type="text" class="form-control" placeholder="e.g., Remote (US)" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Company / Client <span class="form-required">*</span></label><input type="text" class="form-control" data-field="company" value="${attrEsc(d.company)}" placeholder="e.g., ABC Corp" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Location / Mode</label><input type="text" class="form-control" data-field="location" value="${attrEsc(d.location)}" placeholder="e.g., Remote (US)" /></div>
       </div>
       <div class="form-row-2" style="margin-bottom:0.75rem;">
-        <div class="form-group" style="margin:0;"><label class="form-label">Start Date</label><input type="month" class="form-control" /></div>
-        <div class="form-group" style="margin:0;"><label class="form-label">End Date</label><input type="month" class="form-control" /><label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:var(--text-light);margin-top:0.375rem;cursor:pointer;"><input type="checkbox" style="accent-color:var(--primary);" /> I currently work here</label></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Start Date</label><input type="month" class="form-control" data-field="startDate" value="${attrEsc(d.startDate)}" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">End Date</label><input type="month" class="form-control" data-field="endDate" value="${attrEsc(d.endDate)}" /><label style="display:flex;align-items:center;gap:0.375rem;font-size:0.8125rem;color:var(--text-light);margin-top:0.375rem;cursor:pointer;"><input type="checkbox" data-field="current" ${current} style="accent-color:var(--primary);" /> I currently work here</label></div>
       </div>
-      <div class="form-group" style="margin:0;"><label class="form-label">Description</label><textarea class="form-control form-textarea" style="min-height:90px;" placeholder="Describe your responsibilities and key achievements…"></textarea></div>`;
-    document.getElementById('expContainer').insertBefore(div, document.getElementById('addExpBtn'));
-  });
+      <div class="form-group" style="margin:0;"><label class="form-label">Description</label><textarea class="form-control form-textarea" data-field="description" style="min-height:90px;" placeholder="Describe your responsibilities and key achievements…">${attrEsc(d.description)}</textarea></div>`;
+    const typeSel = div.querySelector('[data-field="type"]');
+    if (d.type) typeSel.value = d.type;
+    return div;
+  }
 
-  /* ── Add Education ── */
-  let eduCount = 1;
-  document.getElementById('addEduBtn').addEventListener('click', () => {
-    eduCount++;
+  function buildEduCard(data) {
+    const d = data || {};
     const div = document.createElement('div');
     div.className = 'entry-card';
     div.dataset.entry = 'edu';
     div.innerHTML = `
       <div class="entry-card-head">
-        <span class="entry-card-label">Education #${eduCount}</span>
-        <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
+        <span class="entry-card-label">Education</span>
+        <button class="entry-remove-btn" type="button" data-remove-entry><i class="fas fa-trash-alt"></i> Remove</button>
       </div>
       <div class="form-row-2" style="margin-bottom:0.75rem;">
-        <div class="form-group" style="margin:0;"><label class="form-label">School / University <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., Ateneo de Manila" /></div>
-        <div class="form-group" style="margin:0;"><label class="form-label">Degree / Course</label><input type="text" class="form-control" placeholder="e.g., BS Computer Science" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">School / University <span class="form-required">*</span></label><input type="text" class="form-control" data-field="school" value="${attrEsc(d.school)}" placeholder="e.g., Ateneo de Manila" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Degree / Course</label><input type="text" class="form-control" data-field="degree" value="${attrEsc(d.degree)}" placeholder="e.g., BS Computer Science" /></div>
       </div>
       <div class="form-row-2">
-        <div class="form-group" style="margin:0;"><label class="form-label">Field of Study</label><input type="text" class="form-control" placeholder="e.g., Marketing" /></div>
-        <div class="form-group" style="margin:0;"><label class="form-label">Year Graduated</label><input type="number" class="form-control" placeholder="e.g., 2020" min="1990" max="2030" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Field of Study</label><input type="text" class="form-control" data-field="field" value="${attrEsc(d.field)}" placeholder="e.g., Marketing" /></div>
+        <div class="form-group" style="margin:0;"><label class="form-label">Year Graduated</label><input type="number" class="form-control" data-field="year" value="${attrEsc(d.year)}" placeholder="e.g., 2020" min="1990" max="2030" /></div>
       </div>`;
-    document.getElementById('eduContainer').insertBefore(div, document.getElementById('addEduBtn'));
-  });
+    return div;
+  }
 
-  /* ── Add Certification ── */
-  let certCount = 1;
-  document.getElementById('addCertBtn').addEventListener('click', () => {
-    certCount++;
-    const div = document.createElement('div');
-    div.className = 'entry-card';
-    div.dataset.entry = 'cert';
-    div.innerHTML = `
-      <div class="entry-card-head">
-        <span class="entry-card-label">Certification #${certCount}</span>
-        <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
-      </div>
-      <div class="form-row-2" style="margin-bottom:0.75rem;">
-        <div class="form-group" style="margin:0;"><label class="form-label">Certification Name <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., Google Analytics Certification" /></div>
-        <div class="form-group" style="margin:0;"><label class="form-label">Issuing Organization</label><input type="text" class="form-control" placeholder="e.g., Google" /></div>
-      </div>
-      <div class="form-row-2">
-        <div class="form-group" style="margin:0;"><label class="form-label">Issue Date</label><input type="month" class="form-control" /></div>
-        <div class="form-group" style="margin:0;"><label class="form-label">Credential URL</label><input type="url" class="form-control" placeholder="https://credential.link/..." /></div>
-      </div>`;
-    document.getElementById('certContainer').insertBefore(div, document.getElementById('addCertBtn'));
-  });
-
-  /* ── Add Portfolio item ── */
-  let portfolioCount = 1;
-  document.getElementById('addPortfolioBtn').addEventListener('click', () => {
-    portfolioCount++;
-    const div = document.createElement('div');
-    div.className = 'portfolio-item';
-    div.dataset.entry = 'portfolio';
-    div.innerHTML = `
-      <div class="entry-card-head">
-        <span class="entry-card-label">Sample #${portfolioCount}</span>
-        <button class="entry-remove-btn" onclick="removeEntry(this)"><i class="fas fa-trash-alt"></i> Remove</button>
-      </div>
-      <div class="form-group" style="margin-bottom:0.75rem;"><label class="form-label">Title <span class="form-required">*</span></label><input type="text" class="form-control" placeholder="e.g., Social Media Content Calendar" /></div>
-      <div class="form-row-2" style="margin-bottom:0.75rem;">
-        <div class="form-group" style="margin:0;"><label class="form-label">Category</label><select class="form-control"><option>Admin / Operations</option><option>Social Media</option><option>Content Writing</option><option>Design</option><option>Data / Research</option><option>eCommerce</option><option>Other</option></select></div>
-        <div class="form-group" style="margin:0;"><label class="form-label">Link (optional)</label><input type="url" class="form-control" placeholder="https://drive.google.com/..." /></div>
-      </div>
-      <div class="form-group" style="margin:0;"><label class="form-label">Description</label><textarea class="form-control form-textarea" style="min-height:70px;" placeholder="Briefly describe what you did and the result…"></textarea></div>`;
-    document.getElementById('portfolioContainer').insertBefore(div, document.getElementById('addPortfolioBtn'));
-  });
-
-  /* ── Add Language ── */
-  document.getElementById('addLangBtn').addEventListener('click', () => {
+  function buildLangRow(data) {
+    const d = data || {};
     const row = document.createElement('div');
     row.className = 'lang-row';
     row.dataset.lang = '';
     row.innerHTML = `
-      <div class="form-group" style="margin:0;">
-        <label class="form-label" style="font-size:0.78rem;">Language</label>
-        <input type="text" class="form-control" placeholder="e.g., Japanese" />
-      </div>
-      <div class="form-group" style="margin:0;">
-        <label class="form-label" style="font-size:0.78rem;">Proficiency</label>
-        <select class="form-control"><option>Basic</option><option>Conversational</option><option selected>Professional</option><option>Fluent</option><option>Native</option></select>
-      </div>
-      <button class="entry-remove-btn" style="align-self:flex-end;margin-bottom:0.125rem;" onclick="removeLang(this)"><i class="fas fa-times"></i></button>`;
-    document.getElementById('langRows').appendChild(row);
-  });
-
-  function removeLang(btn) {
-    const row = btn.closest('[data-lang]');
-    if (row) row.remove();
+      <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:0.78rem;">Language</label><input type="text" class="form-control" data-field="name" value="${attrEsc(d.name)}" placeholder="e.g., English" /></div>
+      <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:0.78rem;">Proficiency</label><select class="form-control" data-field="level"><option>Basic</option><option>Conversational</option><option>Professional</option><option>Fluent</option><option>Native</option></select></div>
+      <button class="entry-remove-btn" type="button" data-remove-lang style="align-self:flex-end;margin-bottom:0.125rem;"><i class="fas fa-times"></i></button>`;
+    if (d.level) row.querySelector('[data-field="level"]').value = d.level;
+    return row;
   }
 
+  // Remove-entry delegation (one listener per container)
+  expContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-entry]');
+    if (btn) btn.closest('.entry-card').remove();
+  });
+  eduContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-entry]');
+    if (btn) btn.closest('.entry-card').remove();
+  });
+  langRows.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-lang]');
+    if (btn) btn.closest('.lang-row').remove();
+  });
+
+  document.getElementById('addExpBtn').addEventListener('click', () => {
+    expContainer.insertBefore(buildExpCard(), document.getElementById('addExpBtn'));
+  });
+  document.getElementById('addEduBtn').addEventListener('click', () => {
+    eduContainer.insertBefore(buildEduCard(), document.getElementById('addEduBtn'));
+  });
+
+  /* ── Certifications: load from /api/certificates, upload external ones ── */
+  const certList        = document.getElementById('certList');
+  const certPlaceholder = document.getElementById('certListPlaceholder');
+  const certForm        = document.getElementById('certUploadForm');
+  const certFormError   = document.getElementById('certFormError');
+  const certSaveBtn     = document.getElementById('certSaveBtn');
+  const addCertBtn      = document.getElementById('addCertBtn');
+  const certCancelBtn   = document.getElementById('certCancelBtn');
+
+  function certEscape(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g,
+      c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderCertCard(c) {
+    const isAcademy = c.source === 'academy';
+    const date = c.issueDate || '';
+    const issuer = c.issuer || '';
+    const credential = c.credentialUrl
+      ? `<a href="${certEscape(c.credentialUrl)}" target="_blank" rel="noopener" style="font-size:0.78rem; color:var(--primary);"><i class="fas fa-external-link-alt"></i> Credential</a>`
+      : '';
+    const image = c.imageUrl
+      ? `<a href="${certEscape(c.imageUrl)}" target="_blank" rel="noopener" style="font-size:0.78rem; color:var(--primary); margin-left:0.75rem;"><i class="fas fa-image"></i> View file</a>`
+      : '';
+    const sourceBadge = isAcademy
+      ? `<span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:0.7rem; font-weight:700; color:#0D9488; background:rgba(20,184,166,0.1); padding:0.15rem 0.5rem; border-radius:999px; text-transform:uppercase; letter-spacing:0.04em;"><i class="fas fa-award"></i> Academy</span>`
+      : `<span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:0.7rem; font-weight:700; color:#D97706; background:rgba(245,158,11,0.1); padding:0.15rem 0.5rem; border-radius:999px; text-transform:uppercase; letter-spacing:0.04em;"><i class="fas fa-upload"></i> Uploaded</span>`;
+    const removeBtn = isAcademy
+      ? `<span style="font-size:0.75rem; color:var(--text-light);" title="Academy certificates cannot be removed"><i class="fas fa-lock"></i> Locked</span>`
+      : `<button class="entry-remove-btn" data-cert-del="${certEscape(c.id)}" type="button"><i class="fas fa-trash-alt"></i> Remove</button>`;
+
+    const card = document.createElement('div');
+    card.className = 'entry-card';
+    card.dataset.certId = c.id;
+    card.innerHTML = `
+      <div class="entry-card-head">
+        <span class="entry-card-label" style="display:flex; align-items:center; gap:0.5rem;">
+          <i class="fas fa-certificate" style="color:#D97706;"></i>
+          ${certEscape(c.title)}
+          ${sourceBadge}
+        </span>
+        ${removeBtn}
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:0.5rem 1rem; font-size:0.8125rem; color:var(--text-light);">
+        ${issuer ? `<span><i class="fas fa-building"></i> ${certEscape(issuer)}</span>` : ''}
+        ${date   ? `<span><i class="fas fa-calendar-alt"></i> ${certEscape(date)}</span>` : ''}
+        ${c.academyScore ? `<span><i class="fas fa-check-circle" style="color:var(--success);"></i> Score ${certEscape(c.academyScore)}</span>` : ''}
+      </div>
+      ${(credential || image) ? `<div style="margin-top:0.5rem;">${credential}${image}</div>` : ''}
+    `;
+    return card;
+  }
+
+  async function loadCertificates() {
+    try {
+      const res = await fetch('/api/certificates');
+      if (res.status === 401) {
+        certPlaceholder.innerHTML = '<i class="fas fa-info-circle"></i> Sign in to see and manage your certificates.';
+        return;
+      }
+      const data = await res.json();
+      if (!data.ok) {
+        certPlaceholder.textContent = data.error || 'Could not load certificates.';
+        return;
+      }
+      certList.innerHTML = '';
+      if (!data.certificates.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'font-size:0.85rem; color:var(--text-light); padding:0.5rem 0;';
+        empty.innerHTML = '<i class="fas fa-circle-info"></i> No certificates yet. Pass a <a href="academy" style="color:var(--primary); font-weight:600;">VA Academy</a> assessment or upload one below.';
+        certList.appendChild(empty);
+        return;
+      }
+      data.certificates.forEach(c => certList.appendChild(renderCertCard(c)));
+    } catch (e) {
+      certPlaceholder.textContent = 'Could not load certificates.';
+    }
+  }
+
+  certList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-cert-del]');
+    if (!btn) return;
+    if (!confirm('Remove this certificate? This cannot be undone.')) return;
+    const id = btn.getAttribute('data-cert-del');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/certificates/' + encodeURIComponent(id), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok) loadCertificates();
+      else alert(data.error || 'Could not remove certificate.');
+    } catch (err) {
+      alert('Network error. Try again.');
+    }
+  });
+
+  addCertBtn.addEventListener('click', () => {
+    certForm.hidden = false;
+    certForm.reset();
+    certFormError.hidden = true;
+    addCertBtn.hidden = true;
+    certForm.querySelector('[name="title"]').focus();
+  });
+
+  certCancelBtn.addEventListener('click', () => {
+    certForm.hidden = true;
+    addCertBtn.hidden = false;
+    certFormError.hidden = true;
+  });
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || '');
+        const comma = result.indexOf(',');
+        resolve(comma >= 0 ? result.slice(comma + 1) : result);
+      };
+      reader.onerror = () => reject(new Error('Could not read file.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  certForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    certFormError.hidden = true;
+    certSaveBtn.disabled = true;
+    certSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+    try {
+      const fd = new FormData(certForm);
+      const body = {
+        title: String(fd.get('title') || '').trim(),
+        issuer: String(fd.get('issuer') || '').trim(),
+        issueDate: String(fd.get('issueDate') || '').trim(),
+        credentialUrl: String(fd.get('credentialUrl') || '').trim(),
+      };
+      const file = fd.get('image');
+      if (file && file.size > 0) {
+        if (file.size > 2 * 1024 * 1024) throw new Error('File is larger than 2 MB.');
+        if (!['image/jpeg', 'application/pdf'].includes(file.type)) {
+          throw new Error('Only JPG or PDF files are allowed.');
+        }
+        body.imageMime = file.type;
+        body.imageBase64 = await readFileAsBase64(file);
+      }
+      const res = await fetch('/api/certificates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!data.ok) {
+        const firstError = data.errors ? Object.values(data.errors)[0] : null;
+        throw new Error(firstError || data.error || 'Could not save certificate.');
+      }
+      certForm.hidden = true;
+      addCertBtn.hidden = false;
+      certForm.reset();
+      loadCertificates();
+    } catch (err) {
+      certFormError.textContent = err.message || 'Could not save certificate.';
+      certFormError.hidden = false;
+    } finally {
+      certSaveBtn.disabled = false;
+      certSaveBtn.innerHTML = '<i class="fas fa-upload"></i> Save Certificate';
+    }
+  });
+
+  loadCertificates();
+
+  /* ── Portfolio: load, upload, delete via /api/portfolio ── */
+  const portfolioList        = document.getElementById('portfolioList');
+  const portfolioPlaceholder = document.getElementById('portfolioListPlaceholder');
+  const portfolioForm        = document.getElementById('portfolioUploadForm');
+  const portfolioFormError   = document.getElementById('portfolioFormError');
+  const portfolioSaveBtn     = document.getElementById('portfolioSaveBtn');
+  const addPortfolioBtn      = document.getElementById('addPortfolioBtn');
+  const portfolioCancelBtn   = document.getElementById('portfolioCancelBtn');
+
+  function renderPortfolioCard(s) {
+    const isImage = s.hasFile && s.fileMime === 'image/jpeg';
+    const thumb = isImage
+      ? `<img src="${certEscape(s.fileUrl)}" alt="" style="width:88px; height:88px; object-fit:cover; border-radius:var(--radius-md); flex-shrink:0; background:var(--bg);" />`
+      : `<div style="width:88px; height:88px; display:flex; align-items:center; justify-content:center; border-radius:var(--radius-md); background:var(--bg); color:var(--text-light); font-size:1.75rem; flex-shrink:0;"><i class="fas fa-${s.hasFile ? 'file-pdf' : 'folder-open'}"></i></div>`;
+
+    const meta = [];
+    if (s.role)         meta.push(`<i class="fas fa-user-tie"></i> ${certEscape(s.role)}`);
+    if (s.completedOn)  meta.push(`<i class="fas fa-calendar-alt"></i> ${certEscape(s.completedOn)}`);
+    if (s.category)     meta.push(`<i class="fas fa-tag"></i> ${certEscape(s.category)}`);
+
+    const skillsRow = (s.skillsUsed && s.skillsUsed.length)
+      ? `<div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.5rem;">${
+          s.skillsUsed.map(sk => `<span style="font-size:0.7rem; font-weight:600; padding:0.15rem 0.5rem; background:rgba(79,70,229,0.08); color:var(--primary); border-radius:999px;">${certEscape(sk)}</span>`).join('')
+        }</div>`
+      : '';
+
+    const links = [];
+    if (s.linkUrl) links.push(`<a href="${certEscape(s.linkUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:0.78rem; color:var(--primary);"><i class="fas fa-external-link-alt"></i> Project link</a>`);
+    if (s.fileUrl) links.push(`<a href="${certEscape(s.fileUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:0.78rem; color:var(--primary);"><i class="fas fa-file-${s.fileMime === 'application/pdf' ? 'pdf' : 'image'}"></i> ${isImage ? 'Open image' : 'Open PDF'}</a>`);
+
+    const card = document.createElement('div');
+    card.className = 'entry-card';
+    card.dataset.sampleId = s.id;
+    card.innerHTML = `
+      <div style="display:flex; gap:1rem; align-items:flex-start;">
+        ${thumb}
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.25rem;">
+            <strong style="font-size:0.95rem; color:var(--dark);">${certEscape(s.title)}</strong>
+            <button class="entry-remove-btn" data-sample-del="${certEscape(s.id)}" type="button" style="flex-shrink:0;"><i class="fas fa-trash-alt"></i></button>
+          </div>
+          ${meta.length ? `<div style="display:flex; flex-wrap:wrap; gap:0.75rem; font-size:0.78rem; color:var(--text-light); margin-bottom:0.5rem;">${meta.map(m => `<span>${m}</span>`).join('')}</div>` : ''}
+          ${s.description ? `<p style="font-size:0.85rem; color:var(--text); margin:0 0 0.25rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${certEscape(s.description)}</p>` : ''}
+          ${skillsRow}
+          ${links.length ? `<div style="display:flex; gap:0.75rem; margin-top:0.5rem;">${links.join('')}</div>` : ''}
+        </div>
+      </div>
+    `;
+    return card;
+  }
+
+  async function loadPortfolio() {
+    try {
+      const res = await fetch('/api/portfolio');
+      if (res.status === 401) {
+        portfolioPlaceholder.innerHTML = '<i class="fas fa-info-circle"></i> Sign in to see and manage your work samples.';
+        return;
+      }
+      const data = await res.json();
+      if (!data.ok) {
+        portfolioPlaceholder.textContent = data.error || 'Could not load work samples.';
+        return;
+      }
+      portfolioList.innerHTML = '';
+      if (!data.samples.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'font-size:0.85rem; color:var(--text-light); padding:0.5rem 0;';
+        empty.innerHTML = '<i class="fas fa-circle-info"></i> No work samples yet. Upload your first one below.';
+        portfolioList.appendChild(empty);
+        return;
+      }
+      data.samples.forEach(s => portfolioList.appendChild(renderPortfolioCard(s)));
+    } catch (e) {
+      portfolioPlaceholder.textContent = 'Could not load work samples.';
+    }
+  }
+
+  portfolioList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-sample-del]');
+    if (!btn) return;
+    if (!confirm('Remove this work sample? This cannot be undone.')) return;
+    const id = btn.getAttribute('data-sample-del');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/portfolio/' + encodeURIComponent(id), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok) loadPortfolio();
+      else alert(data.error || 'Could not remove work sample.');
+    } catch (err) {
+      alert('Network error. Try again.');
+    }
+  });
+
+  /* Skills-used tag input inside the portfolio form — scoped to this form */
+  const portfolioSkillsWrap  = document.getElementById('portfolioSkillsWrap');
+  const portfolioSkillsInput = document.getElementById('portfolioSkillsInput');
+  let portfolioSkillsArray = [];
+  function renderPortfolioSkillsTags() {
+    Array.from(portfolioSkillsWrap.querySelectorAll('.input-tag')).forEach(el => el.remove());
+    portfolioSkillsArray.forEach((s, idx) => {
+      const chip = document.createElement('span');
+      chip.className = 'input-tag';
+      chip.textContent = s + ' ';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = '×';
+      btn.addEventListener('click', () => { portfolioSkillsArray.splice(idx, 1); renderPortfolioSkillsTags(); });
+      chip.appendChild(btn);
+      portfolioSkillsWrap.insertBefore(chip, portfolioSkillsInput);
+    });
+  }
+  function addPortfolioSkillFromInput() {
+    const raw = portfolioSkillsInput.value.trim();
+    if (!raw) return;
+    raw.split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
+      if (portfolioSkillsArray.length >= 15) return;
+      if (!portfolioSkillsArray.includes(s)) portfolioSkillsArray.push(s.slice(0, 60));
+    });
+    portfolioSkillsInput.value = '';
+    renderPortfolioSkillsTags();
+  }
+  portfolioSkillsInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addPortfolioSkillFromInput(); }
+    else if (e.key === 'Backspace' && !portfolioSkillsInput.value && portfolioSkillsArray.length) {
+      portfolioSkillsArray.pop(); renderPortfolioSkillsTags();
+    }
+  });
+  portfolioSkillsInput.addEventListener('blur', addPortfolioSkillFromInput);
+
+  addPortfolioBtn.addEventListener('click', () => {
+    portfolioForm.hidden = false;
+    portfolioForm.reset();
+    portfolioSkillsArray = [];
+    renderPortfolioSkillsTags();
+    portfolioFormError.hidden = true;
+    addPortfolioBtn.hidden = true;
+    portfolioForm.querySelector('[name="title"]').focus();
+  });
+
+  portfolioCancelBtn.addEventListener('click', () => {
+    portfolioForm.hidden = true;
+    addPortfolioBtn.hidden = false;
+    portfolioFormError.hidden = true;
+  });
+
+  portfolioForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    portfolioFormError.hidden = true;
+    portfolioSaveBtn.disabled = true;
+    portfolioSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+    try {
+      addPortfolioSkillFromInput();
+      const fd = new FormData(portfolioForm);
+      const body = {
+        title: String(fd.get('title') || '').trim(),
+        category: String(fd.get('category') || '').trim(),
+        description: String(fd.get('description') || '').trim(),
+        linkUrl: String(fd.get('linkUrl') || '').trim(),
+        role: String(fd.get('role') || '').trim(),
+        completedOn: String(fd.get('completedOn') || '').trim(),
+        skillsUsed: portfolioSkillsArray.slice(),
+      };
+      const file = fd.get('file');
+      if (file && file.size > 0) {
+        if (file.size > 2 * 1024 * 1024) throw new Error('File is larger than 2 MB.');
+        if (!['image/jpeg', 'application/pdf'].includes(file.type)) {
+          throw new Error('Only JPG or PDF files are allowed.');
+        }
+        body.fileMime = file.type;
+        body.fileBase64 = await readFileAsBase64(file);
+      }
+      const res = await fetch('/api/portfolio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!data.ok) {
+        const firstError = data.errors ? Object.values(data.errors)[0] : null;
+        throw new Error(firstError || data.error || 'Could not save project.');
+      }
+      portfolioForm.hidden = true;
+      addPortfolioBtn.hidden = false;
+      portfolioForm.reset();
+      portfolioSkillsArray = [];
+      renderPortfolioSkillsTags();
+      loadPortfolio();
+    } catch (err) {
+      portfolioFormError.textContent = err.message || 'Could not save project.';
+      portfolioFormError.hidden = false;
+    } finally {
+      portfolioSaveBtn.disabled = false;
+      portfolioSaveBtn.innerHTML = '<i class="fas fa-upload"></i> Save Project';
+    }
+  });
+
+  loadPortfolio();
+
+  document.getElementById('addLangBtn').addEventListener('click', () => {
+    langRows.appendChild(buildLangRow());
+  });
+
   /* ── Save toast ── */
-  function showSaveToast() {
+  function showSaveToast(message) {
     const toast = document.getElementById('saveToast');
+    if (message) toast.textContent = message;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  document.getElementById('saveBtn').addEventListener('click', showSaveToast);
-  document.getElementById('saveBtnBottom').addEventListener('click', showSaveToast);
+  /* ── Load signed-in account into the form + persist edits to /api/me ── */
+  const firstNameInput = document.getElementById('firstNameInput');
+  const lastNameInput  = document.getElementById('lastNameInput');
+  const titleInput     = document.getElementById('titleInput');
+  const taglineInput   = document.getElementById('taglineInput');
+  const cityInput      = document.getElementById('cityInput');
+  const skillInput     = document.getElementById('skillInput');
+  const mobileInput    = document.getElementById('mobileInput');
+  const yearsInput     = document.getElementById('yearsInput');
+  const bioInput       = document.getElementById('bioInput');
+  const bioCount       = document.getElementById('bioCount');
+  const skillsTagWrap  = document.getElementById('skillsTagWrap');
+  const skillsTagInput = document.getElementById('skillsTagInput');
+  const socialInputs   = {
+    linkedin:   document.getElementById('socialLinkedin'),
+    onlinejobs: document.getElementById('socialOnlinejobs'),
+    github:     document.getElementById('socialGithub'),
+    website:    document.getElementById('socialWebsite'),
+    whatsapp:   document.getElementById('socialWhatsapp'),
+    instagram:  document.getElementById('socialInstagram'),
+  };
+  const sidebarUserName = document.getElementById('sidebarUserName');
+  const sidebarUserRole = document.getElementById('sidebarUserRole');
+  const photoStripName  = document.getElementById('photoStripName');
+  const photoStripTitle = document.getElementById('photoStripTitle');
+  const topbarUserFirst = document.getElementById('topbarUserFirst');
+  const taglineCount    = document.getElementById('taglineCount');
+
+  /* Skills tag input — dynamic add/remove backed by a JS array */
+  let skillsArray = [];
+  function renderSkillsTags() {
+    // Remove existing tag chips (preserve the input)
+    Array.from(skillsTagWrap.querySelectorAll('.input-tag')).forEach(el => el.remove());
+    skillsArray.forEach((s, idx) => {
+      const chip = document.createElement('span');
+      chip.className = 'input-tag';
+      chip.textContent = s + ' ';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = '×';
+      btn.addEventListener('click', () => {
+        skillsArray.splice(idx, 1);
+        renderSkillsTags();
+      });
+      chip.appendChild(btn);
+      skillsTagWrap.insertBefore(chip, skillsTagInput);
+    });
+  }
+  function addSkillFromInput() {
+    const raw = skillsTagInput.value.trim();
+    if (!raw) return;
+    raw.split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
+      if (skillsArray.length >= 20) return;
+      if (!skillsArray.includes(s)) skillsArray.push(s.slice(0, 60));
+    });
+    skillsTagInput.value = '';
+    renderSkillsTags();
+  }
+  skillsTagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addSkillFromInput();
+    } else if (e.key === 'Backspace' && !skillsTagInput.value && skillsArray.length) {
+      skillsArray.pop();
+      renderSkillsTags();
+    }
+  });
+  skillsTagInput.addEventListener('blur', addSkillFromInput);
+
+  bioInput.addEventListener('input', () => {
+    bioCount.textContent = String(bioInput.value.length);
+  });
+
+  function refreshStripFromInputs() {
+    const full = `${firstNameInput.value || ''} ${lastNameInput.value || ''}`.trim() || '—';
+    const title = (titleInput.value || skillInput.value || 'Virtual Assistant').trim();
+    sidebarUserName.textContent = full;
+    photoStripName.textContent  = full;
+    photoStripTitle.textContent = title;
+    sidebarUserRole.textContent = title;
+    topbarUserFirst.textContent = (firstNameInput.value || '—').trim();
+  }
+  [firstNameInput, lastNameInput, titleInput, skillInput].forEach(el => {
+    el.addEventListener('input', refreshStripFromInputs);
+  });
+  taglineInput.addEventListener('input', () => {
+    taglineCount.textContent = String(taglineInput.value.length);
+  });
+
+  async function loadAccountIntoForm() {
+    try {
+      const res = await fetch('/api/me');
+      if (res.status !== 200) {
+        showSaveToast('Sign in to edit your profile.');
+        return;
+      }
+      const { user } = await res.json();
+      if (!user) return;
+      firstNameInput.value = user.firstName || '';
+      lastNameInput.value  = user.lastName  || '';
+      titleInput.value     = user.title     || user.skill || '';
+      taglineInput.value   = user.tagline   || '';
+      cityInput.value      = user.city      || '';
+      skillInput.value     = user.skill     || '';
+      mobileInput.value    = user.mobile    || '';
+      if (user.years != null) {
+        const opt = Array.from(yearsInput.options).find(o => o.value === String(user.years));
+        if (opt) yearsInput.value = String(user.years);
+      }
+      const pd = user.profileData || {};
+      bioInput.value = pd.bio || '';
+      skillsArray = Array.isArray(pd.skills) ? pd.skills.slice(0, 20) : [];
+      renderSkillsTags();
+      const socials = (pd.socials && typeof pd.socials === 'object') ? pd.socials : {};
+      Object.entries(socialInputs).forEach(([key, el]) => {
+        if (el) el.value = socials[key] || '';
+      });
+
+      // Experience / Education / Languages — rebuild the list from stored data
+      Array.from(expContainer.querySelectorAll('.entry-card')).forEach(el => el.remove());
+      (pd.experience || []).forEach(e => {
+        expContainer.insertBefore(buildExpCard(e), document.getElementById('addExpBtn'));
+      });
+      Array.from(eduContainer.querySelectorAll('.entry-card')).forEach(el => el.remove());
+      (pd.education || []).forEach(e => {
+        eduContainer.insertBefore(buildEduCard(e), document.getElementById('addEduBtn'));
+      });
+      langRows.innerHTML = '';
+      (pd.languages || []).forEach(l => langRows.appendChild(buildLangRow(l)));
+
+      // Tools — tick the matching checkboxes
+      const toolsSet = new Set((pd.tools || []).map(t => String(t).toLowerCase()));
+      document.querySelectorAll('.tool-check').forEach(label => {
+        const cb = label.querySelector('input[type="checkbox"]');
+        const name = label.textContent.trim().toLowerCase();
+        if (cb) cb.checked = toolsSet.has(name);
+      });
+
+      // Work preferences + Basic Info extras
+      const prefs = pd.preferences || {};
+      const hourlyRate   = document.getElementById('hourlyRateInput');
+      const hoursPerWeek = document.getElementById('hoursPerWeekInput');
+      const workSchedule = document.getElementById('workScheduleInput');
+      const timezone     = document.getElementById('timezoneInput');
+      const responseTime = document.getElementById('responseTimeInput');
+      if (hourlyRate)   hourlyRate.value   = prefs.hourlyRate   || '';
+      if (hoursPerWeek) hoursPerWeek.value = prefs.hoursPerWeek || '';
+      if (workSchedule) workSchedule.value = prefs.workSchedule || '';
+      if (timezone && prefs.timezone) timezone.value = prefs.timezone;
+      if (responseTime && prefs.responseTime) responseTime.value = prefs.responseTime;
+      const availRadio = document.querySelector(`input[name="avail"][value="${prefs.availability || ''}"]`);
+      if (availRadio) availRadio.checked = true;
+      else document.querySelectorAll('input[name="avail"]').forEach(r => r.checked = false);
+
+      taglineCount.textContent = String(taglineInput.value.length);
+      bioCount.textContent     = String(bioInput.value.length);
+      refreshStripFromInputs();
+    } catch (e) { /* ignore — leave empty */ }
+  }
+
+  async function saveAccount(button) {
+    const originalLabel = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+    try {
+      addSkillFromInput(); // capture any pending text the user hasn't pressed Enter on
+      const socials = {};
+      Object.entries(socialInputs).forEach(([key, el]) => {
+        if (el && el.value.trim()) socials[key] = el.value.trim();
+      });
+
+      // Collect multi-entry sections via data-field attrs
+      function collect(card) {
+        const out = {};
+        card.querySelectorAll('[data-field]').forEach(el => {
+          const k = el.getAttribute('data-field');
+          out[k] = el.type === 'checkbox' ? el.checked : el.value;
+        });
+        return out;
+      }
+      const experience = Array.from(expContainer.querySelectorAll('.entry-card[data-entry="exp"]')).map(collect);
+      const education  = Array.from(eduContainer.querySelectorAll('.entry-card[data-entry="edu"]')).map(collect);
+      const languages  = Array.from(langRows.querySelectorAll('.lang-row')).map(collect);
+      const tools = Array.from(document.querySelectorAll('.tool-check'))
+        .filter(label => label.querySelector('input[type="checkbox"]:checked'))
+        .map(label => label.textContent.trim());
+
+      const availRadio = document.querySelector('input[name="avail"]:checked');
+      const preferences = {
+        hourlyRate:   (document.getElementById('hourlyRateInput')   || {}).value || '',
+        hoursPerWeek: (document.getElementById('hoursPerWeekInput') || {}).value || '',
+        availability: availRadio ? availRadio.value : '',
+        workSchedule: (document.getElementById('workScheduleInput') || {}).value || '',
+        timezone:     (document.getElementById('timezoneInput')     || {}).value || '',
+        responseTime: (document.getElementById('responseTimeInput') || {}).value || '',
+      };
+
+      const body = {
+        firstName: firstNameInput.value,
+        lastName:  lastNameInput.value,
+        title:     titleInput.value,
+        tagline:   taglineInput.value,
+        city:      cityInput.value,
+        skill:     skillInput.value,
+        mobile:    mobileInput.value,
+        years:     yearsInput.value,
+        profileData: {
+          bio: bioInput.value,
+          skills: skillsArray,
+          socials,
+          experience,
+          education,
+          languages,
+          tools,
+          preferences,
+        },
+      };
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!data.ok) {
+        const firstError = data.errors ? Object.values(data.errors)[0] : null;
+        showSaveToast(firstError || data.error || 'Could not save.');
+        return;
+      }
+      refreshStripFromInputs();
+      showSaveToast('Saved — refresh preview to see changes.');
+    } catch (e) {
+      showSaveToast('Network error.');
+    } finally {
+      button.disabled = false;
+      button.innerHTML = originalLabel;
+    }
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', (e) => saveAccount(e.currentTarget));
+  document.getElementById('saveBtnBottom').addEventListener('click', (e) => saveAccount(e.currentTarget));
+
+  loadAccountIntoForm();
 
   /* ── Profile URL live validation ── */
   const urlInput  = document.getElementById('profileUrlInput');
