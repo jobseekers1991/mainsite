@@ -18,9 +18,6 @@
 
   <div class="dash-main">
     <header class="dash-topbar" id="dashTopbar"></header>
-<script>if (new URLSearchParams(location.search).get('as') === 'client') { const s = document.getElementById('dashSidebar'); s.dataset.role = 'client'; }</script>
-<script src="js/va-data.js"></script>
-<script src="js/app-data.js"></script>
 <script src="js/dash.js"></script>
 
     <main class="dash-content">
@@ -62,16 +59,19 @@
 
 <script src="js/main.js"></script>
 <script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  const OFF_PLATFORM_RE = /\b(telegram|whatsapp|viber|signal|wechat|gcash me|pay (you )?outside|outside (the )?(platform|jobseekers)|paypal me|send (me )?(your )?(otp|password|bank))\b/i;
+  const DAY_MS = 86400000;
   const params = new URLSearchParams(location.search);
-  const role = params.get('as') === 'client' ? 'client' : 'va';
-  const KEY = 'jsph-threads-' + role;
-  let threads = Store.get(KEY, () => seedThreads(role));
-  let activeId = null;
   const $ = id => document.getElementById(id);
 
-  const QUICK = role === 'client'
-    ? ['Could you do a 3-day paid trial?', 'Can we schedule a quick video call?', 'Please send today\'s EOD report.']
-    : ['Thank you! I\'m available for a call.', 'I\'ve sent my EOD report.', 'Could you share the trial scope?'];
+  let me = null;
+  let threads = [];
+  let activeThread = null;
+  let activeMessages = [];
+  let lastMessageAt = 0;
+  let pollTimer = null;
+  let composing = false;
 
   const timeLabel = t => {
     const diff = Date.now() - t;
@@ -81,85 +81,158 @@
     return new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
   const clock = t => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-  const save = () => { Store.set(KEY, threads); renderDashNav(); };
 
-  // Start a conversation from a profile or applicant card: messages?to=maria-santos
-  const to = params.get('to');
-  if (to && !threads.find(t => t.id === to)) {
-    if (role === 'client') {
-      const va = vaById(to);
-      threads.unshift({ id: to, name: va.name, img: va.img, sub: va.title || 'Virtual Assistant', unread: 0, messages: [] });
-    } else {
-      // VAs message clients by slug of the client's name (from My Applications)
-      const job = JOBS.find(j => j.client.name.toLowerCase().replace(/[^a-z]+/g, '-') === to);
-      if (job) threads.unshift({ id: to, name: job.client.name, img: 12, sub: `${job.company} · ${job.title}`, unread: 0, messages: [] });
+  async function init() {
+    try {
+      const meRes = await fetch('/api/me');
+      if (meRes.status !== 200) { location.href = 'auth?next=messages'; return; }
+      me = (await meRes.json()).user;
+      // Keep the sidebar in the right role.
+      const sb = document.getElementById('dashSidebar');
+      if (sb && me && me.role) sb.dataset.role = me.role;
+    } catch (err) { location.href = 'auth?next=messages'; return; }
+
+    await loadThreads();
+
+    $('threadList').addEventListener('click', e => {
+      const btn = e.target.closest('.inbox-thread');
+      if (btn) openThread(btn.dataset.id);
+    });
+    $('threadSearch').addEventListener('input', renderThreadList);
+    $('composeText').addEventListener('input', checkCompose);
+    $('composeText').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('composeForm').requestSubmit(); }
+    });
+    $('composeForm').addEventListener('submit', sendMessage);
+
+    const threadParam = params.get('thread');
+    const toParam     = params.get('to');
+    if (threadParam && threads.find(t => t.id === threadParam)) {
+      openThread(threadParam);
+    } else if (toParam) {
+      // Open (or create) a thread with that user and switch to it.
+      try {
+        const res = await fetch('/api/threads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ otherId: toParam }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          await loadThreads();
+          openThread(data.id);
+        }
+      } catch (err) { /* noop */ }
+    } else if (window.innerWidth > 900 && threads.length) {
+      openThread((threads.find(t => t.unreadCount > 0) || threads[0]).id);
     }
-    save();
+
+    // Soft poll for new threads / updated previews every 15s while the page is open.
+    setInterval(loadThreads, 15000);
   }
 
-  function renderList() {
+  async function loadThreads() {
+    try {
+      const res = await fetch('/api/threads');
+      const data = await res.json();
+      if (data.ok) threads = data.threads || [];
+    } catch (err) { /* keep stale list */ }
+    renderThreadList();
+    // Refresh the compose button badge on the dashboard nav if present.
+    if (typeof renderDashNav === 'function') renderDashNav();
+  }
+
+  function renderThreadList() {
     const q = $('threadSearch').value.trim().toLowerCase();
-    const sorted = threads.slice().sort((a, b) => (b.messages.at(-1)?.t || Date.now()) - (a.messages.at(-1)?.t || Date.now()));
-    $('threadList').innerHTML = sorted.filter(t => !q || t.name.toLowerCase().includes(q) || t.messages.some(m => m.text.toLowerCase().includes(q))).map(t => {
-      const last = t.messages.at(-1);
+    const list = threads.slice().filter(t => {
+      if (!q) return true;
+      const hay = ((t.otherFirstName || '') + ' ' + (t.otherLastName || '') + ' ' + (t.otherCompany || '') + ' ' + (t.jobTitle || '') + ' ' + (t.lastMessage ? t.lastMessage.body : '')).toLowerCase();
+      return hay.includes(q);
+    });
+
+    if (!list.length) {
+      $('threadList').innerHTML = '<p style="padding:1.5rem; text-align:center; color:var(--text-light); font-size:0.875rem;">No conversations yet</p>';
+      return;
+    }
+
+    $('threadList').innerHTML = list.map(t => {
+      const name = `${t.otherFirstName || ''} ${t.otherLastName || ''}`.trim() || 'User';
+      const sub = t.jobTitle ? `About: ${t.jobTitle}` : (t.otherCompany || (t.otherRole === 'client' ? 'Client' : 'VA'));
+      const last = t.lastMessage;
+      const preview = last ? (last.mine ? 'You: ' : '') + last.body : 'Say hello 👋';
       return `
-        <button type="button" class="inbox-thread${t.id === activeId ? ' active' : ''}${t.unread ? ' unread' : ''}" data-id="${esc(t.id)}">
-          <img src="https://i.pravatar.cc/80?img=${t.img}" alt="" />
+        <button type="button" class="inbox-thread${t.id === (activeThread && activeThread.id) ? ' active' : ''}${t.unreadCount > 0 ? ' unread' : ''}" data-id="${esc(t.id)}">
+          <div class="chat-avatar" style="width:40px; height:40px; border-radius:50%; background:rgba(79,70,229,0.08); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:700;">${esc((name[0] || '?').toUpperCase())}</div>
           <div class="meta">
-            <div class="who"><span>${esc(t.name)}${t.suspended ? ' <span class="feat-badge danger" style="font-size:0.62rem;">Suspended</span>' : ''}</span><time>${last ? timeLabel(last.t) : ''}</time></div>
-            <div class="sub">${esc(t.sub)}</div>
-            <div class="preview">${last ? (last.me ? 'You: ' : '') + esc(last.text) : 'Say hello 👋'}</div>
+            <div class="who"><span>${esc(name)}</span><time>${last ? timeLabel(last.createdAt) : ''}</time></div>
+            <div class="sub">${esc(sub)}</div>
+            <div class="preview">${esc(preview)}</div>
           </div>
-          ${t.unread ? '<span class="unread-dot"></span>' : ''}
+          ${t.unreadCount > 0 ? `<span class="unread-dot" aria-label="${t.unreadCount} unread"></span>` : ''}
         </button>`;
-    }).join('') || '<p style="padding:1.5rem; text-align:center; color:var(--text-light); font-size:0.875rem;">No conversations found</p>';
+    }).join('');
   }
 
-  function openThread(id) {
+  async function openThread(id) {
     const t = threads.find(x => x.id === id);
     if (!t) return;
-    activeId = id;
-    t.unread = 0;
-    save();
+    activeThread = t;
+    activeMessages = [];
+    lastMessageAt = 0;
+    clearInterval(pollTimer);
+
     $('inbox').classList.add('chat-open');
     $('chatEmpty').hidden = true;
-    ['chatHead', 'chatBody'].forEach(x => { $(x).hidden = false; });
-    $('chatCompose').hidden = !!t.suspended;
+    $('chatHead').hidden = false;
+    $('chatBody').hidden = false;
+    $('chatCompose').hidden = false;
 
-    const profileLink = role === 'client' ? `<a href="va-profile" class="btn btn-ghost btn-sm"><i class="fas fa-user"></i> Profile</a>` : '';
-    const trialLink = role === 'client' && !t.suspended ? `<a href="applicants" class="btn btn-outline-primary btn-sm"><i class="fas fa-flask"></i> Offer trial</a>` : '';
+    const name = `${t.otherFirstName || ''} ${t.otherLastName || ''}`.trim() || 'User';
+    const sub = t.jobTitle ? `About: ${t.jobTitle}` : (t.otherCompany || (t.otherRole === 'client' ? 'Client' : 'VA'));
     $('chatHead').innerHTML = `
       <button class="chat-back" id="chatBack" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
-      <img src="https://i.pravatar.cc/80?img=${t.img}" alt="" />
-      <div class="grow"><strong>${esc(t.name)}</strong><small>${esc(t.sub)}</small></div>
-      ${trialLink}${profileLink}
+      <div class="chat-avatar" style="width:44px; height:44px; border-radius:50%; background:rgba(79,70,229,0.08); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:700; font-size:1.125rem;">${esc((name[0] || '?').toUpperCase())}</div>
+      <div class="grow"><strong>${esc(name)}</strong><small>${esc(sub)}</small></div>
       <button class="btn btn-ghost btn-sm" id="reportUser" title="Report"><i class="fas fa-flag"></i></button>`;
-    $('chatBack').addEventListener('click', () => { $('inbox').classList.remove('chat-open'); activeId = null; renderList(); });
+    $('chatBack').addEventListener('click', () => { $('inbox').classList.remove('chat-open'); activeThread = null; clearInterval(pollTimer); renderThreadList(); });
     $('reportUser').addEventListener('click', () => showToast('Reported. Trust & Safety will review this conversation.'));
 
-    renderMessages(t);
-    $('quickReplies').innerHTML = QUICK.map(q => `<button type="button">${esc(q)}</button>`).join('');
-    renderList();
-    if (!t.suspended) $('composeText').focus();
+    $('quickReplies').innerHTML = '';
+    $('composeText').value = '';
+    checkCompose();
+    await fetchMessages(true);
+    pollTimer = setInterval(() => fetchMessages(false), 5000);
+    renderThreadList();
+    if (window.innerWidth > 900) $('composeText').focus();
   }
 
-  function renderMessages(t) {
+  async function fetchMessages(initial) {
+    if (!activeThread) return;
+    try {
+      const url = `/api/threads/${encodeURIComponent(activeThread.id)}/messages${lastMessageAt ? '?after=' + lastMessageAt : ''}`;
+      const res = await fetch(url);
+      if (res.status !== 200) return;
+      const data = await res.json();
+      if (!data.ok) return;
+      if (data.messages.length) {
+        if (initial) activeMessages = data.messages;
+        else activeMessages = activeMessages.concat(data.messages);
+        lastMessageAt = Math.max(lastMessageAt, ...data.messages.map(m => m.createdAt));
+      }
+      renderMessages();
+      if (!initial && data.messages.length) loadThreads();
+    } catch (err) { /* ignore */ }
+  }
+
+  function renderMessages() {
     const body = $('chatBody');
-    body.innerHTML = `<div class="chat-system"><i class="fas fa-lock"></i> Messages and payments here are protected by Jobseekers.ph</div>` +
-      t.messages.map(m => `<div class="bubble ${m.me ? 'me' : 'them'}">${esc(m.text)}<time>${clock(m.t)}</time></div>`).join('') +
-      (t.suspended ? `<div class="chat-system" style="color:var(--danger); border-color:rgba(239,68,68,0.3);"><i class="fas fa-ban"></i> This account was suspended for asking VAs to pay fees and move to Telegram. Never send money to get a job.</div>` : '') +
-      (t.messages.some(m => !m.me && OFF_PLATFORM_RE.test(m.text)) && !t.suspended ? `<div class="chat-system" style="color:#92400E;"><i class="fas fa-exclamation-triangle"></i> This conversation mentions going off-platform. Stay protected by keeping it here.</div>` : '');
+    const anyOff = activeMessages.some(m => !m.mine && m.offPlatform);
+    body.innerHTML =
+      `<div class="chat-system"><i class="fas fa-lock"></i> Messages here are protected by Jobseekers.ph. Never pay a fee to get hired.</div>` +
+      activeMessages.map(m => `<div class="bubble ${m.mine ? 'me' : 'them'}">${esc(m.body)}<time>${clock(m.createdAt)}</time></div>`).join('') +
+      (anyOff ? `<div class="chat-system" style="color:#92400E;"><i class="fas fa-exclamation-triangle"></i> This conversation mentions going off-platform. Stay protected by keeping it here.</div>` : '');
     body.scrollTop = body.scrollHeight;
   }
-
-  $('threadList').addEventListener('click', e => {
-    const btn = e.target.closest('.inbox-thread');
-    if (btn) openThread(btn.dataset.id);
-  });
-  $('threadSearch').addEventListener('input', renderList);
-  $('quickReplies').addEventListener('click', e => {
-    if (e.target.tagName === 'BUTTON') { $('composeText').value = e.target.textContent; $('composeText').focus(); checkCompose(); }
-  });
 
   function checkCompose() {
     const ta = $('composeText');
@@ -167,27 +240,32 @@
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
   }
-  $('composeText').addEventListener('input', checkCompose);
-  $('composeText').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('composeForm').requestSubmit(); }
-  });
 
-  $('composeForm').addEventListener('submit', e => {
+  async function sendMessage(e) {
     e.preventDefault();
+    if (composing || !activeThread) return;
     const text = $('composeText').value.trim();
-    const t = threads.find(x => x.id === activeId);
-    if (!text || !t) return;
-    t.messages.push({ me: true, text, t: Date.now() });
-    $('composeText').value = '';
-    checkCompose();
-    save();
-    renderMessages(t);
-    renderList();
-  });
+    if (!text) return;
+    composing = true;
+    try {
+      const res = await fetch(`/api/threads/${encodeURIComponent(activeThread.id)}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: text }),
+      });
+      const data = await res.json();
+      if (!data.ok) { showToast(data.error || 'Could not send.'); composing = false; return; }
+      activeMessages.push(data.message);
+      lastMessageAt = Math.max(lastMessageAt, data.message.createdAt);
+      $('composeText').value = '';
+      checkCompose();
+      renderMessages();
+      loadThreads();
+    } catch (err) { showToast('Network error.'); }
+    composing = false;
+  }
 
-  renderList();
-  if (to) openThread(to);
-  else if (window.innerWidth > 900 && threads.length) openThread(threads.find(t => t.unread)?.id || threads[0].id);
+  init();
 </script>
 </body>
 </html>

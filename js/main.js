@@ -47,6 +47,55 @@ document.querySelectorAll('.nav-dropdown').forEach(dd => {
   if (dd.querySelector('.nav-dropdown-menu a.active')) dd.querySelector('button').classList.add('active');
 });
 
+// Auth-aware navbar: swap the "Login / Post a Job" actions based on /api/me.
+// Runs on every page that includes main.js (the dashboard pages use a separate
+// sidebar, so we skip when there's no .navbar-actions).
+(async function wireNavbarAuth() {
+  const actions = document.querySelector('.navbar-actions');
+  const mobileActions = document.querySelector('.mobile-menu .mobile-actions');
+  if (!actions && !mobileActions) return;
+  try {
+    const res = await fetch('/api/me', { cache: 'no-store' });
+    if (res.status !== 200) return; // Leave the "Login / Post a Job" default.
+    const data = await res.json();
+    const user = data && data.user;
+    if (!user) return;
+
+    const dashHref = user.role === 'client' ? 'dashboard-client' : 'dashboard-va';
+    const firstName = (user.firstName || '').split(' ')[0] || user.email || 'Account';
+    const verifiedChip = user.verified ? '' : '<span style="font-size:0.7rem; background:rgba(245,158,11,0.15); color:#92400E; padding:0.15rem 0.5rem; border-radius:9999px; margin-left:0.35rem;">verify</span>';
+
+    const desktopHtml = `
+      <a href="${dashHref}" class="btn btn-ghost btn-sm" style="font-weight:600;">
+        <i class="fas fa-user-circle"></i> ${escapeForNav(firstName)}${verifiedChip}
+      </a>
+      ${user.role === 'client'
+        ? '<a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>'
+        : '<a href="browse-jobs" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Browse Jobs</a>'}
+      <button type="button" class="btn btn-ghost btn-sm" id="navLogout" title="Sign out" style="padding:0.4rem 0.6rem;"><i class="fas fa-sign-out-alt"></i></button>`;
+
+    if (actions) actions.innerHTML = desktopHtml;
+    if (mobileActions) {
+      mobileActions.innerHTML = `
+        <a href="${dashHref}" class="btn btn-outline-primary"><i class="fas fa-user-circle"></i> ${escapeForNav(firstName)}</a>
+        ${user.role === 'client'
+          ? '<a href="post-job" class="btn btn-primary">Post a Job</a>'
+          : '<a href="browse-jobs" class="btn btn-primary">Browse Jobs</a>'}
+        <button type="button" class="btn btn-ghost" id="navLogoutMobile"><i class="fas fa-sign-out-alt"></i> Sign out</button>`;
+    }
+    document.querySelectorAll('#navLogout, #navLogoutMobile').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await fetch('/api/logout', { method: 'POST' }).catch(() => null);
+        location.href = 'index';
+      });
+    });
+  } catch (err) { /* network — leave default nav */ }
+
+  function escapeForNav(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  }
+})();
+
 // Small toast used by feature pages: showToast('Saved!')
 function showToast(message) {
   let toast = document.querySelector('.feature-toast');

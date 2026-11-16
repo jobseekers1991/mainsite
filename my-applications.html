@@ -18,8 +18,6 @@
 
   <div class="dash-main">
     <header class="dash-topbar" id="dashTopbar"></header>
-<script src="js/va-data.js"></script>
-<script src="js/app-data.js"></script>
 <script src="js/dash.js"></script>
 
     <main class="dash-content">
@@ -41,32 +39,62 @@
 
 <script src="js/main.js"></script>
 <script>
-  let apps = Store.get('jsph-applications', seedApplications);
-  let filter = 'all';
-  const save = () => { Store.set('jsph-applications', apps); renderDashNav(); };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  const fmtDay = t => new Date(Number(t)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const APP_STATUS = {
+    submitted:  { label: 'Submitted',       pill: 'pending' },
+    viewed:     { label: 'Viewed',          pill: 'viewed' },
+    interview:  { label: 'Interview',       pill: 'active' },
+    trial:      { label: 'Trial offer',     pill: 'hired' },
+    trialing:   { label: 'Trial in progress', pill: 'active' },
+    hired:      { label: 'Hired',           pill: 'hired' },
+    rejected:   { label: 'Not selected',    pill: 'rejected' },
+    withdrawn:  { label: 'Withdrawn',       pill: 'closed' },
+  };
+
+  const NEXT_STEP = {
+    submitted:  'Waiting for the client to review. Most clients reply within 3 days.',
+    viewed:     'The client viewed your application. A short, polite follow-up can help.',
+    interview:  'The client wants to talk. Reply from your Messages tab.',
+    trial:      'You have a paid-trial offer. Review the scope and accept to start.',
+    trialing:   'Your paid trial is live.',
+    hired:      'You\'re hired! Congratulations.',
+    rejected:   'The client went with someone else. Keep going — the next one could be yours.',
+    withdrawn:  'You withdrew this application.',
+  };
 
   const GROUPS = {
-    all: { label: 'All', match: () => true },
+    all:    { label: 'All',    match: () => true },
     active: { label: 'Active', match: a => ['submitted', 'viewed', 'interview'].includes(a.status) },
-    trial: { label: 'Trials', match: a => ['trial', 'trialing'].includes(a.status) },
-    hired: { label: 'Hired', match: a => a.status === 'hired' },
+    trial:  { label: 'Trials', match: a => ['trial', 'trialing'].includes(a.status) },
+    hired:  { label: 'Hired',  match: a => a.status === 'hired' },
     closed: { label: 'Closed', match: a => ['rejected', 'withdrawn'].includes(a.status) },
   };
 
-  // What the VA should do next, per status
-  const NEXT_STEP = {
-    submitted: 'Waiting for the client to review. Most clients reply within 3 days.',
-    viewed: 'The client viewed your application. A short, polite follow-up message can help.',
-    interview: 'The client wants to talk. Check Messages to confirm a time.',
-    trial: 'You have a paid-trial offer. Review the scope and accept to start.',
-    trialing: 'Your paid trial is live. Track time in Work Tools and send an EOD report each day.',
-    hired: 'You\'re hired! Track time and send EOD reports in Work Tools.',
-    rejected: 'The client went with someone else. Keep going, as the next one could be yours.',
-    withdrawn: 'You withdrew this application.',
-  };
+  let apps = [];
+  let filter = 'all';
+  let me = null;
+
+  async function load() {
+    try {
+      const meRes = await fetch('/api/me');
+      if (meRes.status !== 200) { location.href = 'auth?next=my-applications'; return; }
+      me = (await meRes.json()).user;
+      if (!me || me.role !== 'va') {
+        document.querySelector('.dash-content').innerHTML = '<div class="empty-state"><i class="fas fa-user-lock"></i>This page is for VA accounts.</div>';
+        return;
+      }
+      const res = await fetch('/api/applications');
+      const data = await res.json();
+      if (data.ok) apps = data.applications || [];
+    } catch (err) {
+      console.error('[my-applications]', err);
+    }
+    renderAll();
+  }
 
   function renderStats() {
-    const used = applicationsThisMonth(apps);
     const stat = (label, num, icon, color, sub) => `
       <div class="stat-card">
         <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
@@ -74,10 +102,10 @@
         <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
       </div>`;
     document.getElementById('appStats').innerHTML =
-      stat('Active', apps.filter(GROUPS.active.match).length, 'fa-paper-plane', '#4F46E5', 'waiting on clients') +
+      stat('Active',     apps.filter(GROUPS.active.match).length, 'fa-paper-plane', '#4F46E5', 'waiting on clients') +
       stat('Interviews', apps.filter(a => a.status === 'interview').length, 'fa-video', '#0EA5E9', 'check Messages') +
       stat('Trial offers', apps.filter(a => a.status === 'trial').length, 'fa-flask', '#10B981', 'paid, 1–3 days') +
-      stat('This month', `${used}/${APPLY_LIMIT}`, 'fa-ticket-alt', '#F59E0B', used >= APPLY_LIMIT ? '<a href="pricing" style="color:var(--primary);font-weight:600;">Go Pro for unlimited</a>' : 'free applications used');
+      stat('Hired',      apps.filter(a => a.status === 'hired').length, 'fa-check-circle', '#22C55E', 'active engagements');
   }
 
   function renderTabs() {
@@ -86,46 +114,37 @@
   }
 
   function renderList() {
-    const list = apps.map((a, i) => ({ a, i })).filter(({ a }) => GROUPS[filter].match(a));
-    document.getElementById('appList').innerHTML = list.map(({ a, i }) => {
-      const job = jobById(a.jobId);
-      if (!job) return '';
-      const st = APP_STATUS[a.status];
-      const shift = SHIFT_LABELS[job.shift];
+    const list = apps.filter(a => GROUPS[filter].match(a));
+    if (!list.length) {
+      document.getElementById('appList').innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>No applications here yet. <a href="browse-jobs" style="color:var(--primary); font-weight:600;">Browse jobs</a></div>`;
+      return;
+    }
+    document.getElementById('appList').innerHTML = list.map(a => {
+      const st = APP_STATUS[a.status] || { label: a.status, pill: 'pending' };
       const closed = ['rejected', 'withdrawn'].includes(a.status);
-      const thread = job.client.name.toLowerCase().replace(/[^a-z]+/g, '-');
+      const jobClosed = a.jobStatus && a.jobStatus !== 'open';
       return `
         <div class="item-card${closed ? ' dim' : ''}">
           <div class="item-head">
-            <div class="job-logo" style="background:${job.logoBg}; width:48px; height:48px; font-size:1.375rem;">${job.emoji}</div>
+            <div class="job-logo" style="background:rgba(79,70,229,0.08); width:48px; height:48px;"><i class="fas fa-briefcase" style="color:var(--primary);"></i></div>
             <div class="grow">
-              <h3><a href="job?id=${job.id}">${esc(job.title)}</a></h3>
-              <p>${esc(job.company)} <span class="trust-score ${trustLevel(job.trust)}" style="font-size:0.68rem;"><i class="fas fa-shield-alt"></i> ${job.trust}</span> · Applied ${fmtDay(a.date)}</p>
+              <h3><a href="job?id=${encodeURIComponent(a.jobId)}">${esc(a.jobTitle || 'Job')}</a></h3>
+              <p>${esc(a.jobCompany || 'Private client')} · Applied ${fmtDay(a.createdAt)}${jobClosed ? ' · <span class="warn">Job closed</span>' : ''}</p>
             </div>
             <span class="status-pill ${a.status === 'trial' ? 'trial' : st.pill}">${st.label}</span>
           </div>
           <div class="item-meta">
             <span>Your rate <strong>$${a.rate}/hr</strong></span>
-            <span>Budget <strong>${job.rate}</strong></span>
-            <span><i class="fas ${shift.icon}"></i> ${shift.label}</span>
+            ${a.canStart ? `<span>Can start <strong>${esc(a.canStart)}</strong></span>` : ''}
+            ${a.openToTrial ? '<span><i class="fas fa-flask" style="color:var(--success);"></i> Open to trial</span>' : ''}
           </div>
-          <p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.625rem;"><i class="fas fa-info-circle"></i> ${NEXT_STEP[a.status]}</p>
-          ${['trial', 'trialing'].includes(a.status) && a.trial ? `
-            <div class="inline-panel">
-              <strong style="color:var(--dark); font-size:0.875rem;"><i class="fas fa-flask" style="color:var(--success);"></i> Paid trial offer</strong>
-              <div class="calc-line"><span>Scope</span><strong style="text-align:right; max-width:65%;">${esc(a.trial.scope)}</strong></div>
-              <div class="calc-line"><span>${a.trial.days} days × ${a.trial.hours} hrs × $${a.rate}/hr</span><strong>${money(a.trial.days * a.trial.hours * a.rate)}</strong></div>
-              <p style="font-size:0.75rem; color:var(--text-light);">Funded into escrow before you start, released when the client approves.</p>
-            </div>` : ''}
+          <p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.625rem;"><i class="fas fa-info-circle"></i> ${NEXT_STEP[a.status] || ''}</p>
           <div class="item-actions">
-            <a href="job?id=${job.id}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i> View job</a>
-            ${a.status === 'trial' ? `<button class="btn btn-primary btn-sm" data-act="accept" data-i="${i}"><i class="fas fa-check"></i> Accept trial</button><button class="btn btn-ghost btn-sm" data-act="decline" data-i="${i}">Decline</button>` : ''}
-            ${['viewed', 'interview', 'trial', 'trialing', 'hired'].includes(a.status) ? `<a href="messages?to=${thread}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Message client</a>` : ''}
-            ${['hired', 'trialing'].includes(a.status) ? '<a href="work-tools" class="btn btn-primary btn-sm"><i class="fas fa-stopwatch"></i> Start tracking</a>' : ''}
-            ${['submitted', 'viewed'].includes(a.status) ? `<button class="btn btn-ghost btn-sm" data-act="withdraw" data-i="${i}" style="color:var(--danger);"><i class="fas fa-undo"></i> Withdraw</button>` : ''}
+            <a href="job?id=${encodeURIComponent(a.jobId)}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i> View job</a>
+            ${['submitted', 'viewed'].includes(a.status) ? `<button class="btn btn-ghost btn-sm" data-act="withdraw" data-id="${a.id}" style="color:var(--danger);"><i class="fas fa-undo"></i> Withdraw</button>` : ''}
           </div>
         </div>`;
-    }).join('') || `<div class="empty-state"><i class="fas fa-inbox"></i>No applications here yet. <a href="browse-jobs" style="color:var(--primary); font-weight:600;">Browse jobs</a></div>`;
+    }).join('');
   }
 
   function renderAll() { renderStats(); renderTabs(); renderList(); }
@@ -135,22 +154,38 @@
     if (btn) { filter = btn.dataset.filter; renderTabs(); renderList(); }
   });
 
-  document.getElementById('appList').addEventListener('click', e => {
-    const btn = e.target.closest('[data-act]');
+  document.getElementById('appList').addEventListener('click', async e => {
+    const btn = e.target.closest('[data-act="withdraw"]');
     if (!btn) return;
-    const a = apps[Number(btn.dataset.i)];
-    const job = jobById(a.jobId);
-    if (btn.dataset.act === 'accept') { a.status = 'trialing'; showToast(`Trial accepted! ${job.company} will fund escrow and you can start.`); }
-    if (btn.dataset.act === 'decline') { a.status = 'withdrawn'; showToast('Trial declined. The client has been notified.'); }
-    if (btn.dataset.act === 'withdraw') {
-      if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to withdraw'; return; }
-      a.status = 'withdrawn'; showToast('Application withdrawn.');
+    if (btn.dataset.confirm !== '1') {
+      btn.dataset.confirm = '1';
+      btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to withdraw';
+      return;
     }
-    save();
-    renderAll();
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/applications/' + encodeURIComponent(btn.dataset.id), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'withdrawn' }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const app = apps.find(a => a.id === btn.dataset.id);
+        if (app) app.status = 'withdrawn';
+        showToast('Application withdrawn.');
+        renderAll();
+      } else {
+        showToast(data.error || 'Could not withdraw.');
+        btn.disabled = false;
+      }
+    } catch (err) {
+      showToast('Network error.');
+      btn.disabled = false;
+    }
   });
 
-  renderAll();
+  load();
 </script>
 </body>
 </html>

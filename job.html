@@ -195,148 +195,251 @@
   </div>
 </footer>
 
-<script src="js/va-data.js"></script>
-<script src="js/app-data.js"></script>
 <script src="js/main.js"></script>
 <script>
-  const params = new URLSearchParams(location.search);
-  const job = jobById(params.get('id'));
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  const SHIFT_LABELS = {
+    'us-east': { label: 'US Eastern hours', ph: 'PH 9PM–5AM', icon: 'fa-moon' },
+    'us-west': { label: 'US Pacific hours', ph: 'PH 12AM–8AM', icon: 'fa-moon' },
+    'uk':      { label: 'UK hours',         ph: 'PH 4PM–1AM', icon: 'fa-cloud-moon' },
+    'au':      { label: 'AU hours',         ph: 'PH 6AM–2PM', icon: 'fa-sun' },
+    'ph':      { label: 'PH / Asia daytime', ph: 'PH 8AM–5PM', icon: 'fa-sun' },
+    'flex':    { label: 'Flexible / async',  ph: 'Any hours',  icon: 'fa-clock' },
+  };
+  const JOB_TYPE_LABELS = { fulltime: 'Full-Time', parttime: 'Part-Time', project: 'Project-Based', contract: 'Contract' };
+  const OFF_PLATFORM_RE = /\b(telegram|whatsapp|viber|signal|wechat|gcash me|pay (you )?outside|outside (the )?(platform|jobseekers)|paypal me|send (me )?(your )?(otp|password|bank))\b/i;
 
-  if (!job) {
-    document.getElementById('jobMissing').hidden = false;
-  } else {
+  function fmtRate(min, max) {
+    if (min == null && max == null) return 'Rate on application';
+    if (max == null || Number(max) === Number(min)) return `$${Number(min)}/hr`;
+    return `$${Number(min)}–$${Number(max)}/hr`;
+  }
+  function timeAgo(ms) {
+    const s = Math.max(1, Math.round((Date.now() - ms) / 1000));
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    if (s < 86400*7) return Math.floor(s / 86400) + 'd ago';
+    return new Date(ms).toLocaleDateString();
+  }
+
+  const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const jobId = params.get('id');
+
+  let job = null;
+  let me   = null;
+  let myApplication = null;
+
+  async function load() {
+    if (!jobId) return showMissing();
+    const [jobRes, meRes, appRes] = await Promise.all([
+      fetch('/api/jobs/' + encodeURIComponent(jobId)),
+      fetch('/api/me').catch(() => null),
+      // We'll fetch our applications list and find any entry for this job.
+      // Server allows this only for VAs; 401/403 responses are expected for others.
+      fetch('/api/applications').catch(() => null),
+    ]);
+    if (jobRes.status !== 200) return showMissing();
+    const jobData = await jobRes.json();
+    if (!jobData.ok || !jobData.job) return showMissing();
+    job = jobData.job;
+
+    if (meRes && meRes.status === 200) {
+      const meData = await meRes.json();
+      me = meData.user || null;
+    }
+    if (me && me.role === 'va' && appRes && appRes.status === 200) {
+      const appData = await appRes.json();
+      myApplication = (appData.applications || []).find(a => a.jobId === job.id && a.status !== 'withdrawn') || null;
+    }
+    render();
+  }
+
+  function showMissing() { $('jobMissing').hidden = false; }
+
+  function render() {
     document.title = job.title + ' — Jobseekers.ph';
-    document.getElementById('jobLayout').hidden = false;
-    const shift = SHIFT_LABELS[job.shift];
-    const $ = id => document.getElementById(id);
+    $('jobLayout').hidden = false;
+    const shift = SHIFT_LABELS[job.shift] || { label: job.shift, ph: '', icon: 'fa-clock' };
 
     $('crumbTitle').textContent = job.title;
-    $('jLogo').textContent = job.emoji;
-    $('jLogo').style.background = job.logoBg;
+    $('jLogo').innerHTML = '<i class="fas fa-briefcase" style="color:var(--primary);"></i>';
+    $('jLogo').style.background = 'rgba(79,70,229,0.08)';
     $('jTitle').textContent = job.title;
-    $('jCompany').innerHTML = `${esc(job.company)} <span class="trust-score ${trustLevel(job.trust)}"><i class="fas fa-shield-alt"></i> Trust ${job.trust}</span>${job.verified ? ' · <span class="verified"><i class="fas fa-shield-alt"></i> Verified</span>' : ''}`;
+    $('jCompany').innerHTML = `${esc(job.companyName || 'Private client')}${job.clientVerified ? ' · <span class="verified"><i class="fas fa-shield-alt"></i> Verified</span>' : ''}`;
+
+    const typeLabel = JOB_TYPE_LABELS[job.jobType] || job.jobType;
     $('jMeta').innerHTML = `
-      <span><i class="fas fa-dollar-sign"></i> ${job.rate}</span>
-      <span><i class="fas fa-clock"></i> ${job.type} · ${job.hours}</span>
-      <span><i class="fas ${shift.icon}"></i> ${shift.label} (${shift.ph})</span>
-      ${job.trial ? '<span style="color:#047857;"><i class="fas fa-flask" style="color:#047857;"></i> Paid trial first</span>' : ''}
-      <span><i class="fas fa-calendar"></i> ${job.posted}</span>
-      <span><i class="fas fa-users"></i> ${job.applicants} applicants</span>`;
-    $('jSkills').innerHTML = job.skills.map(s => `<span class="skill-tag">${esc(s)}</span>`).join('');
-    $('jSummary').textContent = job.summary;
-    $('jResp').innerHTML = job.responsibilities.map(r => `<li>${esc(r)}</li>`).join('');
-    $('jReq').innerHTML = job.requirements.map(r => `<li>${esc(r)}</li>`).join('');
+      <span><i class="fas fa-dollar-sign"></i> ${fmtRate(job.payMin, job.payMax)}</span>
+      <span><i class="fas fa-clock"></i> ${esc(typeLabel)}</span>
+      <span><i class="fas ${shift.icon}"></i> ${esc(shift.label)}${shift.ph ? ` (${esc(shift.ph)})` : ''}</span>
+      ${job.startMode === 'trial' ? '<span style="color:#047857;"><i class="fas fa-flask"></i> Paid trial first</span>' : ''}
+      <span><i class="fas fa-calendar"></i> ${timeAgo(Number(job.createdAt))}</span>
+      <span><i class="fas fa-users"></i> ${job.applicantCount || 0} applicant${job.applicantCount === 1 ? '' : 's'}</span>`;
 
-    $('sRate').textContent = job.rate;
-    $('sType').textContent = `${job.type} · ${job.hours}`;
+    $('jSkills').innerHTML = (job.skills || []).map(s => `<span class="skill-tag">${esc(s)}</span>`).join('');
+    $('jSummary').textContent = job.description || '';
+
+    // Jobs no longer have fixed "responsibilities" and "requirements" lists — the
+    // whole role lives in the description above. Hide the empty sub-headings.
+    document.querySelectorAll('.job-section h2').forEach(h => {
+      if (h.textContent === "What you'll do" || h.textContent === "What we're looking for") h.hidden = true;
+    });
+    $('jResp').hidden = true;
+    $('jReq').hidden = true;
+    if (job.experienceLevel || job.englishLevel) {
+      $('jReq').hidden = false;
+      const parts = [];
+      if (job.experienceLevel) parts.push(`<li>Experience: ${esc(job.experienceLevel)}</li>`);
+      if (job.englishLevel && job.englishLevel !== 'Any Level') parts.push(`<li>English: ${esc(job.englishLevel)}</li>`);
+      $('jReq').innerHTML = parts.join('');
+      document.querySelectorAll('.job-section h2').forEach(h => { if (h.textContent === "What we're looking for") h.hidden = false; });
+    }
+
+    $('sRate').textContent = fmtRate(job.payMin, job.payMax);
+    $('sType').textContent = typeLabel;
     $('sFacts').innerHTML = `
-      <div><i class="fas ${shift.icon}" style="color:#312E81; width:18px;"></i> ${shift.label}<br><span style="color:var(--text-light); margin-left:22px;">${shift.ph}</span></div>
-      ${job.trial ? '<div><i class="fas fa-flask" style="color:var(--success); width:18px;"></i> Starts with a paid trial</div>' : ''}
-      <div><i class="fas fa-lock" style="color:var(--primary); width:18px;"></i> Payment protected by escrow</div>`;
+      <div><i class="fas ${shift.icon}" style="color:#312E81; width:18px;"></i> ${esc(shift.label)}${shift.ph ? `<br><span style="color:var(--text-light); margin-left:22px;">${esc(shift.ph)}</span>` : ''}</div>
+      ${job.startMode === 'trial' ? '<div><i class="fas fa-flask" style="color:var(--success); width:18px;"></i> Starts with a paid trial</div>' : ''}
+      ${job.applicationDeadline ? `<div><i class="fas fa-flag-checkered" style="color:var(--accent); width:18px;"></i> Closes ${esc(job.applicationDeadline)}</div>` : ''}`;
 
-    const c = job.client;
+    // Client info card — spare, since we don't have hire history etc. yet.
+    const memberYear = new Date(Number(job.clientCreatedAt || Date.now())).getFullYear();
     $('clientCard').innerHTML = `
-      <div style="margin-bottom:0.75rem;"><span class="trust-score ${trustLevel(job.trust)}"><i class="fas fa-shield-alt"></i> Trust score ${job.trust}</span></div>
       <div style="display:flex; flex-direction:column; gap:0.375rem; font-size:0.8125rem; color:var(--text-light);">
-        <div><i class="fas fa-map-marker-alt" style="width:16px;"></i> ${esc(c.location)}</div>
-        <div><i class="fas fa-calendar" style="width:16px;"></i> ${esc(c.since)}</div>
-        <div><i class="fas fa-user-check" style="width:16px;"></i> ${c.hires} hires · ${esc(c.spent)} paid to VAs</div>
-        <div><i class="fas fa-star" style="width:16px; color:var(--accent);"></i> ${c.rating ? `${c.rating} from ${c.vaReviews} VA reviews` : 'No VA reviews yet'}</div>
-      </div>
-      <div class="trust-detail">${c.details.map(d => `<span${/pending|new client|no /i.test(d) ? ' class="warn"' : ''}><i class="fas ${/pending|new client|no /i.test(d) ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>${esc(d)}</span>`).join('')}</div>`;
+        <div><i class="fas fa-building" style="width:16px;"></i> ${esc(job.companyName || 'Private client')}</div>
+        <div><i class="fas fa-calendar" style="width:16px;"></i> Member since ${memberYear}</div>
+        ${job.clientVerified ? '<div><i class="fas fa-shield-alt" style="width:16px; color:var(--success);"></i> Email verified</div>' : '<div class="warn"><i class="fas fa-exclamation-circle" style="width:16px;"></i> Email not verified yet</div>'}
+      </div>`;
 
-    // Similar jobs: share a skill or the shift
-    const similar = JOBS.filter(j => j.id !== job.id).sort((a, b) =>
-      (b.shift === job.shift) - (a.shift === job.shift) || b.skills.filter(s => job.skills.includes(s)).length - a.skills.filter(s => job.skills.includes(s)).length).slice(0, 3);
-    $('similarJobs').innerHTML = similar.map(j => `
-      <a href="job?id=${j.id}" class="job-card" style="padding:1rem 1.25rem;">
-        <div class="job-logo" style="background:${j.logoBg};">${j.emoji}</div>
-        <div class="job-body"><h3 class="job-title" style="font-size:0.9375rem;">${esc(j.title)}</h3>
-          <p class="job-company" style="margin:0;">${esc(j.company)} · ${j.rate} · ${SHIFT_LABELS[j.shift].label}</p></div>
-      </a>`).join('');
+    $('similarJobs').innerHTML = '';
 
     // Apply flow
-    let apps = Store.get('jsph-applications', seedApplications);
-    const applyCard = $('applyCard');
-    const existing = () => apps.find(a => a.jobId === job.id && a.status !== 'withdrawn');
-
-    function renderApplyState() {
-      const used = applicationsThisMonth(apps);
-      const left = Math.max(0, APPLY_LIMIT - used);
-      const btn = $('applyBtn');
-      if (existing()) {
-        btn.innerHTML = '<i class="fas fa-check"></i> Applied';
-        btn.disabled = true;
-        $('applyLimit').innerHTML = `You applied on ${fmtDay(existing().date)}. <a href="my-applications" style="color:var(--primary); font-weight:600;">View status</a>`;
-      } else if (!left) {
-        btn.disabled = true;
-        $('applyLimit').innerHTML = `You've used all ${APPLY_LIMIT} free applications this month. <a href="pricing" style="color:var(--primary); font-weight:600;">Go Pro for unlimited</a>`;
-      } else {
-        $('applyLimit').textContent = `${left} of ${APPLY_LIMIT} free applications left this month`;
-      }
-    }
-    renderApplyState();
-
-    $('screeningFields').innerHTML = job.screening.map((q, i) => `
+    const screening = job.screeningQuestions || [];
+    $('screeningFields').innerHTML = screening.map((q, i) => `
       <div class="form-group">
         <label class="form-label" for="aQ${i}">${esc(q)} <span class="form-required">*</span></label>
         <textarea id="aQ${i}" class="form-control form-textarea" style="min-height:80px;"></textarea>
       </div>`).join('');
-    $('shiftConfirm').textContent = `I can work ${shift.label} (${shift.ph})`;
-    $('trialTile').hidden = !job.trial;
-    $('aRate').value = job.rateMax;
-    $('rateHint').textContent = `Client budget: ${job.rate}`;
+    $('shiftConfirm').textContent = `I can work ${shift.label}${shift.ph ? ' (' + shift.ph + ')' : ''}`;
+    $('trialTile').hidden = job.startMode !== 'trial';
+    $('aRate').value = job.payMax || job.payMin || '';
+    $('rateHint').textContent = `Client budget: ${fmtRate(job.payMin, job.payMax)}`;
     $('aCover').addEventListener('input', () => { $('coverCount').textContent = $('aCover').value.trim().length; });
 
+    renderApplyState();
+
     $('applyBtn').addEventListener('click', () => {
-      applyCard.hidden = false;
-      applyCard.scrollIntoView({ behavior: 'smooth' });
+      if (!me) { location.href = 'auth?next=job?id=' + encodeURIComponent(job.id) + '%26apply=1'; return; }
+      if (me.role !== 'va') return;
+      $('applyCard').hidden = false;
+      $('applyCard').scrollIntoView({ behavior: 'smooth' });
       setTimeout(() => $('aCover').focus(), 400);
     });
-    if (params.get('apply') && !existing()) $('applyBtn').click();
-    $('cancelApply').addEventListener('click', () => { applyCard.hidden = true; window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    if (params.get('apply') && me && me.role === 'va' && !myApplication) $('applyBtn').click();
+    $('cancelApply').addEventListener('click', () => { $('applyCard').hidden = true; window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-    $('applyForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (existing()) { applyCard.hidden = true; renderApplyState(); return; }
-      const errors = [];
-      const cover = $('aCover').value.trim();
-      const rate = parseFloat($('aRate').value);
-      if (cover.length < 100) errors.push('Write at least 100 characters in your cover letter.');
-      if (!rate || rate < 3) errors.push('Enter your hourly rate.');
-      job.screening.forEach((q, i) => { if (!$('aQ' + i).value.trim()) errors.push(`Answer: "${q}"`); });
-      if (OFF_PLATFORM_RE.test(cover)) errors.push('Please remove outside contact details (Telegram, WhatsApp, etc.). Keep chats on Jobseekers.ph to stay protected.');
-      const box = $('applyErrors');
-      box.hidden = !errors.length;
-      box.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-top:0.2rem;"></i><div>${errors.map(esc).join('<br>')}</div>`;
-      if (errors.length) return;
+    $('applyForm').addEventListener('submit', submitApplication);
+    $('reportJob').addEventListener('click', (e) => { e.preventDefault(); showToast('Thanks. Our Trust & Safety team will review this job.'); });
+  }
 
-      apps = Store.get('jsph-applications', seedApplications);
-      apps.unshift({
-        jobId: job.id, status: 'submitted', date: Date.now(), rate, cover, start: $('aStart').value,
-        answers: job.screening.map((_, i) => $('aQ' + i).value.trim()),
-        shiftOk: $('aShift').checked, openToTrial: job.trial && $('aTrial').checked, resume: $('aResume').checked,
+  function renderApplyState() {
+    const btn = $('applyBtn');
+    const limit = $('applyLimit');
+    if (!me) {
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign in to apply';
+      limit.innerHTML = '<a href="auth" style="color:var(--primary); font-weight:600;">Create a free VA profile</a> to apply.';
+      return;
+    }
+    if (me.role === 'client') {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-ban"></i> Clients cannot apply';
+      limit.textContent = '';
+      return;
+    }
+    if (!me.verified) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-envelope"></i> Verify email first';
+      limit.innerHTML = '<a href="dashboard-va" style="color:var(--primary); font-weight:600;">Resend verification email</a>';
+      return;
+    }
+    if (myApplication) {
+      btn.innerHTML = '<i class="fas fa-check"></i> Applied';
+      btn.disabled = true;
+      limit.innerHTML = `You applied ${timeAgo(myApplication.createdAt)}. <a href="my-applications" style="color:var(--primary); font-weight:600;">View status</a>`;
+      return;
+    }
+    if (job.status !== 'open') {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-lock"></i> Closed';
+      limit.textContent = 'This job is no longer accepting applications.';
+      return;
+    }
+    limit.textContent = '';
+  }
+
+  async function submitApplication(e) {
+    e.preventDefault();
+    if (!me || me.role !== 'va' || !me.verified) return;
+
+    const errors = [];
+    const cover = $('aCover').value.trim();
+    const rate = parseFloat($('aRate').value);
+    const screening = job.screeningQuestions || [];
+    if (cover.length < 100) errors.push('Write at least 100 characters in your cover letter.');
+    if (!rate || rate < 3) errors.push('Enter your hourly rate.');
+    screening.forEach((q, i) => { if (!($('aQ' + i).value.trim())) errors.push(`Answer: "${q}"`); });
+    if (OFF_PLATFORM_RE.test(cover)) errors.push('Remove outside contact details (Telegram, WhatsApp, etc.). Keep chats on Jobseekers.ph.');
+
+    const box = $('applyErrors');
+    box.hidden = !errors.length;
+    box.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-top:0.2rem;"></i><div>${errors.map(esc).join('<br>')}</div>`;
+    if (errors.length) return;
+
+    const payload = {
+      jobId: job.id,
+      cover, rate,
+      canStart: $('aStart').value,
+      answers: screening.map((_, i) => $('aQ' + i).value.trim()),
+      shiftOk: $('aShift').checked,
+      openToTrial: job.startMode === 'trial' && $('aTrial').checked,
+      attachProfile: $('aResume').checked,
+    };
+
+    const submitBtn = $('applyForm').querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+    try {
+      const res = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      Store.set('jsph-applications', apps);
-      applyCard.hidden = true;
+      const data = await res.json();
+      if (!data.ok) {
+        const list = data.errors ? Object.values(data.errors) : [data.error || 'Could not submit application.'];
+        box.hidden = false;
+        box.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-top:0.2rem;"></i><div>${list.map(esc).join('<br>')}</div>`;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
+        return;
+      }
+      myApplication = { id: data.id, jobId: job.id, status: 'submitted', createdAt: Date.now() };
+      $('applyCard').hidden = true;
       $('appliedCard').hidden = false;
-      $('appliedText').textContent = `${job.company} will get your application for "${job.title}" at $${rate}/hr. You'll get a message when they view it.`;
+      $('appliedText').textContent = `${job.companyName || 'The client'} will get your application for "${job.title}" at $${rate}/hr.`;
       $('appliedCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
       renderApplyState();
-    });
-
-    // Save / report
-    const saved = Store.get('jsph-saved-jobs', []);
-    const renderSaved = () => { $('saveJob').innerHTML = saved.includes(job.id) ? '<i class="fas fa-heart" style="color:var(--danger);"></i> Saved' : '<i class="far fa-heart"></i> Save job'; };
-    $('saveJob').addEventListener('click', () => {
-      const i = saved.indexOf(job.id);
-      i >= 0 ? saved.splice(i, 1) : saved.push(job.id);
-      Store.set('jsph-saved-jobs', saved);
-      renderSaved();
-    });
-    renderSaved();
-    $('reportJob').addEventListener('click', (e) => { e.preventDefault(); showToast('Thanks. Our Trust & Safety team will review this job within 24 hours.'); });
+    } catch (err) {
+      box.hidden = false;
+      box.innerHTML = '<i class="fas fa-exclamation-circle"></i><div>Network error. Please try again.</div>';
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
+    }
   }
+
+  load();
 </script>
 </body>
 </html>

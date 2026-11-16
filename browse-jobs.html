@@ -73,9 +73,7 @@
 <!-- JOB STATS STRIP -->
 <div style="background:#fff; border-bottom:1px solid var(--border); padding:1.25rem 1.5rem;">
   <div class="container" style="display:flex; justify-content:center; gap:3rem; flex-wrap:wrap; text-align:center;">
-    <div><strong style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">2,840</strong><div style="font-size:0.8rem; color:var(--text-light);">Active Jobs</div></div>
-    <div><strong style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">840</strong><div style="font-size:0.8rem; color:var(--text-light);">New This Week</div></div>
-    <div><strong style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">5,400+</strong><div style="font-size:0.8rem; color:var(--text-light);">Verified Employers</div></div>
+    <div><strong id="statActive" style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">—</strong><div style="font-size:0.8rem; color:var(--text-light);">Active Jobs</div></div>
     <div><strong style="color:var(--dark); font-size:1.375rem; font-family:'Poppins',sans-serif;">100%</strong><div style="font-size:0.8rem; color:var(--text-light);">Remote Positions</div></div>
   </div>
 </div>
@@ -171,246 +169,27 @@
       <!-- JOBS LIST -->
       <div>
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-          <p style="color:var(--text-light); font-size:0.9375rem;">Showing <strong style="color:var(--dark);" id="jobCount">2,840</strong> jobs</p>
+          <p style="color:var(--text-light); font-size:0.9375rem;">Showing <strong style="color:var(--dark);" id="jobCount">—</strong> jobs</p>
         </div>
 
         <div class="alert alert-success" style="margin-bottom:1.25rem;">
           <i class="fas fa-shield-alt" style="margin-top:0.2rem;"></i>
           <div><strong>Jobseekers.ph will never ask you to pay to apply.</strong> Real clients don't charge fees, ask for deposits, or move you to Telegram/WhatsApp before hiring. Our filter flags those posts automatically. <a href="community" style="font-weight:600; text-decoration:underline;">See scam alerts</a></div>
         </div>
-        <div class="alert alert-warn" id="noJobMatch" hidden><i class="fas fa-info-circle"></i> No jobs on this page match those filters.</div>
+        <div class="alert alert-warn" id="noJobMatch" hidden><i class="fas fa-info-circle"></i> No jobs match those filters.</div>
 
-        <div style="display:flex; flex-direction:column; gap:1rem;">
-
-          <!-- Job Card -->
-          <div class="job-card" data-shift="us-east" data-verified="1" data-trust="96">
-            <div class="job-logo" style="background:rgba(79,70,229,0.08);">🚀</div>
-            <div class="job-body">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
-                <h3 class="job-title"><a href="job?id=exec-assistant">Executive Virtual Assistant (Full-Time)</a></h3>
-                <span class="badge badge-new">New</span>
-              </div>
-              <p class="job-company">Carter Digital Agency <span class="trust-score high" title="Client trust score: payment verification, hire rate, on-time payments and reviews from VAs"><i class="fas fa-shield-alt"></i> Trust 96</span> · <span class="verified"><i class="fas fa-shield-alt"></i> Verified</span></p>
-              <div class="job-meta">
-                <span><i class="fas fa-dollar-sign"></i> $6–$10/hr</span>
-                <span><i class="fas fa-clock"></i> Full-Time</span>
-                <span><i class="fas fa-moon"></i> US Eastern hours (PH 9PM–5AM)</span><span style="color:#047857;"><i class="fas fa-flask" style="color:#047857;"></i> Paid trial first</span>
-                <span><i class="fas fa-map-marker-alt"></i> US Client</span>
-                <span><i class="fas fa-calendar"></i> Posted 2 hours ago</span>
-              </div>
-              <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;">Looking for a dedicated EA to manage executive calendar, handle email correspondence, coordinate travel, and support daily operations. CRM experience preferred.</p>
-              <div style="display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.75rem;">
-                <span class="skill-tag">Calendar Mgmt</span><span class="skill-tag">Email</span><span class="skill-tag">CRM</span><span class="skill-tag">HubSpot</span>
-              </div>
-              <div class="trust-detail"><span><i class="fas fa-check-circle"></i>Payment verified</span><span><i class="fas fa-check-circle"></i>88% hire rate</span><span><i class="fas fa-check-circle"></i>4.9★ from 31 VAs</span><span><i class="fas fa-check-circle"></i>Always paid on time</span></div>
-            </div>
-            <div class="job-actions">
-              <a href="job?id=exec-assistant&apply=1" class="btn btn-primary btn-sm">Apply Now</a>
-              <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i></a>
-              <p style="font-size:0.75rem; color:var(--text-light); text-align:right; margin-top:0.25rem;">14 applicants</p>
-            </div>
-          </div>
-
-          <div class="job-card" data-shift="uk" data-verified="1" data-trust="91">
-            <div class="job-logo" style="background:rgba(236,72,153,0.08);">📱</div>
-            <div class="job-body">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
-                <h3 class="job-title"><a href="job?id=social-media-manager">Social Media Manager — E-commerce Brand</a></h3>
-                <span class="badge badge-hot"><i class="fas fa-fire"></i> Hot</span>
-              </div>
-              <p class="job-company">Bloom & Co. <span class="trust-score high" title="Client trust score: payment verification, hire rate, on-time payments and reviews from VAs"><i class="fas fa-shield-alt"></i> Trust 91</span> · <span class="verified"><i class="fas fa-shield-alt"></i> Verified</span></p>
-              <div class="job-meta">
-                <span><i class="fas fa-dollar-sign"></i> $8–$12/hr</span>
-                <span><i class="fas fa-clock"></i> Part-Time (20 hrs/wk)</span>
-                <span><i class="fas fa-cloud-moon"></i> UK hours (PH 4PM–1AM)</span><span style="color:#047857;"><i class="fas fa-flask" style="color:#047857;"></i> Paid trial first</span>
-                <span><i class="fas fa-calendar"></i> Posted 5 hours ago</span>
-              </div>
-              <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;">Seeking a creative SMM to manage our Instagram, TikTok, and Pinterest. Must be able to create engaging content, design graphics in Canva, and analyze performance metrics.</p>
-              <div style="display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.75rem;">
-                <span class="skill-tag">Instagram</span><span class="skill-tag">TikTok</span><span class="skill-tag">Canva</span><span class="skill-tag">Analytics</span>
-              </div>
-              <div class="trust-detail"><span><i class="fas fa-check-circle"></i>Payment verified</span><span><i class="fas fa-check-circle"></i>75% hire rate</span><span><i class="fas fa-check-circle"></i>4.8★ from 12 VAs</span></div>
-            </div>
-            <div class="job-actions">
-              <a href="job?id=social-media-manager&apply=1" class="btn btn-primary btn-sm">Apply Now</a>
-              <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i></a>
-              <p style="font-size:0.75rem; color:var(--text-light); text-align:right; margin-top:0.25rem;">38 applicants</p>
-            </div>
-          </div>
-
-          <div class="job-card" data-shift="us-east" data-verified="1" data-trust="94">
-            <div class="job-logo" style="background:rgba(16,185,129,0.08);">💼</div>
-            <div class="job-body">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
-                <h3 class="job-title"><a href="job?id=bookkeeper">Online Bookkeeper — QuickBooks & Xero Expert</a></h3>
-                <span class="badge badge-featured"><i class="fas fa-star"></i> Featured</span>
-              </div>
-              <p class="job-company">TechForge Solutions <span class="trust-score high" title="Client trust score: payment verification, hire rate, on-time payments and reviews from VAs"><i class="fas fa-shield-alt"></i> Trust 94</span> · <span class="verified"><i class="fas fa-shield-alt"></i> Verified</span></p>
-              <div class="job-meta">
-                <span><i class="fas fa-dollar-sign"></i> $10–$15/hr</span>
-                <span><i class="fas fa-clock"></i> Full-Time</span>
-                <span><i class="fas fa-moon"></i> US Eastern hours (PH 9PM–5AM)</span>
-                <span><i class="fas fa-calendar"></i> Posted 1 day ago</span>
-              </div>
-              <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;">We need an experienced bookkeeper to manage accounts payable/receivable, bank reconciliations, and prepare monthly financial reports. QuickBooks Online certification is a plus.</p>
-              <div style="display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.75rem;">
-                <span class="skill-tag">QuickBooks</span><span class="skill-tag">Xero</span><span class="skill-tag">Reconciliation</span><span class="skill-tag">Payroll</span>
-              </div>
-              <div class="trust-detail"><span><i class="fas fa-check-circle"></i>Business verified</span><span><i class="fas fa-check-circle"></i>92% hire rate</span><span><i class="fas fa-check-circle"></i>5.0★ from 9 VAs</span></div>
-            </div>
-            <div class="job-actions">
-              <a href="job?id=bookkeeper&apply=1" class="btn btn-primary btn-sm">Apply Now</a>
-              <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i></a>
-              <p style="font-size:0.75rem; color:var(--text-light); text-align:right; margin-top:0.25rem;">22 applicants</p>
-            </div>
-          </div>
-
-          <div class="job-card" data-shift="ph" data-verified="0" data-trust="64">
-            <div class="job-logo" style="background:rgba(245,158,11,0.08);">✍️</div>
-            <div class="job-body">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
-                <h3 class="job-title"><a href="job?id=seo-writer">SEO Content Writer — Health & Wellness Niche</a></h3>
-                <span class="badge badge-new">New</span>
-              </div>
-              <p class="job-company">Vitality Health Media <span class="trust-score mid" title="Client trust score: payment verification, hire rate, on-time payments and reviews from VAs"><i class="fas fa-shield-alt"></i> Trust 64</span></p>
-              <div class="job-meta">
-                <span><i class="fas fa-dollar-sign"></i> $7–$9/hr</span>
-                <span><i class="fas fa-clock"></i> Part-Time</span>
-                <span><i class="fas fa-sun"></i> Flexible / PH daytime</span><span style="color:#047857;"><i class="fas fa-flask" style="color:#047857;"></i> Paid trial first</span>
-                <span><i class="fas fa-calendar"></i> Posted 1 day ago</span>
-              </div>
-              <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;">Looking for a skilled content writer to produce 4–6 SEO-optimized blog posts per week on health, fitness, and wellness topics. SurferSEO or Clearscope experience preferred.</p>
-              <div style="display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.75rem;">
-                <span class="skill-tag">SEO Writing</span><span class="skill-tag">WordPress</span><span class="skill-tag">Health Niche</span>
-              </div>
-              <div class="trust-detail"><span><i class="fas fa-check-circle"></i>Payment method pending</span><span class="warn"><i class="fas fa-exclamation-circle"></i>New client: no hires yet</span></div>
-            </div>
-            <div class="job-actions">
-              <a href="job?id=seo-writer&apply=1" class="btn btn-primary btn-sm">Apply Now</a>
-              <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i></a>
-              <p style="font-size:0.75rem; color:var(--text-light); text-align:right; margin-top:0.25rem;">61 applicants</p>
-            </div>
-          </div>
-
-          <div class="job-card" data-shift="us-west" data-verified="1" data-trust="89">
-            <div class="job-logo" style="background:rgba(99,102,241,0.08);">🎨</div>
-            <div class="job-body">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
-                <h3 class="job-title"><a href="job?id=graphic-designer">Graphic Designer & Brand Identity Specialist</a></h3>
-                <span class="badge badge-remote">Remote</span>
-              </div>
-              <p class="job-company">Nova Branding Co. <span class="trust-score high" title="Client trust score: payment verification, hire rate, on-time payments and reviews from VAs"><i class="fas fa-shield-alt"></i> Trust 89</span> · <span class="verified"><i class="fas fa-shield-alt"></i> Verified</span></p>
-              <div class="job-meta">
-                <span><i class="fas fa-dollar-sign"></i> $10–$14/hr</span>
-                <span><i class="fas fa-clock"></i> Full-Time</span>
-                <span><i class="fas fa-moon"></i> US Pacific hours (PH 12AM–8AM)</span><span style="color:#047857;"><i class="fas fa-flask" style="color:#047857;"></i> Paid trial first</span>
-                <span><i class="fas fa-calendar"></i> Posted 2 days ago</span>
-              </div>
-              <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;">Design logos, brand kits, social media graphics, and marketing materials. Must have a strong portfolio and proficiency in Adobe Suite and Figma.</p>
-              <div style="display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.75rem;">
-                <span class="skill-tag">Photoshop</span><span class="skill-tag">Illustrator</span><span class="skill-tag">Figma</span><span class="skill-tag">Canva Pro</span>
-              </div>
-              <div class="trust-detail"><span><i class="fas fa-check-circle"></i>Payment verified</span><span><i class="fas fa-check-circle"></i>70% hire rate</span><span><i class="fas fa-check-circle"></i>4.7★ from 8 VAs</span></div>
-            </div>
-            <div class="job-actions">
-              <a href="job?id=graphic-designer&apply=1" class="btn btn-primary btn-sm">Apply Now</a>
-              <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i></a>
-              <p style="font-size:0.75rem; color:var(--text-light); text-align:right; margin-top:0.25rem;">45 applicants</p>
-            </div>
-          </div>
-
-          <div class="job-card" data-shift="au" data-verified="0" data-trust="71">
-            <div class="job-logo" style="background:rgba(239,68,68,0.08);">🛒</div>
-            <div class="job-body">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
-                <h3 class="job-title"><a href="job?id=ecommerce-va">eCommerce VA — Shopify & Amazon Expert</a></h3>
-                <span class="badge badge-hot"><i class="fas fa-fire"></i> Hot</span>
-              </div>
-              <p class="job-company">ShopEase Global <span class="trust-score mid" title="Client trust score: payment verification, hire rate, on-time payments and reviews from VAs"><i class="fas fa-shield-alt"></i> Trust 71</span></p>
-              <div class="job-meta">
-                <span><i class="fas fa-dollar-sign"></i> $8–$11/hr</span>
-                <span><i class="fas fa-clock"></i> Full-Time</span>
-                <span><i class="fas fa-sun"></i> AU hours (PH 6AM–2PM)</span>
-                <span><i class="fas fa-calendar"></i> Posted 2 days ago</span>
-              </div>
-              <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;">Manage product listings, inventory, customer inquiries, and order processing for our Shopify and Amazon stores. Experience with jungle scout or Helium 10 is a bonus.</p>
-              <div style="display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.75rem;">
-                <span class="skill-tag">Shopify</span><span class="skill-tag">Amazon FBA</span><span class="skill-tag">Product Listings</span>
-              </div>
-              <div class="trust-detail"><span><i class="fas fa-check-circle"></i>Card verified</span><span><i class="fas fa-check-circle"></i>2 hires</span><span><i class="fas fa-check-circle"></i>No VA reviews yet</span></div>
-            </div>
-            <div class="job-actions">
-              <a href="job?id=ecommerce-va&apply=1" class="btn btn-primary btn-sm">Apply Now</a>
-              <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i></a>
-              <p style="font-size:0.75rem; color:var(--text-light); text-align:right; margin-top:0.25rem;">79 applicants</p>
-            </div>
-          </div>
-
-          <div class="job-card" data-shift="us-west" data-verified="1" data-trust="97">
-            <div class="job-logo" style="background:rgba(16,185,129,0.08);">💬</div>
-            <div class="job-body">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
-                <h3 class="job-title"><a href="job?id=customer-support">Customer Support Specialist (Zendesk)</a></h3>
-                <span class="badge badge-new">New</span>
-              </div>
-              <p class="job-company">SupportGenius Inc. <span class="trust-score high" title="Client trust score: payment verification, hire rate, on-time payments and reviews from VAs"><i class="fas fa-shield-alt"></i> Trust 97</span> · <span class="verified"><i class="fas fa-shield-alt"></i> Verified</span></p>
-              <div class="job-meta">
-                <span><i class="fas fa-dollar-sign"></i> $6–$8/hr</span>
-                <span><i class="fas fa-clock"></i> Full-Time</span>
-                <span><i class="fas fa-moon"></i> US Pacific hours (PH 12AM–8AM)</span><span style="color:#047857;"><i class="fas fa-flask" style="color:#047857;"></i> Paid trial first</span>
-                <span><i class="fas fa-calendar"></i> Posted 3 days ago</span>
-              </div>
-              <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;">Handle customer inquiries via email, live chat, and phone. Must have excellent English communication skills and experience with Zendesk or Freshdesk.</p>
-              <div style="display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.75rem;">
-                <span class="skill-tag">Zendesk</span><span class="skill-tag">Live Chat</span><span class="skill-tag">Email Support</span><span class="skill-tag">Phone Support</span>
-              </div>
-              <div class="trust-detail"><span><i class="fas fa-check-circle"></i>Business verified</span><span><i class="fas fa-check-circle"></i>95% hire rate</span><span><i class="fas fa-check-circle"></i>4.9★ from 44 VAs</span><span><i class="fas fa-check-circle"></i>Always paid on time</span></div>
-            </div>
-            <div class="job-actions">
-              <a href="job?id=customer-support&apply=1" class="btn btn-primary btn-sm">Apply Now</a>
-              <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i></a>
-              <p style="font-size:0.75rem; color:var(--text-light); text-align:right; margin-top:0.25rem;">33 applicants</p>
-            </div>
-          </div>
-
-          <div class="job-card flagged" data-shift="ph" data-verified="0" data-trust="12" data-flagged="1">
-            <div class="job-logo" style="background:rgba(239,68,68,0.08);">⚠️</div>
-            <div class="job-body">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
-                <h3 class="job-title" style="color:var(--text-light);">Hidden for your safety</h3>
-                <span class="feat-badge danger"><i class="fas fa-ban"></i> Auto-flagged</span>
-              </div>
-              <p class="job-company">Unverified client <span class="trust-score low"><i class="fas fa-shield-alt"></i> Trust 12</span></p>
-              <div class="alert alert-error" style="margin:0.75rem 0 0;">
-                <i class="fas fa-exclamation-triangle" style="margin-top:0.2rem;"></i>
-                <div>Our scam filter flagged this post and it's under review:
-                  <ul style="margin:0.375rem 0 0 1rem; list-style:disc;"><li>Asks applicants to pay a "registration fee"</li><li>Moves the conversation to Telegram</li><li>Promises $35/hr for entry-level data entry</li></ul>
-                </div>
-              </div>
-              <div class="flagged-body" hidden>
-                <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;"><strong>"Data Entry Clerk: Earn $35/hr, Start Today!"</strong> No experience needed!! Pay ₱1,500 registration fee via GCash to reserve your slot, then message our HR on Telegram @hr_global_jobs for your training kit.</p>
-              </div>
-            </div>
-            <div class="job-actions">
-              <button type="button" class="btn btn-ghost btn-sm show-flagged">Show anyway</button>
-              <a href="community" class="btn btn-ghost btn-sm" style="color:var(--danger);"><i class="fas fa-flag"></i> Scam alerts</a>
-            </div>
-          </div>
-
+        <div id="jobsList" style="display:flex; flex-direction:column; gap:1rem;">
+          <div id="jobsLoading" style="text-align:center; padding:3rem 1rem; color:var(--text-light);"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><div style="margin-top:0.75rem;">Loading jobs…</div></div>
         </div>
 
-        <!-- Pagination -->
-        <div class="pagination">
-          <button disabled><i class="fas fa-chevron-left"></i></button>
-          <button class="active">1</button>
-          <button>2</button>
-          <button>3</button>
-          <button>4</button>
-          <button>5</button>
-          <span style="padding:0 0.5rem; color:var(--text-light);">...</span>
-          <button>24</button>
-          <button><i class="fas fa-chevron-right"></i></button>
+        <div id="jobsEmpty" class="empty-state" hidden style="margin-top:2rem;">
+          <i class="fas fa-briefcase"></i>
+          <h2 style="font-size:1.25rem; color:var(--dark); margin-bottom:0.5rem;">No jobs posted yet</h2>
+          <p style="margin-bottom:1.25rem;">Be the first to see new postings — create your free VA profile and we'll alert you when matching jobs appear.</p>
+          <a href="auth" class="btn btn-primary">Create Free Profile</a>
         </div>
+
+        <div class="pagination" id="jobsPagination" hidden></div>
       </div>
     </div>
   </div>
@@ -451,36 +230,146 @@
 
 <script src="js/main.js"></script>
 <script>
-  // Safety + shift filters over the job cards on this page
-  const jobCards = [...document.querySelectorAll('.job-card[data-trust]')];
-  const jobCount = document.getElementById('jobCount');
-  const jobTotal = jobCount.textContent;
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  const SHIFT_LABELS = {
+    'us-east': { label: 'US Eastern hours', ph: 'PH 9PM–5AM', icon: 'fa-moon' },
+    'us-west': { label: 'US Pacific hours', ph: 'PH 12AM–8AM', icon: 'fa-moon' },
+    'uk':      { label: 'UK hours',         ph: 'PH 4PM–1AM', icon: 'fa-cloud-moon' },
+    'au':      { label: 'AU hours',         ph: 'PH 6AM–2PM', icon: 'fa-sun' },
+    'ph':      { label: 'PH / Asia daytime', ph: 'PH 8AM–5PM', icon: 'fa-sun' },
+    'flex':    { label: 'Flexible / async',  ph: 'Any hours',  icon: 'fa-clock' },
+  };
+  const JOB_TYPE_LABELS = { fulltime: 'Full-Time', parttime: 'Part-Time', project: 'Project-Based', contract: 'Contract' };
 
-  function filterJobs() {
-    const onlyVerified = document.getElementById('onlyVerified').checked;
-    const trust80 = document.getElementById('trust80').checked;
-    const hideFlagged = document.getElementById('hideFlagged').checked;
-    const shift = document.querySelector('input[name="jobShift"]:checked').value;
-    let shown = 0;
-    jobCards.forEach(card => {
-      const ok = (!onlyVerified || card.dataset.verified === '1')
-        && (!trust80 || Number(card.dataset.trust) >= 80)
-        && (!hideFlagged || card.dataset.flagged !== '1')
-        && (!shift || card.dataset.shift === shift);
-      card.hidden = !ok;
-      if (ok) shown++;
-    });
-    jobCount.textContent = onlyVerified || trust80 || shift ? shown : jobTotal;
-    document.getElementById('noJobMatch').hidden = shown > 0;
+  function fmtRate(min, max) {
+    if (min == null && max == null) return 'Rate on application';
+    if (max == null || Number(max) === Number(min)) return `$${Number(min)}/hr`;
+    return `$${Number(min)}–$${Number(max)}/hr`;
+  }
+  function timeAgo(ms) {
+    const s = Math.max(1, Math.round((Date.now() - ms) / 1000));
+    if (s < 60)       return 'just now';
+    if (s < 3600)     return Math.floor(s / 60) + 'm ago';
+    if (s < 86400)    return Math.floor(s / 3600) + 'h ago';
+    if (s < 86400*7)  return Math.floor(s / 86400) + 'd ago';
+    return new Date(ms).toLocaleDateString();
   }
 
-  document.querySelectorAll('#onlyVerified, #trust80, #hideFlagged, input[name="jobShift"]').forEach(el => el.addEventListener('change', filterJobs));
-  document.querySelectorAll('.show-flagged').forEach(btn => btn.addEventListener('click', () => {
-    const body = btn.closest('.job-card').querySelector('.flagged-body');
-    body.hidden = !body.hidden;
-    btn.textContent = body.hidden ? 'Show anyway' : 'Hide';
-  }));
-  filterJobs();
+  const jobsList  = document.getElementById('jobsList');
+  const jobsEmpty = document.getElementById('jobsEmpty');
+  const jobsPager = document.getElementById('jobsPagination');
+  const jobCount  = document.getElementById('jobCount');
+  const statActive = document.getElementById('statActive');
+  const noMatch   = document.getElementById('noJobMatch');
+
+  let currentPage = 1;
+  const PER_PAGE = 10;
+
+  function renderCard(job) {
+    const shift = SHIFT_LABELS[job.shift] || { label: job.shift, ph: '', icon: 'fa-clock' };
+    const skills = (job.skills || []).slice(0, 6);
+    const applyHref = `job?id=${encodeURIComponent(job.id)}&apply=1`;
+    const trialPill = job.startMode === 'trial'
+      ? '<span style="color:#047857;"><i class="fas fa-flask"></i> Paid trial first</span>' : '';
+    const verifiedPill = job.clientVerified
+      ? '<span class="verified"><i class="fas fa-shield-alt"></i> Verified</span>' : '';
+    return `
+      <div class="job-card" data-shift="${esc(job.shift)}" data-verified="${job.clientVerified ? 1 : 0}">
+        <div class="job-logo" style="background:rgba(79,70,229,0.08);"><i class="fas fa-briefcase" style="color:var(--primary);"></i></div>
+        <div class="job-body">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.25rem;">
+            <h3 class="job-title"><a href="job?id=${encodeURIComponent(job.id)}">${esc(job.title)}</a></h3>
+            ${Date.now() - Number(job.createdAt) < 86400000 ? '<span class="badge badge-new">New</span>' : ''}
+          </div>
+          <p class="job-company">${esc(job.companyName || 'Private client')}${verifiedPill ? ' · ' + verifiedPill : ''}</p>
+          <div class="job-meta">
+            <span><i class="fas fa-dollar-sign"></i> ${fmtRate(job.payMin, job.payMax)}</span>
+            <span><i class="fas fa-clock"></i> ${esc(JOB_TYPE_LABELS[job.jobType] || job.jobType)}</span>
+            <span><i class="fas ${shift.icon}"></i> ${esc(shift.label)}${shift.ph ? ` (${esc(shift.ph)})` : ''}</span>
+            ${trialPill}
+            <span><i class="fas fa-calendar"></i> ${timeAgo(Number(job.createdAt))}</span>
+          </div>
+          <p style="font-size:0.875rem; color:var(--text-light); margin-top:0.75rem; line-height:1.6;">${esc((job.description || '').slice(0, 220))}${job.description && job.description.length > 220 ? '…' : ''}</p>
+          ${skills.length ? `<div style="display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.75rem;">${skills.map(s => `<span class="skill-tag">${esc(s)}</span>`).join('')}</div>` : ''}
+        </div>
+        <div class="job-actions">
+          <a href="${applyHref}" class="btn btn-primary btn-sm">Apply Now</a>
+          <p style="font-size:0.75rem; color:var(--text-light); text-align:right; margin-top:0.25rem;">${job.applicantCount || 0} applicant${job.applicantCount === 1 ? '' : 's'}</p>
+        </div>
+      </div>`;
+  }
+
+  function renderPager(total, page, pages) {
+    jobsPager.hidden = pages <= 1;
+    if (pages <= 1) { jobsPager.innerHTML = ''; return; }
+    const parts = [];
+    parts.push(`<button ${page <= 1 ? 'disabled' : ''} data-go="${page - 1}"><i class="fas fa-chevron-left"></i></button>`);
+    const window = 5;
+    const start = Math.max(1, Math.min(page - 2, pages - window + 1));
+    const end = Math.min(pages, start + window - 1);
+    for (let p = start; p <= end; p++) {
+      parts.push(`<button ${p === page ? 'class="active"' : ''} data-go="${p}">${p}</button>`);
+    }
+    if (end < pages) {
+      parts.push(`<span style="padding:0 0.5rem; color:var(--text-light);">…</span><button data-go="${pages}">${pages}</button>`);
+    }
+    parts.push(`<button ${page >= pages ? 'disabled' : ''} data-go="${page + 1}"><i class="fas fa-chevron-right"></i></button>`);
+    jobsPager.innerHTML = parts.join('');
+    jobsPager.querySelectorAll('button[data-go]').forEach(btn => btn.addEventListener('click', () => {
+      currentPage = Number(btn.dataset.go);
+      loadJobs();
+      window.scrollTo({ top: jobsList.offsetTop - 80, behavior: 'smooth' });
+    }));
+  }
+
+  async function loadJobs() {
+    const q = document.querySelector('.hero-search-wrap input')?.value.trim() || '';
+    const shift = document.querySelector('input[name="jobShift"]:checked')?.value || '';
+    jobsList.innerHTML = '<div id="jobsLoading" style="text-align:center; padding:3rem 1rem; color:var(--text-light);"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><div style="margin-top:0.75rem;">Loading jobs…</div></div>';
+    jobsEmpty.hidden = true;
+    noMatch.hidden = true;
+
+    try {
+      const params = new URLSearchParams();
+      if (q)     params.set('q', q);
+      if (shift) params.set('shift', shift);
+      params.set('page', String(currentPage));
+      params.set('limit', String(PER_PAGE));
+      const res = await fetch('/api/jobs?' + params.toString());
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'fetch failed');
+
+      statActive.textContent = Number(data.total || 0).toLocaleString();
+      jobCount.textContent   = Number(data.total || 0).toLocaleString();
+
+      if (!data.jobs.length) {
+        jobsList.innerHTML = '';
+        if (data.total === 0 && !q && !shift) {
+          jobsEmpty.hidden = false;
+        } else {
+          noMatch.hidden = false;
+        }
+        jobsPager.hidden = true;
+        return;
+      }
+      jobsList.innerHTML = data.jobs.map(renderCard).join('');
+      renderPager(data.total, data.page, data.pages);
+    } catch (err) {
+      console.error('[browse-jobs]', err);
+      jobsList.innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div>Could not load jobs. Please try again shortly.</div></div>';
+    }
+  }
+
+  // Shift filter + search bar
+  document.querySelectorAll('input[name="jobShift"]').forEach(el => el.addEventListener('change', () => { currentPage = 1; loadJobs(); }));
+  const heroInput = document.querySelector('.hero-search-wrap input');
+  const heroBtn   = document.querySelector('.hero-search-wrap button');
+  if (heroInput && heroBtn) {
+    heroInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { currentPage = 1; loadJobs(); } });
+    heroBtn.addEventListener('click', () => { currentPage = 1; loadJobs(); });
+  }
+
+  loadJobs();
 </script>
 </body>
 </html>

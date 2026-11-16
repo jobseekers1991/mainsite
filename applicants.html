@@ -18,8 +18,6 @@
 
   <div class="dash-main">
     <header class="dash-topbar" id="dashTopbar"></header>
-<script src="js/va-data.js"></script>
-<script src="js/app-data.js"></script>
 <script src="js/dash.js"></script>
 
     <main class="dash-content">
@@ -57,176 +55,179 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  const _params = new URLSearchParams(location.search);
-  let jobId = _params.get('job') || client.jobs[0].id;
-  let status = _params.get('status') || 'all';
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  const fmtDay = t => new Date(Number(t)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const $ = id => document.getElementById(id);
 
   const STATUS = {
-    new: { label: 'New', pill: 'new' },
-    shortlisted: { label: 'Shortlisted', pill: 'viewed' },
-    trial: { label: 'Paid trial', pill: 'trial' },
-    hired: { label: 'Hired', pill: 'hired' },
-    rejected: { label: 'Declined', pill: 'rejected' },
+    submitted: { label: 'New',         pill: 'new' },
+    viewed:    { label: 'Viewed',      pill: 'viewed' },
+    interview: { label: 'Interview',   pill: 'active' },
+    trial:     { label: 'Trial offer', pill: 'trial' },
+    trialing:  { label: 'Trialing',    pill: 'active' },
+    hired:     { label: 'Hired',       pill: 'hired' },
+    rejected:  { label: 'Declined',    pill: 'rejected' },
+    withdrawn: { label: 'Withdrawn',   pill: 'closed' },
   };
-  const TABS = ['all', 'new', 'shortlisted', 'trial', 'hired', 'rejected'];
+  const TABS = ['all', 'submitted', 'viewed', 'interview', 'hired', 'rejected'];
+  const TAB_LABEL = { all: 'All', submitted: 'New', viewed: 'Viewed', interview: 'Interview', hired: 'Hired', rejected: 'Declined' };
 
-  $('jobSel').innerHTML = client.jobs.map(j => `<option value="${j.id}"${j.id === jobId ? ' selected' : ''}>${esc(j.title)}</option>`).join('');
-  $('jobSel').addEventListener('change', () => { jobId = $('jobSel').value; status = 'all'; render(); });
-  $('sortSel').addEventListener('change', render);
+  const _params = new URLSearchParams(location.search);
+  let jobs = [];
+  let jobId = _params.get('job') || null;
+  let filter = 'all';
+  let applicants = [];
 
-  const forJob = () => client.applicants.filter(a => a.jobId === jobId);
+  async function load() {
+    try {
+      const meRes = await fetch('/api/me');
+      if (meRes.status !== 200) { location.href = 'auth?next=applicants'; return; }
+      const me = (await meRes.json()).user;
+      if (me.role !== 'client') {
+        document.querySelector('.dash-content').innerHTML = '<div class="empty-state"><i class="fas fa-user-lock"></i>Jobs &amp; Applicants is for client accounts.</div>';
+        return;
+      }
+      const jr = await fetch('/api/jobs/mine');
+      const jd = await jr.json();
+      jobs = jd.jobs || [];
+      if (!jobs.length) {
+        document.querySelector('.dash-content').innerHTML = '<div class="empty-state"><i class="fas fa-briefcase"></i>You haven\'t posted any jobs yet.<br><a href="post-job" class="btn btn-primary" style="margin-top:1rem;">Post your first job</a></div>';
+        return;
+      }
+      if (!jobId || !jobs.some(j => j.id === jobId)) jobId = jobs[0].id;
+      $('jobSel').innerHTML = jobs.map(j => `<option value="${j.id}"${j.id === jobId ? ' selected' : ''}>${esc(j.title)} (${j.applicantCount || 0})</option>`).join('');
+      $('jobSel').addEventListener('change', () => { jobId = $('jobSel').value; filter = 'all'; loadApplicants(); });
+      $('sortSel').addEventListener('change', render);
+      $('statusTabs').addEventListener('click', e => {
+        const b = e.target.closest('[data-s]');
+        if (b) { filter = b.dataset.s; render(); }
+      });
+      $('applicantList').addEventListener('click', onAction);
+
+      // Hide compare for now — needs more thought post-payments.
+      const compareBtn = $('compareBtn');
+      if (compareBtn) compareBtn.hidden = true;
+
+      await loadApplicants();
+    } catch (err) {
+      console.error('[applicants]', err);
+      document.querySelector('.dash-content').innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div>Could not load applicants. Please refresh.</div></div>';
+    }
+  }
+
+  async function loadApplicants() {
+    try {
+      const res = await fetch('/api/applications?jobId=' + encodeURIComponent(jobId));
+      const data = await res.json();
+      applicants = data.applications || [];
+    } catch (err) {
+      applicants = [];
+    }
+    render();
+  }
 
   function render() {
-    const job = client.jobs.find(j => j.id === jobId);
-    const list = forJob();
-    $('jobInfo').innerHTML = `<span class="status-pill active">${job.status}</span> Posted ${fmtDay(job.posted)} · ${list.length} applicants`;
-    $('statusTabs').innerHTML = TABS.map(s => `<button type="button" data-s="${s}" class="${s === status ? 'active' : ''}">${s === 'all' ? 'All' : STATUS[s].label}<span>${s === 'all' ? list.length : list.filter(a => a.status === s).length}</span></button>`).join('');
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) return;
+    $('jobInfo').innerHTML = `<span class="status-pill ${job.status === 'open' ? 'active' : 'closed'}">${esc(job.status)}</span> Posted ${fmtDay(job.createdAt)} · ${applicants.filter(a => a.status !== 'withdrawn').length} applicant${applicants.length === 1 ? '' : 's'}`;
+    $('statusTabs').innerHTML = TABS.map(s => {
+      const count = s === 'all' ? applicants.filter(a => a.status !== 'withdrawn').length : applicants.filter(a => a.status === s).length;
+      return `<button type="button" data-s="${s}" class="${s === filter ? 'active' : ''}">${TAB_LABEL[s]}<span>${count}</span></button>`;
+    }).join('');
 
     const sort = $('sortSel').value;
-    const shown = list.filter(a => status === 'all' || a.status === status)
-      .sort((a, b) => sort === 'rate' ? a.rate - b.rate : sort === 'date' ? b.date - a.date : b.match - a.match);
+    let shown = applicants.filter(a => {
+      if (filter === 'all') return a.status !== 'withdrawn';
+      return a.status === filter;
+    });
+    shown.sort((a, b) =>
+      sort === 'rate' ? a.rate - b.rate :
+      sort === 'date' ? b.createdAt - a.createdAt :
+      /* match placeholder → fall back to newest */ b.createdAt - a.createdAt
+    );
 
+    if (!shown.length) {
+      $('applicantList').innerHTML = `<div class="empty-state"><i class="fas fa-user-friends"></i>No applicants in this list yet.</div>`;
+      return;
+    }
+
+    const questions = job.screeningQuestions || [];
     $('applicantList').innerHTML = shown.map(a => {
-      const va = vaById(a.vaId);
-      const i = client.applicants.indexOf(a);
-      const st = STATUS[a.status];
-      const questions = (jobById(jobId) || { screening: ['Screening question 1', 'Screening question 2'] }).screening;
+      const st = STATUS[a.status] || { label: a.status, pill: 'pending' };
+      const name = `${a.vaFirstName || ''} ${a.vaLastName || ''}`.trim() || 'VA';
       return `
         <div class="item-card${a.status === 'rejected' ? ' dim' : ''}">
           <div class="item-head">
-            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+            <div class="job-logo" style="background:rgba(79,70,229,0.08); width:48px; height:48px;"><i class="fas fa-user" style="color:var(--primary);"></i></div>
             <div class="grow">
-              <h3><a href="va-profile">${esc(va.name)}</a> ${va.rising ? '<span class="feat-badge rising"><i class="fas fa-seedling"></i> Rising Talent</span>' : ''}</h3>
-              <p>${esc(va.title)} · ${esc(va.location || '')} · ${va.reviews ? `${va.rating.toFixed(1)}★ (${va.reviews})` : 'New'} · Applied ${fmtDay(a.date)}</p>
-              <div class="va-badges" style="margin:0.5rem 0 0;">
-                ${va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''}
-                ${(va.certs || []).map(c => `<span class="feat-badge cert"><i class="fas fa-certificate"></i> ${esc(c)}</span>`).join('')}
-                ${va.english ? `<span class="feat-badge" style="background:var(--bg); color:var(--text);">English ${va.english}</span>` : ''}
-              </div>
+              <h3>${esc(name)}</h3>
+              <p>${esc(a.vaTitle || a.vaSkill || 'VA')}${a.vaCity ? ' · ' + esc(a.vaCity) : ''} · Applied ${fmtDay(a.createdAt)}</p>
             </div>
-            <div style="text-align:right;">
-              <div class="match-score-ring" style="--pct:${a.match}; width:56px; height:56px; font-size:0.875rem; margin:0 0 0.375rem auto;"><span>${a.match}%</span></div>
-              <span class="status-pill ${st.pill}">${st.label}</span>
-            </div>
+            <span class="status-pill ${st.pill}">${st.label}</span>
           </div>
           <div class="item-meta">
             <span>Proposed <strong>$${a.rate}/hr</strong></span>
-            <span>Works <strong>${(va.shifts || []).map(s => SHIFT_LABELS[s]?.label.replace(' hours', '')).join(', ') || '—'}</strong></span>
+            ${a.canStart ? `<span>Can start <strong>${esc(a.canStart)}</strong></span>` : ''}
+            ${a.shiftOk ? '<span><i class="fas fa-check-circle" style="color:var(--success);"></i> Works your hours</span>' : ''}
+            ${a.openToTrial ? '<span><i class="fas fa-flask" style="color:var(--success);"></i> Open to trial</span>' : ''}
           </div>
           <p class="item-quote">${esc(a.cover)}</p>
-          <details style="margin-top:0.75rem; font-size:0.85rem;">
+          ${questions.length ? `<details style="margin-top:0.75rem; font-size:0.85rem;">
             <summary style="cursor:pointer; color:var(--primary); font-weight:600;">Screening answers</summary>
-            ${questions.map((q, qi) => `<p style="margin-top:0.5rem;"><strong style="color:var(--dark);">${esc(q)}</strong><br><span style="color:var(--text-light);">${esc(a.answers?.[qi] || '—')}</span></p>`).join('')}
-          </details>
-          <div class="trial-form inline-panel" data-trial-form="${i}" hidden>
-            <strong style="font-size:0.875rem; color:var(--dark);"><i class="fas fa-flask" style="color:var(--success);"></i> Offer a paid trial to ${esc(va.name.split(' ')[0])}</strong>
-            <div class="form-row-2" style="margin-top:0.75rem;">
-              <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Days</label><select class="form-control" data-f="days"><option>1</option><option>2</option><option selected>3</option></select></div>
-              <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Hours / day</label><select class="form-control" data-f="hours"><option>2</option><option selected>4</option><option>8</option></select></div>
-            </div>
-            <div class="form-group" style="margin-bottom:0.5rem;"><label class="form-label">Fixed scope</label><textarea class="form-control form-textarea" data-f="scope" style="min-height:70px;" placeholder="e.g. Clean up my inbox and book 3 meetings"></textarea></div>
-            <div class="calc-line"><span>Escrow amount</span><strong data-f="cost">${money(3 * 4 * a.rate)}</strong></div>
-            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;"><button class="btn btn-primary btn-sm" data-act="sendTrial" data-i="${i}"><i class="fas fa-lock"></i> Fund escrow &amp; send offer</button><button class="btn btn-ghost btn-sm" data-act="cancelTrial" data-i="${i}">Cancel</button></div>
-          </div>
+            ${questions.map((q, qi) => `<p style="margin-top:0.5rem;"><strong style="color:var(--dark);">${esc(q)}</strong><br><span style="color:var(--text-light);">${esc((a.answers && a.answers[qi]) || '—')}</span></p>`).join('')}
+          </details>` : ''}
           <div class="item-actions">
-            ${a.status === 'new' ? `<button class="btn btn-outline-primary btn-sm" data-act="shortlist" data-i="${i}"><i class="fas fa-star"></i> Shortlist</button>` : ''}
-            ${['new', 'shortlisted'].includes(a.status) ? `<button class="btn btn-primary btn-sm" data-act="trial" data-i="${i}"><i class="fas fa-flask"></i> Offer paid trial</button>` : ''}
-            ${['shortlisted', 'trial'].includes(a.status) ? `<button class="btn btn-outline-primary btn-sm" data-act="hire" data-i="${i}"><i class="fas fa-handshake"></i> Hire</button>` : ''}
-            <a href="calendar?va=${a.vaId}&job=${jobId}&schedule=1" class="btn btn-ghost btn-sm"><i class="fas fa-calendar-plus"></i> Interview</a>
-            <a href="messages?as=client&to=${a.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
-            <button class="btn btn-ghost btn-sm" data-act="favorite" data-i="${i}" title="Save to Talent Pool"><i class="fas fa-star" style="color:${(client.favorites || []).includes(a.vaId) ? 'var(--accent)' : 'var(--text-light)'};"></i></button>
-            ${['new', 'shortlisted'].includes(a.status) ? `<button class="btn btn-ghost btn-sm" data-act="reject" data-i="${i}" style="color:var(--danger);"><i class="fas fa-times"></i> Decline</button>` : ''}
-            ${a.status === 'rejected' ? `<button class="btn btn-ghost btn-sm" data-act="undo" data-i="${i}"><i class="fas fa-undo"></i> Undo</button>` : ''}
+            ${a.status === 'submitted' ? `<button class="btn btn-outline-primary btn-sm" data-act="viewed" data-id="${a.id}"><i class="fas fa-eye"></i> Mark viewed</button>` : ''}
+            ${['submitted', 'viewed'].includes(a.status) ? `<button class="btn btn-primary btn-sm" data-act="interview" data-id="${a.id}"><i class="fas fa-video"></i> Move to interview</button>` : ''}
+            ${['submitted', 'viewed', 'interview'].includes(a.status) ? `<button class="btn btn-outline-primary btn-sm" data-act="hired" data-id="${a.id}"><i class="fas fa-handshake"></i> Mark hired</button>` : ''}
+            <button class="btn btn-ghost btn-sm" data-act="message" data-va="${a.vaId}"><i class="fas fa-comment"></i> Message</button>
+            ${['submitted', 'viewed', 'interview'].includes(a.status) ? `<button class="btn btn-ghost btn-sm" data-act="rejected" data-id="${a.id}" style="color:var(--danger);"><i class="fas fa-times"></i> Decline</button>` : ''}
+            ${a.status === 'rejected' ? `<button class="btn btn-ghost btn-sm" data-act="submitted" data-id="${a.id}"><i class="fas fa-undo"></i> Undo</button>` : ''}
           </div>
         </div>`;
-    }).join('') || `<div class="empty-state"><i class="fas fa-user-friends"></i>No applicants in this list yet.<br><a href="ai-match" style="color:var(--primary); font-weight:600;">Use AI Match to invite VAs</a></div>`;
+    }).join('');
   }
 
-  $('statusTabs').addEventListener('click', e => {
-    const b = e.target.closest('[data-s]');
-    if (b) { status = b.dataset.s; render(); }
-  });
-
-  $('applicantList').addEventListener('input', e => {
-    const form = e.target.closest('[data-trial-form]');
-    if (!form) return;
-    const a = client.applicants[Number(form.dataset.trialForm)];
-    const f = name => form.querySelector(`[data-f="${name}"]`);
-    f('cost').textContent = money(Number(f('days').value) * Number(f('hours').value) * a.rate);
-  });
-
-  $('applicantList').addEventListener('click', e => {
+  async function onAction(e) {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
-    const i = Number(btn.dataset.i);
-    const a = client.applicants[i];
-    const va = vaById(a.vaId);
-    const form = document.querySelector(`[data-trial-form="${i}"]`);
-    switch (btn.dataset.act) {
-      case 'shortlist': a.status = 'shortlisted'; showToast(`${va.name} shortlisted`); break;
-      case 'reject': a.status = 'rejected'; showToast(`${va.name} will get a polite "not this time" message`); break;
-      case 'undo': a.status = 'new'; break;
-      case 'trial': form.hidden = false; form.querySelector('textarea').focus(); return;
-      case 'cancelTrial': form.hidden = true; return;
-      case 'sendTrial': {
-        const f = name => form.querySelector(`[data-f="${name}"]`);
-        const scope = f('scope').value.trim();
-        if (!scope) { f('scope').style.borderColor = 'var(--danger)'; f('scope').focus(); return; }
-        a.status = 'trial';
-        client.trials.unshift({ id: 't' + Date.now(), vaId: a.vaId, role: client.jobs.find(j => j.id === jobId).title, days: Number(f('days').value), hours: Number(f('hours').value), rate: a.rate, scope, status: 'pending-accept' });
-        showToast(`Trial offer sent to ${va.name}. Escrow funded: ${f('cost').textContent}`);
-        break;
-      }
-      case 'hire':
-        a.status = 'hired';
-        if (!client.hires.some(h => h.vaId === a.vaId)) client.hires.unshift({ vaId: a.vaId, role: client.jobs.find(j => j.id === jobId).title, rate: a.rate, start: Date.now(), hoursWeek: 0 });
-        showToast(`${va.name} hired! The 30-day Replacement Guarantee starts today.`);
-        break;
-      case 'favorite':
-        client.favorites ||= [];
-        if (client.favorites.includes(a.vaId)) { client.favorites = client.favorites.filter(x => x !== a.vaId); showToast(`${va.name} removed from Talent Pool`); }
-        else { client.favorites.push(a.vaId); showToast(`${va.name} saved to Talent Pool`); }
-        break;
-    }
-    save();
-    render();
-  });
-
-  // Compare shortlist panel
-  document.getElementById('compareBtn').addEventListener('click', () => {
-    const panel = document.getElementById('compareView');
-    const shown = panel.hidden;
-    panel.hidden = !shown;
-    document.getElementById('compareBtn').innerHTML = shown ? '<i class="fas fa-times"></i> Hide compare' : '<i class="fas fa-balance-scale"></i> Compare shortlist';
-    if (!shown) return;
-    const picked = forJob().filter(a => ['shortlisted', 'trial'].includes(a.status));
-    if (!picked.length) {
-      panel.innerHTML = '<div class="dash-card" style="padding:1rem; margin-bottom:1rem;"><div class="empty-state" style="padding:1.25rem;"><i class="fas fa-balance-scale"></i>Shortlist 2 or more applicants to compare them side by side.</div></div>';
+    const act = btn.dataset.act;
+    if (act === 'message') {
+      // Open (or reuse) a thread with this VA for the current job, then jump to messages.
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/threads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ otherId: btn.dataset.va, jobId }),
+        });
+        const data = await res.json();
+        if (data.ok) location.href = 'messages?thread=' + encodeURIComponent(data.id);
+        else { showToast(data.error || 'Could not open thread.'); btn.disabled = false; }
+      } catch (err) { showToast('Network error.'); btn.disabled = false; }
       return;
     }
-    const row = (label, cells) => `<tr><th style="text-align:left; font-weight:700; color:var(--dark); padding:0.6rem; border-bottom:1px solid var(--border); background:#F8FAFC;">${label}</th>${cells.map(c => `<td style="padding:0.6rem; border-bottom:1px solid var(--border); vertical-align:top;">${c}</td>`).join('')}</tr>`;
-    const header = `<tr><th></th>${picked.map(a => { const v = vaById(a.vaId); return `<th style="padding:0.75rem; text-align:center; background:#F8FAFC; border-bottom:1px solid var(--border);"><img src="https://i.pravatar.cc/60?img=${v.img}" alt="" style="width:40px; height:40px; border-radius:50%;" /><div style="font-weight:700; color:var(--dark); margin-top:0.25rem;">${esc(v.name)}</div></th>`; }).join('')}</tr>`;
-    panel.innerHTML = `<div class="dash-card" style="margin-bottom:1.25rem; padding:1rem;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;"><strong style="color:var(--dark);"><i class="fas fa-balance-scale"></i> Comparing ${picked.length} shortlisted applicants</strong><span style="font-size:0.8125rem; color:var(--text-light);">Shortlist more to add columns</span></div>
-      <div class="table-responsive"><table class="dash-table" style="width:100%;">${header}
-        ${row('Match score', picked.map(a => `<strong style="color:var(--primary); font-size:1rem;">${a.match}%</strong>`))}
-        ${row('Rate', picked.map(a => `<strong>$${a.rate}/hr</strong>`))}
-        ${row('Rating', picked.map(a => { const v = vaById(a.vaId); return v.reviews ? `${(v.rating||0).toFixed(1)}★ <span style="color:var(--text-light);">(${v.reviews})</span>` : 'New'; }))}
-        ${row('Location', picked.map(a => esc(vaById(a.vaId).location || '—')))}
-        ${row('Shifts', picked.map(a => (vaById(a.vaId).shifts || []).map(s => SHIFT_LABELS[s]?.label.replace(' hours','')).join(', ') || '—'))}
-        ${row('English', picked.map(a => esc(vaById(a.vaId).english || '—')))}
-        ${row('Brownout-ready', picked.map(a => vaById(a.vaId).brownout ? '<span style="color:var(--success); font-weight:700;"><i class="fas fa-check"></i></span>' : '<span style="color:var(--text-light);">—</span>'))}
-        ${row('Certifications', picked.map(a => (vaById(a.vaId).certs || []).map(c => esc(c)).join(', ') || '—'))}
-        ${row('Applied', picked.map(a => fmtDay(a.date)))}
-        ${row('Cover note', picked.map(a => `<span style="font-size:0.85rem; color:var(--text-light);">${esc((a.cover || '').slice(0, 160))}${a.cover && a.cover.length > 160 ? '…' : ''}</span>`))}
-      </table></div>
-    </div>`;
-  });
+    // Any other action is an applications PATCH.
+    const id = btn.dataset.id;
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/applications/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: act }),
+      });
+      const data = await res.json();
+      if (!data.ok) { showToast(data.error || 'Update failed.'); btn.disabled = false; return; }
+      const app = applicants.find(a => a.id === id);
+      if (app) app.status = act;
+      render();
+    } catch (err) {
+      showToast('Network error.');
+      btn.disabled = false;
+    }
+  }
 
-  render();
+  load();
 </script>
 </body>
 </html>

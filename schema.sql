@@ -82,3 +82,92 @@ CREATE INDEX IF NOT EXISTS idx_va_portfolio_account_id ON va_portfolio (account_
 ALTER TABLE va_portfolio ADD COLUMN IF NOT EXISTS role         TEXT;
 ALTER TABLE va_portfolio ADD COLUMN IF NOT EXISTS completed_on TEXT;
 ALTER TABLE va_portfolio ADD COLUMN IF NOT EXISTS skills_used  JSONB;
+
+-- ============================================================
+-- Marketplace core: jobs, applications, threads, messages
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id                   TEXT PRIMARY KEY,
+  client_id            TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  title                TEXT NOT NULL,
+  category             TEXT,
+  job_type             TEXT NOT NULL CHECK (job_type IN ('fulltime','parttime','project','contract')),
+  shift                TEXT NOT NULL CHECK (shift IN ('us-east','us-west','uk','au','ph','flex')),
+  description          TEXT NOT NULL,
+  pay_min              NUMERIC(10,2),
+  pay_max              NUMERIC(10,2),
+  experience_level     TEXT,
+  english_level        TEXT,
+  skills               JSONB NOT NULL DEFAULT '[]'::jsonb,
+  screening_questions  JSONB NOT NULL DEFAULT '[]'::jsonb,
+  application_deadline TEXT,
+  start_mode           TEXT CHECK (start_mode IN ('trial','direct')),
+  trial_days           INTEGER,
+  trial_hours          INTEGER,
+  trial_scope          TEXT,
+  company_name         TEXT,
+  status               TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','closed','flagged','removed')),
+  created_at           BIGINT NOT NULL,
+  updated_at           BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_jobs_client_id   ON jobs (client_id);
+CREATE INDEX IF NOT EXISTS idx_jobs_status      ON jobs (status);
+CREATE INDEX IF NOT EXISTS idx_jobs_created_at  ON jobs (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_jobs_shift       ON jobs (shift);
+
+CREATE TABLE IF NOT EXISTS applications (
+  id              TEXT PRIMARY KEY,
+  job_id          TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  va_id           TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  cover           TEXT NOT NULL,
+  rate            NUMERIC(10,2) NOT NULL,
+  can_start       TEXT,
+  answers         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  shift_ok        BOOLEAN NOT NULL DEFAULT FALSE,
+  open_to_trial   BOOLEAN NOT NULL DEFAULT FALSE,
+  attach_profile  BOOLEAN NOT NULL DEFAULT TRUE,
+  status          TEXT NOT NULL DEFAULT 'submitted'
+                    CHECK (status IN ('submitted','viewed','interview','trial','trialing','hired','rejected','withdrawn')),
+  created_at      BIGINT NOT NULL,
+  updated_at      BIGINT NOT NULL
+);
+
+-- One live application per VA per job. Withdrawn applications don't block re-applying.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_applications_unique_active
+  ON applications (job_id, va_id) WHERE status <> 'withdrawn';
+CREATE INDEX IF NOT EXISTS idx_applications_va_id   ON applications (va_id);
+CREATE INDEX IF NOT EXISTS idx_applications_job_id  ON applications (job_id);
+CREATE INDEX IF NOT EXISTS idx_applications_status  ON applications (status);
+
+CREATE TABLE IF NOT EXISTS threads (
+  id               TEXT PRIMARY KEY,
+  client_id        TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  va_id            TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  job_id           TEXT REFERENCES jobs(id) ON DELETE SET NULL,
+  last_message_at  BIGINT NOT NULL,
+  created_at       BIGINT NOT NULL
+);
+
+-- One thread per (client, va, job) combo. job_id NULL means a general thread
+-- not tied to a specific job — those still dedupe per (client, va).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_threads_unique_with_job
+  ON threads (client_id, va_id, job_id) WHERE job_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_threads_unique_no_job
+  ON threads (client_id, va_id) WHERE job_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_threads_client_id ON threads (client_id, last_message_at DESC);
+CREATE INDEX IF NOT EXISTS idx_threads_va_id     ON threads (va_id, last_message_at DESC);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id                 TEXT PRIMARY KEY,
+  thread_id          TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+  sender_id          TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  body               TEXT NOT NULL,
+  off_platform_flag  BOOLEAN NOT NULL DEFAULT FALSE,
+  read_at            BIGINT,
+  created_at         BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_messages_thread_created ON messages (thread_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id      ON messages (sender_id);

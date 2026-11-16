@@ -71,6 +71,7 @@
 
       <!-- FORM -->
       <div class="post-job-card">
+        <div id="authBanner" hidden style="margin-bottom:1.5rem;"></div>
         <!-- Progress -->
         <div class="progress-steps" style="margin-bottom:2rem;">
           <div class="progress-step active">
@@ -96,14 +97,14 @@
 
         <form data-validate>
           <div class="form-group">
-            <label class="form-label">Job Title <span class="form-required">*</span></label>
-            <input type="text" class="form-control" placeholder="e.g., Executive Virtual Assistant" required />
+            <label class="form-label" for="jobTitle">Job Title <span class="form-required">*</span></label>
+            <input id="jobTitle" type="text" class="form-control" placeholder="e.g., Executive Virtual Assistant" required />
             <p class="form-hint">Be specific — "Executive VA for Tech Startup" gets more qualified applicants than "VA Needed"</p>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Job Category <span class="form-required">*</span></label>
-            <select class="form-control" required>
+            <label class="form-label" for="jobCategory">Job Category <span class="form-required">*</span></label>
+            <select id="jobCategory" class="form-control" required>
               <option value="">Select a category</option>
               <option>Virtual Assistant / Admin Support</option>
               <option>Social Media Management</option>
@@ -168,14 +169,15 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Required Skills <span class="form-required">*</span></label>
-            <div class="tag-input-wrap">
-              <span class="input-tag">Calendar Management <button type="button">×</button></span>
-              <span class="input-tag">Email Management <button type="button">×</button></span>
-              <span class="input-tag">CRM <button type="button">×</button></span>
-              <input type="text" placeholder="Type skill and press Enter..." />
-            </div>
-            <p class="form-hint">Press Enter or comma to add a skill</p>
+            <label class="form-label" for="skillsInput">Required Skills <span class="form-required">*</span></label>
+            <input id="skillsInput" type="text" class="form-control" placeholder="Admin, Email Management, CRM, HubSpot" />
+            <p class="form-hint">Separate skills with commas. <span id="skillsCount" style="color:var(--primary); font-weight:600;"></span></p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="screeningQs">Screening Questions</label>
+            <textarea id="screeningQs" class="form-control form-textarea" style="min-height:90px;" placeholder="One question per line, e.g.&#10;Tell us about a time you managed a very busy calendar.&#10;What is your backup plan if there is a brownout during your shift?"></textarea>
+            <p class="form-hint">Up to 10. Each applicant has to answer these.</p>
           </div>
 
           <div class="form-row-2">
@@ -189,8 +191,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">English Proficiency</label>
-              <select class="form-control">
+              <label class="form-label" for="englishLevel">English Proficiency</label>
+              <select id="englishLevel" class="form-control">
                 <option>Any Level</option>
                 <option>Basic</option>
                 <option>Conversational</option>
@@ -251,29 +253,23 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Application Deadline</label>
-            <input type="date" class="form-control" />
+            <label class="form-label" for="appDeadline">Application Deadline</label>
+            <input id="appDeadline" type="date" class="form-control" />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Company / Your Name <span class="form-required">*</span></label>
-            <input type="text" class="form-control" placeholder="Company name or your name" required />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Your Email <span class="form-required">*</span></label>
-            <div class="input-icon-wrap">
-              <i class="fas fa-envelope"></i>
-              <input type="email" class="form-control" placeholder="you@company.com" required />
-            </div>
+            <label class="form-label" for="jobCompany">Company / Your Name <span class="form-required">*</span></label>
+            <input id="jobCompany" type="text" class="form-control" placeholder="Company name or your name" required />
           </div>
 
           <div style="background:rgba(79,70,229,0.04); border:1px solid rgba(79,70,229,0.12); border-radius:var(--radius-lg); padding:1rem; margin-bottom:1.5rem;">
             <label style="display:flex; align-items:flex-start; gap:0.75rem; cursor:pointer;">
-              <input type="checkbox" style="accent-color:var(--primary); margin-top:0.125rem; width:16px; height:16px; flex-shrink:0;" />
+              <input id="postAgree" type="checkbox" style="accent-color:var(--primary); margin-top:0.125rem; width:16px; height:16px; flex-shrink:0;" />
               <span style="font-size:0.875rem; color:var(--text);">I agree to the <a href="terms" style="color:var(--primary); font-weight:600;">Terms of Service</a> and confirm that this is a legitimate remote work opportunity for Filipino virtual assistants.</span>
             </label>
           </div>
+
+          <div class="alert alert-error" id="postErrors" hidden><i class="fas fa-exclamation-circle" style="margin-top:0.2rem;"></i><div id="postErrorList"></div></div>
 
           <div style="display:flex; gap:1rem; flex-wrap:wrap;">
             <button type="submit" class="btn btn-primary btn-lg" style="flex:1;">
@@ -406,16 +402,156 @@
   document.querySelectorAll('input[name="startMode"], #trialDays, #trialHours, #payMin, #payMax').forEach(el => el.addEventListener('input', updateTrial));
   updateTrial();
 
-  /* ---------- Submit ---------- */
-  document.querySelector('form[data-validate]').addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (!validateForm(e.target)) return;
-    if (scanPost().length) {
-      flagsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      showToast('Held for review: please remove the flagged items');
+  /* ---------- Skills input (plain comma-separated) ---------- */
+  const skillsInput = document.getElementById('skillsInput');
+  const skillsCount = document.getElementById('skillsCount');
+
+  function getSkills() {
+    return (skillsInput.value || '')
+      .split(/[,\n]/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .slice(0, 20);
+  }
+  function updateSkillsCount() {
+    const list = getSkills();
+    skillsCount.textContent = list.length ? list.length + ' skill' + (list.length === 1 ? '' : 's') + ' detected' : '';
+  }
+  skillsInput.addEventListener('input', updateSkillsCount);
+  // Enter shouldn't submit the form from this field — easy to hit by accident.
+  skillsInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') e.preventDefault();
+  });
+  updateSkillsCount();
+
+  /* ---------- Auth gate: must be logged-in verified client ---------- */
+  const form      = document.querySelector('form[data-validate]');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const authBanner = document.getElementById('authBanner');
+  let currentUser = null;
+
+  function setBanner(kind, html) {
+    authBanner.hidden = false;
+    authBanner.className = 'alert alert-' + kind;
+    authBanner.innerHTML = html;
+  }
+
+  async function loadMe() {
+    try {
+      const res = await fetch('/api/me');
+      if (res.status !== 200) throw new Error('not signed in');
+      const data = await res.json();
+      currentUser = data.user || null;
+    } catch (e) { currentUser = null; }
+
+    if (!currentUser) {
+      setBanner('warn', '<i class="fas fa-lock" style="margin-top:0.2rem;"></i><div>You need to sign in as a client to post a job. <a href="auth?next=post-job" style="color:var(--primary); font-weight:700; text-decoration:underline;">Sign in or register →</a></div>');
+      submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign in to post';
       return;
     }
-    showToast('Job posted! Matching VAs who work your hours are being notified.');
+    if (currentUser.role !== 'client') {
+      setBanner('warn', '<i class="fas fa-ban" style="margin-top:0.2rem;"></i><div>You\'re signed in as a VA. Switch to a client account to post jobs.</div>');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-ban"></i> Client accounts only';
+      return;
+    }
+    if (!currentUser.verified) {
+      setBanner('warn', '<i class="fas fa-envelope" style="margin-top:0.2rem;"></i><div>Verify your email first — we sent a link to <strong>' + (currentUser.email || '') + '</strong>. <a href="dashboard-client" style="color:var(--primary); font-weight:700; text-decoration:underline;">Resend →</a></div>');
+      submitBtn.innerHTML = '<i class="fas fa-envelope"></i> Verify email to post';
+      return;
+    }
+    // Pre-fill company name for the client.
+    if (currentUser.companyName && !document.getElementById('jobCompany').value) {
+      document.getElementById('jobCompany').value = currentUser.companyName;
+    }
+  }
+  loadMe();
+
+  /* ---------- Submit ---------- */
+  function getRadio(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : '';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!currentUser) { location.href = 'auth?next=post-job'; return; }
+    if (currentUser.role !== 'client') return;
+    if (!currentUser.verified) { location.href = 'dashboard-client'; return; }
+
+    const errorsBox  = document.getElementById('postErrors');
+    const errorsList = document.getElementById('postErrorList');
+    const localErrors = [];
+
+    if (scanPost().length) {
+      localErrors.push('Please remove the items flagged by the safety check above.');
+    }
+    if (!document.getElementById('postAgree').checked) {
+      localErrors.push('Agree to the Terms of Service to continue.');
+    }
+    const skills = getSkills();
+    if (!skills.length) localErrors.push('Add at least one required skill (type them into the Skills field, separated by commas).');
+
+    if (localErrors.length) {
+      errorsBox.hidden = false;
+      errorsList.innerHTML = localErrors.map(x => `<div>${x}</div>`).join('');
+      errorsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const payload = {
+      title:       document.getElementById('jobTitle').value.trim(),
+      category:    document.getElementById('jobCategory').value.trim(),
+      jobType:     getRadio('jobType'),
+      shift:       getRadio('shift'),
+      description: document.getElementById('jobDesc').value.trim(),
+      payMin:      document.getElementById('payMin').value,
+      payMax:      document.getElementById('payMax').value || null,
+      experienceLevel:     document.getElementById('expLevel').value,
+      englishLevel:        document.getElementById('englishLevel').value,
+      applicationDeadline: document.getElementById('appDeadline').value || null,
+      startMode:   getRadio('startMode'),
+      trialDays:   getRadio('startMode') === 'trial' ? Number(document.getElementById('trialDays').value)  : null,
+      trialHours:  getRadio('startMode') === 'trial' ? Number(document.getElementById('trialHours').value) : null,
+      trialScope:  getRadio('startMode') === 'trial' ? document.getElementById('trialScope').value.trim() : null,
+      companyName: document.getElementById('jobCompany').value.trim(),
+      skills,
+      screeningQuestions: document.getElementById('screeningQs').value
+        .split('\n').map(s => s.trim()).filter(Boolean).slice(0, 10),
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting…';
+    try {
+      const res = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        const list = data.errors
+          ? Object.values(data.errors)
+          : [data.error || 'Could not post the job. Please try again.'];
+        errorsBox.hidden = false;
+        errorsList.innerHTML = list.map(x => `<div>${x}</div>`).join('');
+        errorsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-rocket"></i> Post Job for Free';
+        return;
+      }
+      if (data.flagged) {
+        showToast('Posted but held for review: ' + (data.flagReasons || []).join('; '));
+      } else {
+        showToast('Job posted! VAs working your hours will see it first.');
+      }
+      setTimeout(() => { location.href = 'my-jobs'; }, 900);
+    } catch (err) {
+      errorsBox.hidden = false;
+      errorsList.innerHTML = '<div>Network error. Please try again.</div>';
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-rocket"></i> Post Job for Free';
+    }
   });
 </script>
 </body>

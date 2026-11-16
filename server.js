@@ -1064,6 +1064,595 @@ async function handlePortfolio(req, res, urlPath) {
   return false;
 }
 
+// ============================================================
+// Marketplace: jobs, applications, threads/messages
+// ============================================================
+
+const JOB_CATEGORIES = new Set([
+  'Virtual Assistant / Admin Support', 'Social Media Management', 'Bookkeeping / Accounting',
+  'Content Writing / Copywriting', 'Graphic Design', 'Customer Support', 'Web Development',
+  'Video Editing', 'Digital Marketing / SEO', 'Data Entry / Research',
+  'eCommerce / Shopify / Amazon', 'Other',
+]);
+const JOB_TYPES = new Set(['fulltime', 'parttime', 'project', 'contract']);
+const SHIFTS = new Set(['us-east', 'us-west', 'uk', 'au', 'ph', 'flex']);
+const START_MODES = new Set(['trial', 'direct']);
+
+// Server-side scam heuristics — same spirit as post-job.html's client-side scan.
+// If a post trips any of these, we save it with status='flagged' and hide it
+// from the public listing until Trust & Safety reviews it.
+const JOB_SCAM_RULES = [
+  { re: /\b(registration|training|processing|application|membership|starter kit|reservation)\s*fee\b|\bpay\s+(a|an|the)?\s*(fee|deposit)\b|\b(laptop|equipment|security|refundable)\s+deposit\b/i,
+    msg: 'Asks applicants to pay a fee or deposit' },
+  { re: /\b(telegram|whatsapp|signal|viber|wechat)\b/i, msg: 'Moves conversation off-platform' },
+  { re: /\b(send|transfer)\b.{0,20}\b(money|gcash|maya|payment)\b|\bgcash me\b/i, msg: 'Asks applicants to send money' },
+  { re: /\b(crypto|bitcoin|usdt|forex|investment opportunity)\b/i, msg: 'Mentions crypto or investments' },
+  { re: /\b(buy|purchase)\b.{0,25}\b(laptop|equipment|software|kit)\b.{0,25}\b(from us|reimburse)/i, msg: 'Asks applicants to buy equipment from you' },
+];
+
+// Off-platform contact regex for messages & cover letters.
+const OFF_PLATFORM_REGEX = /\b(telegram|whatsapp|viber|signal|wechat|gcash me|pay (you )?outside|outside (the )?(platform|jobseekers)|paypal me|send (me )?(your )?(otp|password|bank))\b/i;
+
+const JOB_COLUMNS = `
+  j.id, j.client_id AS "clientId", j.title, j.category, j.job_type AS "jobType",
+  j.shift, j.description, j.pay_min AS "payMin", j.pay_max AS "payMax",
+  j.experience_level AS "experienceLevel", j.english_level AS "englishLevel",
+  j.skills, j.screening_questions AS "screeningQuestions",
+  j.application_deadline AS "applicationDeadline",
+  j.start_mode AS "startMode", j.trial_days AS "trialDays", j.trial_hours AS "trialHours",
+  j.trial_scope AS "trialScope", j.company_name AS "companyName", j.status,
+  j.created_at AS "createdAt", j.updated_at AS "updatedAt"`;
+
+function normalizeJobRow(row) {
+  // Coerce Postgres numeric → Number so the frontend doesn't have to parse strings.
+  return {
+    ...row,
+    payMin: row.payMin == null ? null : Number(row.payMin),
+    payMax: row.payMax == null ? null : Number(row.payMax),
+    createdAt: Number(row.createdAt),
+    updatedAt: Number(row.updatedAt),
+  };
+}
+
+async function handleJobs(req, res, urlPath) {
+  // POST /api/jobs — client creates a new job
+  if (urlPath === '/api/jobs' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Only clients can post jobs.' });
+    if (!user.verified) return sendJson(res, 403, { ok: false, error: 'Verify your email before posting a job.' });
+    if (!rateLimit('post-job:' + user.id, 10, 60 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many jobs posted in the last hour.' });
+    }
+
+    let body;
+    try { body = JSON.parse(await readBody(req, 64 * 1024)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+
+    const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+    const title       = str(body.title, 150);
+    const category    = str(body.category, 80);
+    const jobType     = str(body.jobType, 20);
+    const shift       = str(body.shift, 20);
+    const description = str(body.description, 8000);
+    const payMin      = body.payMin !== undefined && body.payMin !== '' ? Number(body.payMin) : null;
+    const payMax      = body.payMax !== undefined && body.payMax !== '' ? Number(body.payMax) : null;
+    const experienceLevel     = str(body.experienceLevel, 50) || null;
+    const englishLevel        = str(body.englishLevel, 30) || null;
+    const applicationDeadline = str(body.applicationDeadline, 20) || null;
+    const startMode   = str(body.startMode, 20) || null;
+    const trialDays   = body.trialDays ? Math.max(1, Math.min(14, Number(body.trialDays) | 0)) : null;
+    const trialHours  = body.trialHours ? Math.max(1, Math.min(12, Number(body.trialHours) | 0)) : null;
+    const trialScope  = str(body.trialScope, 2000) || null;
+    const companyName = str(body.companyName, 150) || user.companyName || null;
+
+    const skills = Array.isArray(body.skills)
+      ? body.skills.map(s => String(s || '').trim()).filter(Boolean).slice(0, 20).map(s => s.slice(0, 60))
+      : [];
+    const screeningQuestions = Array.isArray(body.screeningQuestions)
+      ? body.screeningQuestions.map(q => String(q || '').trim()).filter(Boolean).slice(0, 10).map(q => q.slice(0, 400))
+      : [];
+
+    const errors = {};
+    if (!title) errors.title = 'Job title is required.';
+    if (category && !JOB_CATEGORIES.has(category)) errors.category = 'Pick a valid category.';
+    if (!JOB_TYPES.has(jobType)) errors.jobType = 'Pick a job type.';
+    if (!SHIFTS.has(shift)) errors.shift = 'Pick working hours.';
+    if (description.length < 60) errors.description = 'Describe the role in a bit more detail (60+ characters).';
+    if (payMin == null || !isFinite(payMin) || payMin < 0 || payMin > 500) errors.payMin = 'Enter an hourly rate (0–500).';
+    if (payMax != null && (!isFinite(payMax) || payMax < payMin || payMax > 500)) errors.payMax = 'Max rate must be ≥ min and ≤ 500.';
+    if (startMode && !START_MODES.has(startMode)) errors.startMode = 'Invalid start mode.';
+    if (Object.keys(errors).length) return sendJson(res, 400, { ok: false, errors });
+
+    const scam = JOB_SCAM_RULES.filter(r => r.re.test(description)).map(r => r.msg);
+    const status = scam.length ? 'flagged' : 'open';
+    const id = 'job_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+
+    await db.query(
+      `INSERT INTO jobs (id, client_id, title, category, job_type, shift, description,
+         pay_min, pay_max, experience_level, english_level, skills, screening_questions,
+         application_deadline, start_mode, trial_days, trial_hours, trial_scope,
+         company_name, status, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$21)`,
+      [id, user.id, title, category || null, jobType, shift, description,
+       payMin, payMax, experienceLevel, englishLevel,
+       JSON.stringify(skills), JSON.stringify(screeningQuestions),
+       applicationDeadline, startMode, trialDays, trialHours, trialScope,
+       companyName, status, now]
+    );
+    return sendJson(res, 200, { ok: true, id, status, flagged: scam.length > 0, flagReasons: scam });
+  }
+
+  // GET /api/jobs/mine — current client's own jobs (checked before /api/jobs/:id)
+  if (urlPath === '/api/jobs/mine' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    const r = await db.query(
+      `SELECT ${JOB_COLUMNS},
+              (SELECT COUNT(*)::int FROM applications a WHERE a.job_id = j.id AND a.status <> 'withdrawn') AS applicant_count,
+              (SELECT COUNT(*)::int FROM applications a WHERE a.job_id = j.id AND a.status = 'submitted') AS new_count
+         FROM jobs j
+        WHERE j.client_id = $1
+        ORDER BY j.created_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      jobs: r.rows.map(row => ({
+        ...normalizeJobRow(row),
+        applicantCount: row.applicant_count,
+        newCount: row.new_count,
+        applicant_count: undefined, new_count: undefined,
+      })),
+    });
+  }
+
+  // GET /api/jobs — public list with filters
+  if (urlPath === '/api/jobs' && req.method === 'GET') {
+    const url = new URL(req.url, 'http://localhost');
+    const q      = (url.searchParams.get('q')        || '').trim().toLowerCase();
+    const shift  = (url.searchParams.get('shift')    || '').trim();
+    const type   = (url.searchParams.get('type')     || '').trim();
+    const cat    = (url.searchParams.get('category') || '').trim();
+    const page   = Math.max(1, parseInt(url.searchParams.get('page')  || '1', 10) || 1);
+    const limit  = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10) || 20));
+
+    const where = [`j.status = 'open'`];
+    const params = [];
+    if (q) {
+      params.push('%' + q + '%');
+      where.push(`(LOWER(j.title) LIKE $${params.length} OR LOWER(j.description) LIKE $${params.length} OR LOWER(COALESCE(j.company_name,'')) LIKE $${params.length})`);
+    }
+    if (shift && SHIFTS.has(shift))        { params.push(shift); where.push(`j.shift = $${params.length}`); }
+    if (type  && JOB_TYPES.has(type))      { params.push(type);  where.push(`j.job_type = $${params.length}`); }
+    if (cat   && JOB_CATEGORIES.has(cat))  { params.push(cat);   where.push(`j.category = $${params.length}`); }
+
+    const whereSql = where.join(' AND ');
+    const countR = await db.query(`SELECT COUNT(*)::int AS n FROM jobs j WHERE ${whereSql}`, params);
+    const total = countR.rows[0].n;
+
+    params.push(limit);
+    params.push((page - 1) * limit);
+    const listR = await db.query(
+      `SELECT ${JOB_COLUMNS},
+              (SELECT COUNT(*)::int FROM applications a WHERE a.job_id = j.id AND a.status <> 'withdrawn') AS applicant_count,
+              a.verified AS "clientVerified"
+         FROM jobs j JOIN accounts a ON a.id = j.client_id
+        WHERE ${whereSql}
+        ORDER BY j.created_at DESC
+        LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+    return sendJson(res, 200, {
+      ok: true, total, page, limit, pages: Math.max(1, Math.ceil(total / limit)),
+      jobs: listR.rows.map(row => ({
+        ...normalizeJobRow(row),
+        applicantCount: row.applicant_count,
+        applicant_count: undefined,
+      })),
+    });
+  }
+
+  // GET /api/jobs/:id — single job
+  const getMatch = urlPath.match(/^\/api\/jobs\/([a-z0-9_]+)$/);
+  if (getMatch && req.method === 'GET') {
+    const id = getMatch[1];
+    const r = await db.query(
+      `SELECT ${JOB_COLUMNS},
+              (SELECT COUNT(*)::int FROM applications a WHERE a.job_id = j.id AND a.status <> 'withdrawn') AS applicant_count,
+              a.verified AS "clientVerified", a.first_name AS "clientFirstName",
+              a.company_size AS "clientCompanySize", a.created_at AS "clientCreatedAt"
+         FROM jobs j JOIN accounts a ON a.id = j.client_id
+        WHERE j.id = $1`,
+      [id]
+    );
+    const job = r.rows[0];
+    if (!job) return sendJson(res, 404, { ok: false, error: 'Not found' });
+
+    // Non-open jobs are only visible to their owner.
+    if (job.status !== 'open') {
+      const user = await currentUser(req);
+      if (!user || user.id !== job.clientId) return sendJson(res, 404, { ok: false, error: 'Not found' });
+    }
+
+    const out = normalizeJobRow({ ...job, applicantCount: job.applicant_count });
+    delete out.applicant_count;
+    out.clientCreatedAt = Number(out.clientCreatedAt);
+    return sendJson(res, 200, { ok: true, job: out });
+  }
+
+  // PATCH /api/jobs/:id — owner only: { status: 'open' | 'closed' }
+  if (getMatch && req.method === 'PATCH') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const id = getMatch[1];
+    const r = await db.query('SELECT client_id, status FROM jobs WHERE id = $1', [id]);
+    const row = r.rows[0];
+    if (!row || row.client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found' });
+    if (row.status === 'flagged' || row.status === 'removed') {
+      return sendJson(res, 403, { ok: false, error: 'This job is held by Trust & Safety and cannot be reopened.' });
+    }
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const status = String(body.status || '').trim();
+    if (!['open', 'closed'].includes(status)) return sendJson(res, 400, { ok: false, error: 'Invalid status' });
+    await db.query('UPDATE jobs SET status = $1, updated_at = $2 WHERE id = $3', [status, Date.now(), id]);
+    return sendJson(res, 200, { ok: true, status });
+  }
+
+  return false;
+}
+
+// ============================================================
+// Applications: VA applies / lists own; client lists per job / updates status.
+// ============================================================
+
+const APPLICATION_STATUSES = new Set(['submitted', 'viewed', 'interview', 'trial', 'trialing', 'hired', 'rejected', 'withdrawn']);
+
+function applicationRowToJson(row) {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    vaId: row.va_id,
+    cover: row.cover,
+    rate: row.rate == null ? null : Number(row.rate),
+    canStart: row.can_start,
+    answers: Array.isArray(row.answers) ? row.answers : [],
+    shiftOk: !!row.shift_ok,
+    openToTrial: !!row.open_to_trial,
+    attachProfile: !!row.attach_profile,
+    status: row.status,
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+    // Optional joined fields — present on client-facing responses only.
+    vaFirstName: row.va_first_name ?? undefined,
+    vaLastName:  row.va_last_name  ?? undefined,
+    vaCity:      row.va_city       ?? undefined,
+    vaSkill:     row.va_skill      ?? undefined,
+    vaTitle:     row.va_title      ?? undefined,
+    vaYears:     row.va_years      ?? undefined,
+    jobTitle:    row.job_title     ?? undefined,
+    jobCompany:  row.job_company   ?? undefined,
+    jobStatus:   row.job_status    ?? undefined,
+  };
+}
+
+async function handleApplications(req, res, urlPath) {
+  // POST /api/applications — VA applies to a job
+  if (urlPath === '/api/applications' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'Only VAs can apply to jobs.' });
+    if (!user.verified) return sendJson(res, 403, { ok: false, error: 'Verify your email before applying.' });
+    if (!rateLimit('apply:' + user.id, 30, 60 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many applications in the last hour.' });
+    }
+
+    let body;
+    try { body = JSON.parse(await readBody(req, 32 * 1024)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+
+    const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+    const jobId = str(body.jobId, 60);
+    const cover = str(body.cover, 4000);
+    const rate  = Number(body.rate);
+    const canStart = str(body.canStart, 40) || null;
+    const answers = Array.isArray(body.answers)
+      ? body.answers.map(a => String(a || '').trim().slice(0, 2000)).slice(0, 10)
+      : [];
+    const shiftOk = !!body.shiftOk;
+    const openToTrial = !!body.openToTrial;
+    const attachProfile = body.attachProfile !== false;
+
+    const errors = {};
+    if (!jobId) errors.jobId = 'Missing jobId.';
+    if (cover.length < 100) errors.cover = 'Cover letter must be at least 100 characters.';
+    if (!isFinite(rate) || rate < 3 || rate > 500) errors.rate = 'Enter a rate between $3 and $500.';
+    if (OFF_PLATFORM_REGEX.test(cover)) errors.cover = 'Please remove outside contact details (Telegram, WhatsApp, etc.). Keep chats on Jobseekers.ph.';
+    if (Object.keys(errors).length) return sendJson(res, 400, { ok: false, errors });
+
+    const jr = await db.query('SELECT id, client_id, status FROM jobs WHERE id = $1', [jobId]);
+    const job = jr.rows[0];
+    if (!job) return sendJson(res, 404, { ok: false, error: 'Job not found.' });
+    if (job.status !== 'open') return sendJson(res, 409, { ok: false, error: 'This job is no longer open.' });
+    if (job.client_id === user.id) return sendJson(res, 403, { ok: false, error: 'You cannot apply to your own job.' });
+
+    const id = 'app_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    try {
+      await db.query(
+        `INSERT INTO applications (id, job_id, va_id, cover, rate, can_start, answers,
+            shift_ok, open_to_trial, attach_profile, status, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'submitted',$11,$11)`,
+        [id, jobId, user.id, cover, rate, canStart, JSON.stringify(answers),
+         shiftOk, openToTrial, attachProfile, now]
+      );
+    } catch (err) {
+      if (err && err.code === '23505') return sendJson(res, 409, { ok: false, error: 'You already applied to this job.' });
+      throw err;
+    }
+    return sendJson(res, 200, { ok: true, id });
+  }
+
+  // GET /api/applications — list; VA sees own, client sees ?jobId=X
+  if (urlPath === '/api/applications' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const url = new URL(req.url, 'http://localhost');
+    const jobId = (url.searchParams.get('jobId') || '').trim();
+
+    if (user.role === 'va') {
+      const r = await db.query(
+        `SELECT a.*, j.title AS job_title, j.company_name AS job_company, j.status AS job_status
+           FROM applications a JOIN jobs j ON j.id = a.job_id
+          WHERE a.va_id = $1
+          ORDER BY a.created_at DESC`,
+        [user.id]
+      );
+      return sendJson(res, 200, { ok: true, applications: r.rows.map(applicationRowToJson) });
+    }
+
+    // Client flow: must supply jobId and own the job.
+    if (!jobId) return sendJson(res, 400, { ok: false, error: 'Missing jobId.' });
+    const jr = await db.query('SELECT client_id FROM jobs WHERE id = $1', [jobId]);
+    const job = jr.rows[0];
+    if (!job || job.client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+
+    const r = await db.query(
+      `SELECT a.*, acc.first_name AS va_first_name, acc.last_name AS va_last_name,
+              acc.city AS va_city, acc.skill AS va_skill, acc.title AS va_title, acc.years AS va_years
+         FROM applications a JOIN accounts acc ON acc.id = a.va_id
+        WHERE a.job_id = $1
+        ORDER BY a.created_at DESC`,
+      [jobId]
+    );
+    return sendJson(res, 200, { ok: true, applications: r.rows.map(applicationRowToJson) });
+  }
+
+  // PATCH /api/applications/:id — client updates status; VA can only withdraw.
+  const match = urlPath.match(/^\/api\/applications\/([a-z0-9_]+)$/);
+  if (match && req.method === 'PATCH') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const id = match[1];
+
+    const r = await db.query(
+      `SELECT a.*, j.client_id FROM applications a JOIN jobs j ON j.id = a.job_id WHERE a.id = $1`,
+      [id]
+    );
+    const row = r.rows[0];
+    if (!row) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const status = String(body.status || '').trim();
+    if (!APPLICATION_STATUSES.has(status)) return sendJson(res, 400, { ok: false, error: 'Invalid status.' });
+
+    if (user.id === row.va_id) {
+      if (status !== 'withdrawn') return sendJson(res, 403, { ok: false, error: 'VAs can only withdraw.' });
+    } else if (user.id === row.client_id) {
+      if (status === 'withdrawn') return sendJson(res, 403, { ok: false, error: 'Only the VA can withdraw.' });
+    } else {
+      return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    }
+
+    await db.query('UPDATE applications SET status = $1, updated_at = $2 WHERE id = $3', [status, Date.now(), id]);
+    return sendJson(res, 200, { ok: true, status });
+  }
+
+  return false;
+}
+
+// ============================================================
+// Threads & messages: open a thread with another user, read/write messages.
+// Threads are deduped per (client, va, job). job_id may be null for a general
+// thread. Off-platform content is flagged per-message, not blocked.
+// ============================================================
+
+function threadRowToJson(row, viewerId) {
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    vaId: row.va_id,
+    jobId: row.job_id,
+    lastMessageAt: Number(row.last_message_at),
+    createdAt: Number(row.created_at),
+    otherFirstName: row.other_first_name,
+    otherLastName:  row.other_last_name,
+    otherRole:      row.other_role,
+    otherCompany:   row.other_company_name,
+    jobTitle:       row.job_title,
+    unreadCount:    Number(row.unread_count || 0),
+    lastMessage:    row.last_body ? {
+      body: row.last_body,
+      senderId: row.last_sender_id,
+      mine: row.last_sender_id === viewerId,
+      createdAt: Number(row.last_created_at),
+      offPlatform: !!row.last_off_platform,
+    } : null,
+  };
+}
+
+async function handleThreads(req, res, urlPath) {
+  // GET /api/threads — list threads for current user
+  if (urlPath === '/api/threads' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+
+    const r = await db.query(
+      `SELECT t.id, t.client_id, t.va_id, t.job_id, t.last_message_at, t.created_at,
+              other.first_name  AS other_first_name,
+              other.last_name   AS other_last_name,
+              other.role        AS other_role,
+              other.company_name AS other_company_name,
+              j.title           AS job_title,
+              (SELECT COUNT(*)::int FROM messages m
+                 WHERE m.thread_id = t.id AND m.sender_id <> $1 AND m.read_at IS NULL) AS unread_count,
+              lm.body           AS last_body,
+              lm.sender_id      AS last_sender_id,
+              lm.created_at     AS last_created_at,
+              lm.off_platform_flag AS last_off_platform
+         FROM threads t
+         JOIN accounts other ON other.id = (CASE WHEN t.client_id = $1 THEN t.va_id ELSE t.client_id END)
+         LEFT JOIN jobs j ON j.id = t.job_id
+         LEFT JOIN LATERAL (
+           SELECT body, sender_id, created_at, off_platform_flag
+             FROM messages m WHERE m.thread_id = t.id
+             ORDER BY m.created_at DESC LIMIT 1
+         ) lm ON TRUE
+        WHERE t.client_id = $1 OR t.va_id = $1
+        ORDER BY t.last_message_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, { ok: true, threads: r.rows.map(row => threadRowToJson(row, user.id)) });
+  }
+
+  // POST /api/threads — open (or reuse) a thread with another user
+  if (urlPath === '/api/threads' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const otherId = String(body.otherId || '').trim();
+    const jobId   = body.jobId ? String(body.jobId).trim() : null;
+    if (!otherId) return sendJson(res, 400, { ok: false, error: 'Missing otherId.' });
+    if (otherId === user.id) return sendJson(res, 400, { ok: false, error: 'You cannot message yourself.' });
+
+    const otherR = await db.query('SELECT id, role FROM accounts WHERE id = $1', [otherId]);
+    const other = otherR.rows[0];
+    if (!other) return sendJson(res, 404, { ok: false, error: 'User not found.' });
+    if (other.role === user.role) return sendJson(res, 400, { ok: false, error: 'Clients can only message VAs and vice-versa.' });
+
+    const clientId = user.role === 'client' ? user.id : other.id;
+    const vaId     = user.role === 'va'     ? user.id : other.id;
+
+    // If jobId provided, validate it belongs to the client in this pair.
+    if (jobId) {
+      const jr = await db.query('SELECT id FROM jobs WHERE id = $1 AND client_id = $2', [jobId, clientId]);
+      if (!jr.rows[0]) return sendJson(res, 400, { ok: false, error: 'Invalid jobId for this pair.' });
+    }
+
+    // Find-or-create. Separate unique indexes for job NULL and NOT NULL.
+    let existing;
+    if (jobId) {
+      existing = await db.query('SELECT id FROM threads WHERE client_id = $1 AND va_id = $2 AND job_id = $3', [clientId, vaId, jobId]);
+    } else {
+      existing = await db.query('SELECT id FROM threads WHERE client_id = $1 AND va_id = $2 AND job_id IS NULL', [clientId, vaId]);
+    }
+    if (existing.rows[0]) return sendJson(res, 200, { ok: true, id: existing.rows[0].id, created: false });
+
+    const id = 'th_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      'INSERT INTO threads (id, client_id, va_id, job_id, last_message_at, created_at) VALUES ($1,$2,$3,$4,$5,$5)',
+      [id, clientId, vaId, jobId, now]
+    );
+    return sendJson(res, 200, { ok: true, id, created: true });
+  }
+
+  // GET /api/threads/:id/messages?after=TIMESTAMP — list messages in a thread
+  const msgListMatch = urlPath.match(/^\/api\/threads\/([a-z0-9_]+)\/messages$/);
+  if (msgListMatch && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const threadId = msgListMatch[1];
+
+    const tr = await db.query('SELECT client_id, va_id, job_id FROM threads WHERE id = $1', [threadId]);
+    const t = tr.rows[0];
+    if (!t || (t.client_id !== user.id && t.va_id !== user.id)) {
+      return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    }
+
+    const url = new URL(req.url, 'http://localhost');
+    const after = Number(url.searchParams.get('after') || 0);
+    const mr = await db.query(
+      `SELECT id, sender_id, body, off_platform_flag, read_at, created_at
+         FROM messages WHERE thread_id = $1 AND created_at > $2
+         ORDER BY created_at ASC LIMIT 500`,
+      [threadId, after]
+    );
+
+    // Mark the other party's messages as read.
+    await db.query(
+      'UPDATE messages SET read_at = $1 WHERE thread_id = $2 AND sender_id <> $3 AND read_at IS NULL',
+      [Date.now(), threadId, user.id]
+    );
+
+    return sendJson(res, 200, {
+      ok: true,
+      thread: { id: threadId, clientId: t.client_id, vaId: t.va_id, jobId: t.job_id },
+      messages: mr.rows.map(m => ({
+        id: m.id,
+        senderId: m.sender_id,
+        mine: m.sender_id === user.id,
+        body: m.body,
+        offPlatform: !!m.off_platform_flag,
+        readAt: m.read_at == null ? null : Number(m.read_at),
+        createdAt: Number(m.created_at),
+      })),
+    });
+  }
+
+  // POST /api/threads/:id/messages — send a message
+  if (msgListMatch && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const threadId = msgListMatch[1];
+
+    const tr = await db.query('SELECT client_id, va_id FROM threads WHERE id = $1', [threadId]);
+    const t = tr.rows[0];
+    if (!t || (t.client_id !== user.id && t.va_id !== user.id)) {
+      return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    }
+
+    if (!rateLimit('msg:' + user.id, 60, 5 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many messages. Slow down a bit.' });
+    }
+
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const text = String(body.body || '').trim().slice(0, 4000);
+    if (!text) return sendJson(res, 400, { ok: false, error: 'Message is empty.' });
+
+    const offPlatform = OFF_PLATFORM_REGEX.test(text);
+    const id = 'msg_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      'INSERT INTO messages (id, thread_id, sender_id, body, off_platform_flag, created_at) VALUES ($1,$2,$3,$4,$5,$6)',
+      [id, threadId, user.id, text, offPlatform, now]
+    );
+    await db.query('UPDATE threads SET last_message_at = $1 WHERE id = $2', [now, threadId]);
+    return sendJson(res, 200, {
+      ok: true,
+      message: { id, senderId: user.id, mine: true, body: text, offPlatform, readAt: null, createdAt: now },
+    });
+  }
+
+  return false;
+}
+
 // Speed test endpoints for setup-check.html
 const SPEED_CHUNK = crypto.randomBytes(1024 * 1024); // random so it can't be compressed
 const MAX_TEST_BYTES = 50 * 1024 * 1024;
@@ -1127,6 +1716,12 @@ const server = http.createServer(async (req, res) => {
       if (handledCerts) return;
       const handledPortfolio = await handlePortfolio(req, res, urlPath);
       if (handledPortfolio) return;
+      const handledJobs = await handleJobs(req, res, urlPath);
+      if (handledJobs) return;
+      const handledApps = await handleApplications(req, res, urlPath);
+      if (handledApps) return;
+      const handledThreads = await handleThreads(req, res, urlPath);
+      if (handledThreads) return;
       const handled = await handleAuth(req, res, urlPath);
       if (handled) return;
     } catch (err) {
