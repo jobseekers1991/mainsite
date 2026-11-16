@@ -107,10 +107,12 @@ function renderDashNav() {
   const role = DASH_ROLES[roleKey] || DASH_ROLES.va;
   const active = sidebar.dataset.active;
   const badges = dashBadges(roleKey);
+  // Nav items that should open in a new tab (client's post-job flow, VA's browse-jobs).
+  const NEW_TAB = new Set(['post-job', 'browse-jobs']);
   nav.innerHTML = `
       ${role.nav.map(([key, href, icon, label, badge]) => href === undefined
         ? `<div class="dash-nav-section">${key}</div>`
-        : `<a href="${href}" class="dash-nav-item${key === active ? ' active' : ''}"><i class="fas ${icon}"></i> ${label}${badge && badges[badge] ? ` <span class="dash-nav-badge">${badges[badge]}</span>` : ''}</a>`).join('')}
+        : `<a href="${href}"${NEW_TAB.has(href) ? ' target="_blank" rel="noopener"' : ''} class="dash-nav-item${key === active ? ' active' : ''}"><i class="fas ${icon}"></i> ${label}${badge && badges[badge] ? ` <span class="dash-nav-badge">${badges[badge]}</span>` : ''}</a>`).join('')}
       <div class="dash-nav-divider"></div>
       ${roleKey === 'admin' ? '' : '<a href="#" class="dash-nav-item"><i class="fas fa-cog"></i> Settings</a>'}
       <a href="auth" class="dash-nav-item" style="color:rgba(239,68,68,0.7);"><i class="fas fa-sign-out-alt"></i> Log Out</a>`;
