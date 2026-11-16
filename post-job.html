@@ -445,8 +445,75 @@
     if (currentUser.companyName && !document.getElementById('jobCompany').value) {
       document.getElementById('jobCompany').value = currentUser.companyName;
     }
+    // If ?id=jobId is present, load the existing job into edit mode.
+    const editId = new URLSearchParams(location.search).get('id');
+    if (editId) await loadJobForEdit(editId);
   }
   loadMe();
+
+  /* ---------- Edit mode ---------- */
+  let editingJobId = null;
+
+  async function loadJobForEdit(id) {
+    try {
+      const res = await fetch('/api/jobs/' + encodeURIComponent(id));
+      if (res.status !== 200) throw new Error('not found');
+      const data = await res.json();
+      if (!data.ok || !data.job) throw new Error('not found');
+      const job = data.job;
+      if (job.clientId !== currentUser.id) {
+        setBanner('error', '<i class="fas fa-ban"></i><div>You can only edit your own jobs.</div>');
+        submitBtn.disabled = true;
+        return;
+      }
+      editingJobId = id;
+
+      // Pre-fill scalar fields.
+      document.getElementById('jobTitle').value    = job.title || '';
+      document.getElementById('jobCategory').value = job.category || '';
+      document.getElementById('jobDesc').value     = job.description || '';
+      document.getElementById('payMin').value      = job.payMin == null ? '' : job.payMin;
+      document.getElementById('payMax').value      = job.payMax == null ? '' : job.payMax;
+      document.getElementById('expLevel').value    = job.experienceLevel || '';
+      document.getElementById('englishLevel').value = job.englishLevel || 'Any Level';
+      document.getElementById('appDeadline').value = job.applicationDeadline || '';
+      document.getElementById('jobCompany').value  = job.companyName || currentUser.companyName || '';
+      document.getElementById('screeningQs').value = (job.screeningQuestions || []).join('\n');
+      document.getElementById('skillsInput').value = (job.skills || []).join(', ');
+      updateSkillsCount();
+
+      // Pre-fill radio groups.
+      const pickRadio = (name, value) => {
+        const el = document.querySelector(`input[name="${name}"][value="${value}"]`);
+        if (el) el.checked = true;
+      };
+      if (job.jobType)   pickRadio('jobType', job.jobType);
+      if (job.shift)     pickRadio('shift', job.shift);
+      if (job.startMode) pickRadio('startMode', job.startMode);
+
+      if (job.startMode === 'trial') {
+        if (job.trialDays)  document.getElementById('trialDays').value  = job.trialDays;
+        if (job.trialHours) document.getElementById('trialHours').value = job.trialHours;
+        if (job.trialScope) document.getElementById('trialScope').value = job.trialScope;
+      }
+      // Agreement doesn't need to be re-checked on edit of an already-posted job.
+      document.getElementById('postAgree').checked = true;
+
+      // Flip the UI into edit mode.
+      document.title = 'Edit Job — Jobseekers.ph';
+      const pageH1 = document.querySelector('.page-hero h1');
+      if (pageH1) pageH1.textContent = 'Edit your job';
+      const h2 = document.querySelector('.post-job-card h2');
+      if (h2) h2.textContent = 'Edit Job';
+      submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+      // Refresh pending UI calculators that depend on values we just set.
+      if (typeof scanPost === 'function') scanPost();
+      if (typeof updateTrial === 'function') updateTrial();
+    } catch (err) {
+      setBanner('error', '<i class="fas fa-exclamation-circle"></i><div>Could not load this job for editing. It may have been removed. <a href="my-jobs" style="color:var(--primary); font-weight:700;">Back to My Jobs</a></div>');
+      submitBtn.disabled = true;
+    }
+  }
 
   /* ---------- Submit ---------- */
   function getRadio(name) {
@@ -501,11 +568,17 @@
         .split('\n').map(s => s.trim()).filter(Boolean).slice(0, 10),
     };
 
+    const isEdit     = !!editingJobId;
+    const url        = isEdit ? '/api/jobs/' + encodeURIComponent(editingJobId) : '/api/jobs';
+    const method     = isEdit ? 'PATCH' : 'POST';
+    const idleLabel  = isEdit ? '<i class="fas fa-save"></i> Save Changes' : '<i class="fas fa-rocket"></i> Post Job for Free';
+    const busyLabel  = isEdit ? '<i class="fas fa-spinner fa-spin"></i> Saving…' : '<i class="fas fa-spinner fa-spin"></i> Posting…';
+
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting…';
+    submitBtn.innerHTML = busyLabel;
     try {
-      const res = await fetch('/api/jobs', {
-        method: 'POST',
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -513,25 +586,25 @@
       if (!data.ok) {
         const list = data.errors
           ? Object.values(data.errors)
-          : [data.error || 'Could not post the job. Please try again.'];
+          : [data.error || (isEdit ? 'Could not save the job.' : 'Could not post the job. Please try again.')];
         errorsBox.hidden = false;
         errorsList.innerHTML = list.map(x => `<div>${x}</div>`).join('');
         errorsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-rocket"></i> Post Job for Free';
+        submitBtn.innerHTML = idleLabel;
         return;
       }
       if (data.flagged) {
-        showToast('Posted but held for review: ' + (data.flagReasons || []).join('; '));
+        showToast((isEdit ? 'Saved but held for review: ' : 'Posted but held for review: ') + (data.flagReasons || []).join('; '));
       } else {
-        showToast('Job posted! VAs working your hours will see it first.');
+        showToast(isEdit ? 'Changes saved.' : 'Job posted! VAs working your hours will see it first.');
       }
       setTimeout(() => { location.href = 'my-jobs'; }, 900);
     } catch (err) {
       errorsBox.hidden = false;
       errorsList.innerHTML = '<div>Network error. Please try again.</div>';
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-rocket"></i> Post Job for Free';
+      submitBtn.innerHTML = idleLabel;
     }
   });
 </script>

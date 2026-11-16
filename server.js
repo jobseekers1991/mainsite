@@ -1283,7 +1283,9 @@ async function handleJobs(req, res, urlPath) {
     return sendJson(res, 200, { ok: true, job: out });
   }
 
-  // PATCH /api/jobs/:id — owner only: { status: 'open' | 'closed' }
+  // PATCH /api/jobs/:id — owner only. Accepts either:
+  //  { status: 'open' | 'closed' }  — quick open/close
+  //  { ...any job fields... }       — full edit; re-runs validation + scam check
   if (getMatch && req.method === 'PATCH') {
     const user = await currentUser(req);
     if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
@@ -1291,15 +1293,81 @@ async function handleJobs(req, res, urlPath) {
     const r = await db.query('SELECT client_id, status FROM jobs WHERE id = $1', [id]);
     const row = r.rows[0];
     if (!row || row.client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found' });
-    if (row.status === 'flagged' || row.status === 'removed') {
-      return sendJson(res, 403, { ok: false, error: 'This job is held by Trust & Safety and cannot be reopened.' });
+    if (row.status === 'removed') {
+      return sendJson(res, 403, { ok: false, error: 'This job has been removed and cannot be edited.' });
     }
+
     let body;
-    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
-    const status = String(body.status || '').trim();
-    if (!['open', 'closed'].includes(status)) return sendJson(res, 400, { ok: false, error: 'Invalid status' });
-    await db.query('UPDATE jobs SET status = $1, updated_at = $2 WHERE id = $3', [status, Date.now(), id]);
-    return sendJson(res, 200, { ok: true, status });
+    try { body = JSON.parse(await readBody(req, 64 * 1024)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+
+    // Status-only quick toggle (keeps existing clients working).
+    const keys = Object.keys(body);
+    if (keys.length === 1 && keys[0] === 'status') {
+      const status = String(body.status || '').trim();
+      if (!['open', 'closed'].includes(status)) return sendJson(res, 400, { ok: false, error: 'Invalid status' });
+      if (row.status === 'flagged') {
+        return sendJson(res, 403, { ok: false, error: 'This job is held by Trust & Safety and cannot be reopened.' });
+      }
+      await db.query('UPDATE jobs SET status = $1, updated_at = $2 WHERE id = $3', [status, Date.now(), id]);
+      return sendJson(res, 200, { ok: true, status });
+    }
+
+    // Full edit path — reuse the same validation as POST.
+    const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+    const title       = str(body.title, 150);
+    const category    = str(body.category, 80);
+    const jobType     = str(body.jobType, 20);
+    const shift       = str(body.shift, 20);
+    const description = str(body.description, 8000);
+    const payMin      = body.payMin !== undefined && body.payMin !== '' ? Number(body.payMin) : null;
+    const payMax      = body.payMax !== undefined && body.payMax !== '' ? Number(body.payMax) : null;
+    const experienceLevel     = str(body.experienceLevel, 50) || null;
+    const englishLevel        = str(body.englishLevel, 30) || null;
+    const applicationDeadline = str(body.applicationDeadline, 20) || null;
+    const startMode   = str(body.startMode, 20) || null;
+    const trialDays   = body.trialDays ? Math.max(1, Math.min(14, Number(body.trialDays) | 0)) : null;
+    const trialHours  = body.trialHours ? Math.max(1, Math.min(12, Number(body.trialHours) | 0)) : null;
+    const trialScope  = str(body.trialScope, 2000) || null;
+    const companyName = str(body.companyName, 150) || user.companyName || null;
+
+    const skills = Array.isArray(body.skills)
+      ? body.skills.map(s => String(s || '').trim()).filter(Boolean).slice(0, 20).map(s => s.slice(0, 60))
+      : [];
+    const screeningQuestions = Array.isArray(body.screeningQuestions)
+      ? body.screeningQuestions.map(q => String(q || '').trim()).filter(Boolean).slice(0, 10).map(q => q.slice(0, 400))
+      : [];
+
+    const errors = {};
+    if (!title) errors.title = 'Job title is required.';
+    if (category && !JOB_CATEGORIES.has(category)) errors.category = 'Pick a valid category.';
+    if (!JOB_TYPES.has(jobType)) errors.jobType = 'Pick a job type.';
+    if (!SHIFTS.has(shift)) errors.shift = 'Pick working hours.';
+    if (description.length < 60) errors.description = 'Describe the role in a bit more detail (60+ characters).';
+    if (payMin == null || !isFinite(payMin) || payMin < 0 || payMin > 500) errors.payMin = 'Enter an hourly rate (0–500).';
+    if (payMax != null && (!isFinite(payMax) || payMax < payMin || payMax > 500)) errors.payMax = 'Max rate must be ≥ min and ≤ 500.';
+    if (startMode && !START_MODES.has(startMode)) errors.startMode = 'Invalid start mode.';
+    if (Object.keys(errors).length) return sendJson(res, 400, { ok: false, errors });
+
+    const scam = JOB_SCAM_RULES.filter(r => r.re.test(description)).map(r => r.msg);
+    // A clean edit lifts a prior auto-flag; a dirty edit re-flags.
+    const newStatus = scam.length ? 'flagged' : (row.status === 'flagged' ? 'open' : row.status);
+
+    await db.query(
+      `UPDATE jobs SET
+         title = $1, category = $2, job_type = $3, shift = $4, description = $5,
+         pay_min = $6, pay_max = $7, experience_level = $8, english_level = $9,
+         skills = $10, screening_questions = $11, application_deadline = $12,
+         start_mode = $13, trial_days = $14, trial_hours = $15, trial_scope = $16,
+         company_name = $17, status = $18, updated_at = $19
+       WHERE id = $20`,
+      [title, category || null, jobType, shift, description,
+       payMin, payMax, experienceLevel, englishLevel,
+       JSON.stringify(skills), JSON.stringify(screeningQuestions),
+       applicationDeadline, startMode, trialDays, trialHours, trialScope,
+       companyName, newStatus, Date.now(), id]
+    );
+    return sendJson(res, 200, { ok: true, id, status: newStatus, flagged: scam.length > 0, flagReasons: scam });
   }
 
   return false;
