@@ -321,55 +321,51 @@
             </div>
           </div>
 
-          <!-- Recommended Jobs -->
+          <!-- Recommended Jobs (fetched from /api/jobs) -->
           <div class="dash-card">
             <div class="dash-card-header">
-              <span class="dash-card-title">Recommended for You</span>
+              <span class="dash-card-title">Latest open jobs</span>
               <a href="browse-jobs" class="dash-card-link" target="_blank" rel="noopener">Browse All <i class="fas fa-arrow-right" style="font-size:0.75rem;"></i></a>
             </div>
-            <div class="dash-card-body">
-              <div class="rec-job">
-                <div class="rec-job-emoji">🚀</div>
-                <div class="rec-job-body">
-                  <div class="rec-job-title">Executive VA – Tech Startup</div>
-                  <div class="rec-job-co">Carter Digital · Full-Time · <span class="badge badge-new" style="font-size:0.65rem;">New</span></div>
-                </div>
-                <div class="rec-job-rate">$10/hr</div>
-              </div>
-              <div class="rec-job">
-                <div class="rec-job-emoji">📱</div>
-                <div class="rec-job-body">
-                  <div class="rec-job-title">Social Media Manager</div>
-                  <div class="rec-job-co">ViralBrand PH · Part-Time</div>
-                </div>
-                <div class="rec-job-rate">$7/hr</div>
-              </div>
-              <div class="rec-job">
-                <div class="rec-job-emoji">📧</div>
-                <div class="rec-job-body">
-                  <div class="rec-job-title">Email &amp; Calendar Manager</div>
-                  <div class="rec-job-co">Bright Ideas Co. · Full-Time</div>
-                </div>
-                <div class="rec-job-rate">$9/hr</div>
-              </div>
-              <div class="rec-job">
-                <div class="rec-job-emoji">🛍️</div>
-                <div class="rec-job-body">
-                  <div class="rec-job-title">Shopify VA – Product Listings</div>
-                  <div class="rec-job-co">CleanEarth Store · Project-Based</div>
-                </div>
-                <div class="rec-job-rate">$8/hr</div>
-              </div>
-              <div class="rec-job">
-                <div class="rec-job-emoji">📊</div>
-                <div class="rec-job-body">
-                  <div class="rec-job-title">Data Entry &amp; Research VA</div>
-                  <div class="rec-job-co">Alpha Analytics · Part-Time</div>
-                </div>
-                <div class="rec-job-rate">$6/hr</div>
-              </div>
+            <div class="dash-card-body" id="recentJobsBody">
+              <p style="padding:1.5rem; text-align:center; color:var(--text-light); font-size:0.875rem;"><i class="fas fa-spinner fa-spin"></i> Loading jobs…</p>
             </div>
           </div>
+          <script>
+          (async function loadRecentJobs() {
+            const JOB_TYPE_LABELS = { fulltime: 'Full-Time', parttime: 'Part-Time', project: 'Project-Based', contract: 'Contract' };
+            const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+            const fmtRate = (min, max) => {
+              if (min == null && max == null) return 'Rate on application';
+              if (max == null || Number(max) === Number(min)) return `$${Number(min)}/hr`;
+              return `$${Number(min)}–$${Number(max)}/hr`;
+            };
+            const body = document.getElementById('recentJobsBody');
+            try {
+              const r = await fetch('/api/jobs?limit=5');
+              const d = await r.json();
+              const jobs = d.ok ? (d.jobs || []) : [];
+              if (!jobs.length) {
+                body.innerHTML = '<p style="padding:1.5rem; text-align:center; color:var(--text-light); font-size:0.875rem;">No open jobs yet — check back soon.</p>';
+                return;
+              }
+              body.innerHTML = jobs.map(j => {
+                const isNew = (Date.now() - Number(j.createdAt)) < 86400000;
+                return `
+                  <a class="rec-job" href="job?id=${encodeURIComponent(j.id)}" style="text-decoration:none; color:inherit;">
+                    <div class="rec-job-emoji"><i class="fas fa-briefcase" style="color:var(--primary);"></i></div>
+                    <div class="rec-job-body">
+                      <div class="rec-job-title">${escapeHtml(j.title)}</div>
+                      <div class="rec-job-co">${escapeHtml(j.companyName || 'Private client')} · ${escapeHtml(JOB_TYPE_LABELS[j.jobType] || j.jobType)}${isNew ? ' · <span class="badge badge-new" style="font-size:0.65rem;">New</span>' : ''}</div>
+                    </div>
+                    <div class="rec-job-rate">${fmtRate(j.payMin, j.payMax)}</div>
+                  </a>`;
+              }).join('');
+            } catch (err) {
+              body.innerHTML = '<p style="padding:1.5rem; text-align:center; color:var(--danger); font-size:0.875rem;">Could not load jobs. Please refresh.</p>';
+            }
+          })();
+          </script>
 
         </div>
 
