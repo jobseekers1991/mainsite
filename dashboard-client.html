@@ -36,7 +36,12 @@
 <script>
 (function(){
   fetch('/api/me').then(r => r.json()).then(d => {
-    if (!d.ok || !d.user || d.user.verified) return;
+    if (!d.ok || !d.user) return;
+    // Welcome header uses the user's real first name.
+    const nameEl = document.getElementById('dashWelcomeName');
+    if (nameEl) nameEl.textContent = (d.user.firstName || '').trim() || 'there';
+
+    if (d.user.verified) return;
     const b = document.getElementById('verifyBanner');
     document.getElementById('verifyBannerEmail').textContent = d.user.email || 'your inbox';
     b.hidden = false;
@@ -54,12 +59,12 @@
 </script>
 <div class="dash-page-header page-header">
   <div>
-    <h1>Welcome back, James 👋</h1>
+    <h1>Welcome back, <span id="dashWelcomeName">there</span> 👋</h1>
     <p id="todayLine"></p>
   </div>
   <div class="btn-group">
     <a href="applicants" class="btn btn-outline-primary"><i class="fas fa-user-friends" aria-hidden="true"></i> Review applicants</a>
-    <a href="post-job" class="btn btn-primary"><i class="fas fa-plus" aria-hidden="true"></i> Post a Job</a>
+    <a href="post-job" target="_blank" rel="noopener" class="btn btn-primary"><i class="fas fa-plus" aria-hidden="true"></i> Post a Job</a>
   </div>
 </div>
 

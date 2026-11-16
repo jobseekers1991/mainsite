@@ -25,9 +25,9 @@
 
     <!-- User card -->
     <div class="dash-user-card">
-      <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" class="dash-user-avatar" />
+      <div class="dash-user-avatar" id="dashSidebarAvatar" style="width:40px; height:40px; border-radius:50%; background:rgba(79,70,229,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:800; font-size:1rem;">?</div>
       <div>
-        <div class="dash-user-name">Maria Santos</div>
+        <div class="dash-user-name" id="dashSidebarName">—</div>
         <div class="dash-user-role">Virtual Assistant</div>
       </div>
       <div class="dash-online-dot" title="Online"></div>
@@ -115,8 +115,8 @@
           <i class="fas fa-question-circle"></i>
         </button>
         <button class="dash-avatar-btn">
-          <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" />
-          <span>Maria</span>
+          <div id="dashTopAvatar" style="width:28px; height:28px; border-radius:50%; background:rgba(79,70,229,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:800; font-size:0.75rem;">?</div>
+          <span id="dashTopName">—</span>
           <i class="fas fa-chevron-down" style="font-size:0.625rem; color:var(--text-light);"></i>
         </button>
       </div>
@@ -138,7 +138,24 @@
 <script>
 (function(){
   fetch('/api/me').then(r => r.json()).then(d => {
-    if (!d.ok || !d.user || d.user.verified) return;
+    if (!d.ok || !d.user) return;
+
+    const fn = (d.user.firstName || '').trim();
+    const ln = (d.user.lastName || '').trim();
+    const full = (fn + ' ' + ln).trim() || d.user.email || 'User';
+    const initial = (fn[0] || d.user.email[0] || '?').toUpperCase();
+
+    const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+    set('dashSidebarName', full);
+    set('dashSidebarAvatar', initial);
+    set('dashTopName', fn || 'You');
+    set('dashTopAvatar', initial);
+
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    set('vaWelcomeHeading', `${greeting}, ${fn || 'there'} 👋`);
+
+    if (d.user.verified) return;
     const b = document.getElementById('verifyBanner');
     document.getElementById('verifyBannerEmail').textContent = d.user.email || 'your inbox';
     b.hidden = false;
@@ -157,7 +174,7 @@
 
       <!-- Page header -->
       <div class="dash-page-header">
-        <h1>Good morning, Maria 👋</h1>
+        <h1 id="vaWelcomeHeading">Good morning 👋</h1>
         <p>Friday, October 23, 2026 · Here's what's happening with your profile today.</p>
       </div>
 

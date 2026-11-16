@@ -70,7 +70,7 @@ document.querySelectorAll('.nav-dropdown').forEach(dd => {
         <i class="fas fa-user-circle"></i> ${escapeForNav(firstName)}${verifiedChip}
       </a>
       ${user.role === 'client'
-        ? '<a href="post-job" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>'
+        ? '<a href="post-job" target="_blank" rel="noopener" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Post a Job</a>'
         : '<a href="browse-jobs" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Browse Jobs</a>'}
       <button type="button" class="btn btn-ghost btn-sm" id="navLogout" title="Sign out" style="padding:0.4rem 0.6rem;"><i class="fas fa-sign-out-alt"></i></button>`;
 
@@ -79,7 +79,7 @@ document.querySelectorAll('.nav-dropdown').forEach(dd => {
       mobileActions.innerHTML = `
         <a href="${dashHref}" class="btn btn-outline-primary"><i class="fas fa-user-circle"></i> ${escapeForNav(firstName)}</a>
         ${user.role === 'client'
-          ? '<a href="post-job" class="btn btn-primary">Post a Job</a>'
+          ? '<a href="post-job" target="_blank" rel="noopener" class="btn btn-primary">Post a Job</a>'
           : '<a href="browse-jobs" class="btn btn-primary">Browse Jobs</a>'}
         <button type="button" class="btn btn-ghost" id="navLogoutMobile"><i class="fas fa-sign-out-alt"></i> Sign out</button>`;
     }
