@@ -171,3 +171,40 @@ function renderDashShell() {
 }
 
 renderDashShell();
+
+// Swap the hardcoded DASH_ROLES demo name/avatar with the signed-in user's
+// real identity. Runs once per page load; falls back quietly on 401/network.
+(async function hydrateDashUser() {
+  try {
+    const res = await fetch('/api/me', { cache: 'no-store' });
+    if (res.status !== 200) return;
+    const { user } = await res.json();
+    if (!user) return;
+
+    const fn = (user.firstName || '').trim();
+    const ln = (user.lastName || '').trim();
+    const full = (fn + ' ' + ln).trim() || user.email || 'User';
+    const initial = (fn[0] || user.email[0] || '?').toUpperCase();
+    const roleLabel = user.role === 'client'
+      ? 'Client' + (user.companyName ? ' · ' + user.companyName : '')
+      : user.role === 'admin' ? 'Admin' : 'Virtual Assistant';
+
+    // Sidebar user card
+    const card = document.querySelector('.dash-sidebar .dash-user-card');
+    if (card) {
+      card.innerHTML = `
+        <div class="dash-user-avatar" style="width:40px; height:40px; border-radius:50%; background:rgba(79,70,229,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:800; font-size:1rem;">${initial}</div>
+        <div><div class="dash-user-name">${full}</div><div class="dash-user-role">${roleLabel}</div></div>
+        <div class="dash-online-dot" title="Online"></div>`;
+    }
+
+    // Top-right avatar button
+    const topBtn = document.querySelector('.dash-topbar-right .dash-avatar-btn');
+    if (topBtn) {
+      topBtn.innerHTML = `
+        <div style="width:28px; height:28px; border-radius:50%; background:rgba(79,70,229,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:800; font-size:0.75rem;">${initial}</div>
+        <span>${fn || 'You'}</span>
+        <i class="fas fa-chevron-down" style="font-size:0.625rem; color:var(--text-light);"></i>`;
+    }
+  } catch (_) { /* leave the demo name in place */ }
+})();
