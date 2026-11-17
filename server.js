@@ -76,11 +76,11 @@ function tryServe(res, filePath) {
     }
     const ext = path.extname(filePath).toLowerCase();
     const mime = MIME[ext] || 'application/octet-stream';
-    // Keep HTML/JS/CSS fresh in dev so edits show up without a hard refresh.
+    // Keep HTML/JS/CSS fresh so edits show up without a hard refresh.
     // Fonts/images can still be cached normally.
     const dynamic = ext === '.html' || ext === '.js' || ext === '.css';
     const headers = { 'Content-Type': mime };
-    if (dynamic) headers['Cache-Control'] = 'no-cache';
+    if (dynamic) headers['Cache-Control'] = 'no-store, must-revalidate';
     res.writeHead(200, headers);
     res.end(data);
   });

@@ -9,6 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script>
+    // Install early so we catch errors thrown by any later script (including main.js).
+    window.__jsphShowErr = function(msg, where) {
+      const list = document.getElementById('jobsList');
+      if (!list) return;
+      list.innerHTML = '<div class="alert alert-error" style="padding:1rem;"><strong>Script error:</strong> ' +
+        String(msg || 'unknown').replace(/</g,'&lt;') + ' <small>(' + (where || '') + ')</small></div>';
+    };
+    window.addEventListener('error', (ev) => window.__jsphShowErr(ev.message || ev.error, (ev.filename || '') + ':' + (ev.lineno || '')));
+    window.addEventListener('unhandledrejection', (ev) => window.__jsphShowErr(ev.reason && (ev.reason.message || ev.reason), 'promise'));
+  </script>
 </head>
 <body>
 
@@ -230,14 +241,6 @@
 
 <script src="js/main.js"></script>
 <script>
-  // Surface any JS error visibly in the jobs area so we don't silently spin forever.
-  window.addEventListener('error', (ev) => {
-    const list = document.getElementById('jobsList');
-    if (list) list.innerHTML = '<div class="alert alert-error" style="padding:1rem;"><strong>Script error:</strong> ' +
-      String(ev.message || ev.error || 'unknown').replace(/</g,'&lt;') +
-      ' <small>(' + (ev.filename || '') + ':' + (ev.lineno || '') + ')</small></div>';
-  });
-
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
   const SHIFT_LABELS = {
     'us-east': { label: 'US Eastern hours', ph: 'PH 9PM–5AM', icon: 'fa-moon' },
