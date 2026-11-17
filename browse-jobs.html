@@ -273,7 +273,7 @@
   const statActive = document.getElementById('statActive');
   const noMatch   = document.getElementById('noJobMatch');
 
-  let currentPage = 1;
+  let jobPage = 1;
   const PER_PAGE = 10;
 
   function renderCard(job) {
@@ -327,7 +327,7 @@
     parts.push(`<button ${page >= pages ? 'disabled' : ''} data-go="${page + 1}"><i class="fas fa-chevron-right"></i></button>`);
     jobsPager.innerHTML = parts.join('');
     jobsPager.querySelectorAll('button[data-go]').forEach(btn => btn.addEventListener('click', () => {
-      currentPage = Number(btn.dataset.go);
+      jobPage = Number(btn.dataset.go);
       loadJobs();
       window.scrollTo({ top: jobsList.offsetTop - 80, behavior: 'smooth' });
     }));
@@ -344,7 +344,7 @@
       const params = new URLSearchParams();
       if (q)     params.set('q', q);
       if (shift) params.set('shift', shift);
-      params.set('page', String(currentPage));
+      params.set('page', String(jobPage));
       params.set('limit', String(PER_PAGE));
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), 15000);
@@ -376,12 +376,12 @@
   }
 
   // Shift filter + search bar
-  document.querySelectorAll('input[name="jobShift"]').forEach(el => el.addEventListener('change', () => { currentPage = 1; loadJobs(); }));
+  document.querySelectorAll('input[name="jobShift"]').forEach(el => el.addEventListener('change', () => { jobPage = 1; loadJobs(); }));
   const heroInput = document.querySelector('.hero-search-wrap input');
   const heroBtn   = document.querySelector('.hero-search-wrap button');
   if (heroInput && heroBtn) {
-    heroInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { currentPage = 1; loadJobs(); } });
-    heroBtn.addEventListener('click', () => { currentPage = 1; loadJobs(); });
+    heroInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { jobPage = 1; loadJobs(); } });
+    heroBtn.addEventListener('click', () => { jobPage = 1; loadJobs(); });
   }
 
   loadJobs();
