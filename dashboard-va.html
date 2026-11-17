@@ -57,14 +57,11 @@
       <a href="edit-profile" class="dash-nav-item">
         <i class="fas fa-user-circle"></i> My Profile
       </a>
-      <a href="va-profile" class="dash-nav-item" target="_blank" rel="noopener">
+      <a href="va-profile" class="dash-nav-item" target="_blank" rel="noopener" id="dashSidebarViewProfile">
         <i class="fas fa-eye"></i> View Profile
       </a>
       <a href="#" class="dash-nav-item">
         <i class="fas fa-images"></i> Portfolio
-      </a>
-      <a href="work-tools" class="dash-nav-item">
-        <i class="fas fa-wallet"></i> Earnings
       </a>
       <a href="#" class="dash-nav-item">
         <i class="fas fa-star"></i> Reviews
@@ -75,7 +72,7 @@
       <a href="academy" class="dash-nav-item"><i class="fas fa-graduation-cap"></i> VA Academy</a>
       <a href="setup-check" class="dash-nav-item"><i class="fas fa-bolt"></i> Setup Check</a>
       <a href="compliance" class="dash-nav-item"><i class="fas fa-file-signature"></i> Contracts &amp; Taxes</a>
-      <a href="community" class="dash-nav-item"><i class="fas fa-users"></i> Community</a>
+      <a href="community" class="dash-nav-item" target="_blank" rel="noopener"><i class="fas fa-users"></i> Community</a>
 
       <div class="dash-nav-divider"></div>
 
@@ -150,6 +147,11 @@
     set('dashSidebarAvatar', initial);
     set('dashTopName', fn || 'You');
     set('dashTopAvatar', initial);
+
+    // Point "View Profile" at the VA's vanity URL (/firstnamelastname)
+    const slug = (fn + ln).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const viewLink = document.getElementById('dashSidebarViewProfile');
+    if (viewLink && slug) viewLink.href = '/' + slug;
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';

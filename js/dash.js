@@ -17,7 +17,6 @@ const DASH_ROLES = {
       ['messages', 'messages', 'fa-comments', 'Messages', 'msgs'],
       ['My Account'],
       ['profile', 'edit-profile', 'fa-user-circle', 'My Profile'],
-      ['earnings', 'work-tools', 'fa-wallet', 'Earnings &amp; Invoices'],
       ['Grow &amp; Tools'],
       ['tools', 'work-tools', 'fa-stopwatch', 'Work Tools'],
       ['academy', 'academy', 'fa-graduation-cap', 'VA Academy'],
@@ -108,7 +107,7 @@ function renderDashNav() {
   const active = sidebar.dataset.active;
   const badges = dashBadges(roleKey);
   // Nav items that should open in a new tab (client's post-job flow, VA's browse-jobs).
-  const NEW_TAB = new Set(['post-job', 'browse-jobs']);
+  const NEW_TAB = new Set(['post-job', 'browse-jobs', 'community']);
   nav.innerHTML = `
       ${role.nav.map(([key, href, icon, label, badge]) => href === undefined
         ? `<div class="dash-nav-section">${key}</div>`

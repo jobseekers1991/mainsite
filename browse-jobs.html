@@ -335,7 +335,11 @@
       if (shift) params.set('shift', shift);
       params.set('page', String(currentPage));
       params.set('limit', String(PER_PAGE));
-      const res = await fetch('/api/jobs?' + params.toString());
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 15000);
+      let res;
+      try { res = await fetch('/api/jobs?' + params.toString(), { signal: ctl.signal }); }
+      finally { clearTimeout(timer); }
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'fetch failed');
 
