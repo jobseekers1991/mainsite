@@ -230,6 +230,14 @@
 
 <script src="js/main.js"></script>
 <script>
+  // Surface any JS error visibly in the jobs area so we don't silently spin forever.
+  window.addEventListener('error', (ev) => {
+    const list = document.getElementById('jobsList');
+    if (list) list.innerHTML = '<div class="alert alert-error" style="padding:1rem;"><strong>Script error:</strong> ' +
+      String(ev.message || ev.error || 'unknown').replace(/</g,'&lt;') +
+      ' <small>(' + (ev.filename || '') + ':' + (ev.lineno || '') + ')</small></div>';
+  });
+
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
   const SHIFT_LABELS = {
     'us-east': { label: 'US Eastern hours', ph: 'PH 9PM–5AM', icon: 'fa-moon' },
@@ -304,9 +312,9 @@
     if (pages <= 1) { jobsPager.innerHTML = ''; return; }
     const parts = [];
     parts.push(`<button ${page <= 1 ? 'disabled' : ''} data-go="${page - 1}"><i class="fas fa-chevron-left"></i></button>`);
-    const window = 5;
-    const start = Math.max(1, Math.min(page - 2, pages - window + 1));
-    const end = Math.min(pages, start + window - 1);
+    const pageWindow = 5;
+    const start = Math.max(1, Math.min(page - 2, pages - pageWindow + 1));
+    const end = Math.min(pages, start + pageWindow - 1);
     for (let p = start; p <= end; p++) {
       parts.push(`<button ${p === page ? 'class="active"' : ''} data-go="${p}">${p}</button>`);
     }
