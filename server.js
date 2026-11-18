@@ -559,7 +559,67 @@ async function handleAuth(req, res, urlPath) {
 // Reads from the in-memory VAS array loaded above.
 // ============================================================
 
-function handleVaDirectory(req, res, urlPath) {
+// Reverse-lookup of a vanity slug (firstnamelastname, lowercased, non-alphanum
+// stripped) to a real VA account. Mirrors the client-side slug derivation in
+// dashboard-va.html so /<slug> and /api/vas/<slug> resolve the same signed-up
+// user. Returns the account row or null.
+async function findVaAccountBySlug(slug) {
+  const r = await db.query(
+    `SELECT id, first_name AS "firstName", last_name AS "lastName", email,
+            title, tagline, city, skill, years,
+            profile_data AS "profileData",
+            (avatar_data IS NOT NULL) AS "hasAvatar",
+            created_at AS "createdAt"
+       FROM accounts
+      WHERE role = 'va'
+        AND LOWER(REGEXP_REPLACE(first_name || last_name, '[^a-zA-Z0-9]', '', 'g')) = $1
+      LIMIT 1`,
+    [String(slug || '').toLowerCase()]
+  );
+  return r.rows[0] || null;
+}
+
+// Build a VA-shaped object (matching the shape loadFullProfiles/VAS returns)
+// from a signed-in account, so the /<slug> page renders the same way for both
+// demo and real users. Mirrors the client-side loadFromAccount() in va-profile.
+function accountToVaShape(acc) {
+  const pd = acc.profileData || {};
+  const slug = (acc.firstName + acc.lastName).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const name = `${acc.firstName || ''} ${acc.lastName || ''}`.trim();
+  const pdSkills = Array.isArray(pd.skills) ? pd.skills : [];
+  return {
+    slug,
+    name,
+    firstName: acc.firstName || '',
+    title: acc.title || acc.skill || 'Virtual Assistant',
+    tagline: pd.bio || acc.tagline || '',
+    city: acc.city || '',
+    state: '',
+    createdAt: Number(acc.createdAt) || Date.now(),
+    skills: pdSkills.length ? pdSkills : (acc.skill ? [acc.skill] : []),
+    certs: [],
+    portfolio: [],
+    services: [],
+    experience: Array.isArray(pd.experience) ? pd.experience.map(e => ({
+      role: e.title, company: e.company,
+      startDate: e.startDate, endDate: e.current ? 'Present' : e.endDate,
+      content: e.description,
+    })) : [],
+    testimonials: [],
+    education: Array.isArray(pd.education) ? pd.education.map(e => ({
+      degree: [e.degree, e.field].filter(Boolean).join(' · ') || e.degree || '',
+      school: e.school, year: e.year,
+    })) : [],
+    socials: [],
+    languages: Array.isArray(pd.languages) ? pd.languages : [],
+    tools: Array.isArray(pd.tools) ? pd.tools : [],
+    preferences: pd.preferences || {},
+    hasAvatar: !!acc.hasAvatar,
+    accountId: acc.id,
+  };
+}
+
+async function handleVaDirectory(req, res, urlPath) {
   if (urlPath === '/api/vas' && req.method === 'GET') {
     const url = new URL(req.url, 'http://localhost');
     const q      = (url.searchParams.get('q')     || '').trim().toLowerCase();
@@ -598,6 +658,9 @@ function handleVaDirectory(req, res, urlPath) {
     if (full) return sendJson(res, 200, { ok: true, va: full });
     const lean = VAS_BY_SLUG.get(slug);
     if (lean) return sendJson(res, 200, { ok: true, va: lean });
+    // Fall back to signed-up VA accounts whose derived slug matches.
+    const acc = await findVaAccountBySlug(slug);
+    if (acc) return sendJson(res, 200, { ok: true, va: accountToVaShape(acc) });
     return sendJson(res, 404, { ok: false, error: 'Not found' });
   }
 
@@ -1866,7 +1929,8 @@ const server = http.createServer(async (req, res) => {
   if (handleSpeedTest(req, res, urlPath)) return;
   if (urlPath.startsWith('/api/')) {
     try {
-      if (handleVaDirectory(req, res, urlPath)) return;
+      const handledVaDir = await handleVaDirectory(req, res, urlPath);
+      if (handledVaDir) return;
       if (handleAiMatch(req, res, urlPath)) return;
       const handledCerts = await handleCertificates(req, res, urlPath);
       if (handledCerts) return;
@@ -1908,16 +1972,23 @@ const server = http.createServer(async (req, res) => {
       notFound(res);
       return;
     }
-    fs.access(filePath + '.html', fs.constants.F_OK, (htmlErr) => {
+    fs.access(filePath + '.html', fs.constants.F_OK, async (htmlErr) => {
       if (!htmlErr) {
         tryServe(res, filePath + '.html');
         return;
       }
       const maybeSlug = urlPath.slice(1); // strip leading '/'
-      if (/^[a-z0-9][a-z0-9-]*$/i.test(maybeSlug) && VAS_BY_SLUG.has(maybeSlug.toLowerCase())) {
+      if (!/^[a-z0-9][a-z0-9-]*$/i.test(maybeSlug)) { notFound(res); return; }
+      const slugLower = maybeSlug.toLowerCase();
+      if (VAS_BY_SLUG.has(slugLower)) {
         tryServe(res, path.join(ROOT, 'va-profile.html'));
         return;
       }
+      // Check real VA accounts too so signed-up users have a vanity URL.
+      try {
+        const acc = await findVaAccountBySlug(slugLower);
+        if (acc) { tryServe(res, path.join(ROOT, 'va-profile.html')); return; }
+      } catch (e) { /* fall through to 404 */ }
       notFound(res);
     });
   });

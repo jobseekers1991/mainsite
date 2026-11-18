@@ -440,8 +440,12 @@
 
     const hue = nameHue(v.name || v.slug);
     const av = document.getElementById('pfAvatar');
-    av.textContent = initials(v.name);
-    av.style.background = `hsl(${hue},62%,52%)`;
+    if (v.hasAvatar && v.accountId) {
+      av.outerHTML = `<img id="pfAvatar" src="/api/avatar/${encodeURIComponent(v.accountId)}" alt="${esc(v.name || '')}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
+    } else {
+      av.textContent = initials(v.name);
+      av.style.background = `hsl(${hue},62%,52%)`;
+    }
 
     const badges = [`<span class="verified"><i class="fas fa-check-circle"></i> Email verified</span>`];
     if (v.featured) badges.push(`<span class="badge badge-featured"><i class="fas fa-crown"></i> Featured</span>`);
@@ -806,6 +810,8 @@
 
     return {
       slug: 'my-profile',
+      accountId: me.id,
+      hasAvatar: !!me.hasAvatar,
       name,
       firstName: me.firstName || '',
       title: me.title || me.skill || 'Virtual Assistant',
