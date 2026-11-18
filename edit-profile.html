@@ -812,16 +812,64 @@
   const avatarPreview = document.getElementById('avatarPreview');
   const sidebarAvatar = document.getElementById('sidebarAvatar');
   const topbarAvatar  = document.getElementById('topbarAvatar');
+  let currentAccountId = null;
+
+  function swapAvatar(src) {
+    if (avatarPreview) avatarPreview.src = src;
+    if (sidebarAvatar) sidebarAvatar.src = src;
+    if (topbarAvatar)  topbarAvatar.src  = src;
+  }
 
   document.getElementById('avatarWrap').addEventListener('click', () => avatarInput.click());
 
-  avatarInput.addEventListener('change', e => {
+  avatarInput.addEventListener('change', async e => {
     const file = e.target.files[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    avatarPreview.src = url;
-    sidebarAvatar.src = url;
-    topbarAvatar.src  = url;
+    if (!/^image\/(jpeg|png)$/.test(file.type)) {
+      showSaveToast('Only JPG or PNG photos are allowed.');
+      avatarInput.value = '';
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      showSaveToast('Photo is larger than 1 MB. Please pick a smaller one.');
+      avatarInput.value = '';
+      return;
+    }
+
+    // Local preview first so the UI feels instant.
+    const previewUrl = URL.createObjectURL(file);
+    swapAvatar(previewUrl);
+
+    try {
+      const buf = await file.arrayBuffer();
+      // Chunked base64 so large files don't blow the call stack via String.fromCharCode(...bytes).
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+      }
+      const base64 = btoa(bin);
+
+      const res = await fetch('/api/me/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, imageMime: file.type }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        showSaveToast(data.error || 'Could not upload photo. Please try again.');
+        // Revert preview to the stored avatar (or the default) on failure.
+        if (currentAccountId) swapAvatar('/api/avatar/' + encodeURIComponent(currentAccountId) + '?v=' + Date.now());
+        return;
+      }
+      // Replace the blob URL with the stored one so other tabs/pages see the same bytes.
+      swapAvatar(data.avatarUrl || ('/api/avatar/' + encodeURIComponent(currentAccountId) + '?v=' + Date.now()));
+      showSaveToast('Profile photo updated.');
+    } catch (err) {
+      showSaveToast('Network error — photo not uploaded.');
+    }
+    avatarInput.value = '';
   });
 
   /* ── Photo upload — Cover ── */
@@ -1453,6 +1501,8 @@
       }
       const { user } = await res.json();
       if (!user) return;
+      currentAccountId = user.id;
+      if (user.hasAvatar) swapAvatar('/api/avatar/' + encodeURIComponent(user.id) + '?v=' + Date.now());
       firstNameInput.value = user.firstName || '';
       lastNameInput.value  = user.lastName  || '';
       titleInput.value     = user.title     || user.skill || '';

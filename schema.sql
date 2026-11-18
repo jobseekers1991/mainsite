@@ -25,6 +25,8 @@ CREATE INDEX IF NOT EXISTS idx_accounts_verify_token_hash ON accounts (verify_to
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS title        TEXT;
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS tagline      TEXT;
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS profile_data JSONB;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS avatar_data  BYTEA;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS avatar_mime  TEXT;
 
 CREATE TABLE IF NOT EXISTS sessions (
   id          TEXT PRIMARY KEY,

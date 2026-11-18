@@ -190,7 +190,8 @@ const ACCOUNT_COLUMNS = `id, role, email, password_hash AS "passwordHash", passw
   first_name AS "firstName", last_name AS "lastName", verified,
   verify_token_hash AS "verifyTokenHash", verify_expires AS "verifyExpires",
   company_name AS "companyName", company_size AS "companySize", source,
-  mobile, city, skill, years, title, tagline, profile_data AS "profileData", created_at AS "createdAt"`;
+  mobile, city, skill, years, title, tagline, profile_data AS "profileData",
+  (avatar_data IS NOT NULL) AS "hasAvatar", created_at AS "createdAt"`;
 
 // Same column list, but qualified with the accounts alias — needed whenever
 // we JOIN another table that also has an `id` column (e.g. sessions).
@@ -198,7 +199,8 @@ const ACCOUNT_COLUMNS_A = `a.id, a.role, a.email, a.password_hash AS "passwordHa
   a.first_name AS "firstName", a.last_name AS "lastName", a.verified,
   a.verify_token_hash AS "verifyTokenHash", a.verify_expires AS "verifyExpires",
   a.company_name AS "companyName", a.company_size AS "companySize", a.source,
-  a.mobile, a.city, a.skill, a.years, a.title, a.tagline, a.profile_data AS "profileData", a.created_at AS "createdAt"`;
+  a.mobile, a.city, a.skill, a.years, a.title, a.tagline, a.profile_data AS "profileData",
+  (a.avatar_data IS NOT NULL) AS "hasAvatar", a.created_at AS "createdAt"`;
 
 async function findAccountByEmail(email) {
   const r = await db.query(`SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE email = $1`, [email]);
@@ -699,6 +701,9 @@ function sniffUploadMime(buf) {
   if (!buf || buf.length < 4) return null;
   // JPEG: FF D8 FF
   if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'image/jpeg';
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47
+      && buf[4] === 0x0D && buf[5] === 0x0A && buf[6] === 0x1A && buf[7] === 0x0A) return 'image/png';
   // PDF: "%PDF-"
   if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46 && buf[4] === 0x2D) return 'application/pdf';
   return null;
@@ -914,6 +919,89 @@ async function handleCertificates(req, res, urlPath) {
       [id, user.id, meta.title, meta.issuer, today, course, score, Date.now()]
     );
     return sendJson(res, 200, { ok: true, certificateId: id, title: meta.title });
+  }
+
+  return false;
+}
+
+// ============================================================
+// Profile avatar: POST /api/me/avatar, DELETE /api/me/avatar,
+// GET /api/avatar/:accountId. Stored as bytea on accounts so there's
+// no new table and no external object store to configure. JPG/PNG only,
+// 1 MB cap, magic-byte validated. Served inline (unlike cert downloads)
+// so <img src> can render it directly.
+// ============================================================
+
+const AVATAR_MAX_BYTES  = 1 * 1024 * 1024;
+const AVATAR_JSON_LIMIT = Math.round(AVATAR_MAX_BYTES * 1.5) + 8 * 1024;
+const AVATAR_ALLOWED_MIME = new Set(['image/jpeg', 'image/png']);
+
+async function handleAvatar(req, res, urlPath) {
+  // POST /api/me/avatar — upload or replace the signed-in user's avatar
+  if (urlPath === '/api/me/avatar' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+
+    let body;
+    try { body = JSON.parse(await readBody(req, AVATAR_JSON_LIMIT)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON or file too large (1 MB max).' }); }
+
+    const declared = String(body.imageMime || '').toLowerCase();
+    if (!AVATAR_ALLOWED_MIME.has(declared)) {
+      return sendJson(res, 400, { ok: false, error: 'Only JPG or PNG photos are allowed.' });
+    }
+    if (!body.imageBase64) return sendJson(res, 400, { ok: false, error: 'No image provided.' });
+
+    let buf;
+    try { buf = Buffer.from(String(body.imageBase64), 'base64'); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Could not decode uploaded file.' }); }
+    if (buf.length === 0)                 return sendJson(res, 400, { ok: false, error: 'Uploaded file is empty.' });
+    if (buf.length > AVATAR_MAX_BYTES)    return sendJson(res, 400, { ok: false, error: 'Photo is larger than 1 MB.' });
+
+    const sniffed = sniffUploadMime(buf);
+    if (!sniffed || sniffed !== declared || !AVATAR_ALLOWED_MIME.has(sniffed)) {
+      return sendJson(res, 400, { ok: false, error: 'File contents are not a valid JPG or PNG.' });
+    }
+    if (containsHtmlInjection(buf)) {
+      return sendJson(res, 400, { ok: false, error: 'File rejected: contains disallowed markup.' });
+    }
+
+    await db.query(
+      'UPDATE accounts SET avatar_data = $1, avatar_mime = $2 WHERE id = $3',
+      [buf, sniffed, user.id]
+    );
+    return sendJson(res, 200, { ok: true, avatarUrl: `/api/avatar/${user.id}?v=${Date.now()}` });
+  }
+
+  // DELETE /api/me/avatar — clear it
+  if (urlPath === '/api/me/avatar' && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    await db.query('UPDATE accounts SET avatar_data = NULL, avatar_mime = NULL WHERE id = $1', [user.id]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // GET /api/avatar/:accountId — public; the id itself is unguessable (16 hex),
+  // and it only exposes a photo the user chose to upload.
+  const getMatch = urlPath.match(/^\/api\/avatar\/([a-z0-9_]+)$/);
+  if (getMatch && req.method === 'GET') {
+    const id = getMatch[1];
+    const r = await db.query('SELECT avatar_data, avatar_mime FROM accounts WHERE id = $1', [id]);
+    const row = r.rows[0];
+    if (!row || !row.avatar_data) return sendJson(res, 404, { ok: false, error: 'No avatar.' });
+    // Trust the stored bytes over the stored mime — re-sniff at serve time.
+    const mime = sniffUploadMime(row.avatar_data) === row.avatar_mime
+      ? row.avatar_mime : 'application/octet-stream';
+    res.writeHead(200, {
+      'Content-Type': mime,
+      'Content-Length': row.avatar_data.length,
+      'Content-Disposition': 'inline',
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'private, max-age=300',
+      'Referrer-Policy': 'no-referrer',
+    });
+    res.end(row.avatar_data);
+    return true;
   }
 
   return false;
@@ -1782,6 +1870,8 @@ const server = http.createServer(async (req, res) => {
       if (handleAiMatch(req, res, urlPath)) return;
       const handledCerts = await handleCertificates(req, res, urlPath);
       if (handledCerts) return;
+      const handledAvatar = await handleAvatar(req, res, urlPath);
+      if (handledAvatar) return;
       const handledPortfolio = await handlePortfolio(req, res, urlPath);
       if (handledPortfolio) return;
       const handledJobs = await handleJobs(req, res, urlPath);

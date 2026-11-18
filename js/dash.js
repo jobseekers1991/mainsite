@@ -189,11 +189,19 @@ renderDashShell();
       ? 'Client' + (user.companyName ? ' · ' + user.companyName : '')
       : user.role === 'admin' ? 'Admin' : 'Virtual Assistant';
 
+    const avatarSrc = user.hasAvatar ? '/api/avatar/' + encodeURIComponent(user.id) : null;
+    const sidebarAv = avatarSrc
+      ? `<img src="${avatarSrc}" alt="" class="dash-user-avatar" style="width:40px; height:40px; border-radius:50%; object-fit:cover;" />`
+      : `<div class="dash-user-avatar" style="width:40px; height:40px; border-radius:50%; background:rgba(79,70,229,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:800; font-size:1rem;">${initial}</div>`;
+    const topAv = avatarSrc
+      ? `<img src="${avatarSrc}" alt="" style="width:28px; height:28px; border-radius:50%; object-fit:cover;" />`
+      : `<div style="width:28px; height:28px; border-radius:50%; background:rgba(79,70,229,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:800; font-size:0.75rem;">${initial}</div>`;
+
     // Sidebar user card
     const card = document.querySelector('.dash-sidebar .dash-user-card');
     if (card) {
       card.innerHTML = `
-        <div class="dash-user-avatar" style="width:40px; height:40px; border-radius:50%; background:rgba(79,70,229,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:800; font-size:1rem;">${initial}</div>
+        ${sidebarAv}
         <div><div class="dash-user-name">${full}</div><div class="dash-user-role">${roleLabel}</div></div>
         <div class="dash-online-dot" title="Online"></div>`;
     }
@@ -202,7 +210,7 @@ renderDashShell();
     const topBtn = document.querySelector('.dash-topbar-right .dash-avatar-btn');
     if (topBtn) {
       topBtn.innerHTML = `
-        <div style="width:28px; height:28px; border-radius:50%; background:rgba(79,70,229,0.12); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:800; font-size:0.75rem;">${initial}</div>
+        ${topAv}
         <span>${fn || 'You'}</span>
         <i class="fas fa-chevron-down" style="font-size:0.625rem; color:var(--text-light);"></i>`;
     }

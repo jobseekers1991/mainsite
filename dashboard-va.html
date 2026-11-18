@@ -144,9 +144,18 @@
 
     const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
     set('dashSidebarName', full);
-    set('dashSidebarAvatar', initial);
     set('dashTopName', fn || 'You');
-    set('dashTopAvatar', initial);
+    // Avatar: real photo if uploaded, otherwise letter initial.
+    const sb = document.getElementById('dashSidebarAvatar');
+    const tp = document.getElementById('dashTopAvatar');
+    if (d.user.hasAvatar) {
+      const src = '/api/avatar/' + encodeURIComponent(d.user.id);
+      if (sb) sb.outerHTML = `<img src="${src}" alt="" id="dashSidebarAvatar" class="dash-user-avatar" style="width:40px; height:40px; border-radius:50%; object-fit:cover;" />`;
+      if (tp) tp.outerHTML = `<img src="${src}" alt="" id="dashTopAvatar" style="width:28px; height:28px; border-radius:50%; object-fit:cover;" />`;
+    } else {
+      if (sb) sb.textContent = initial;
+      if (tp) tp.textContent = initial;
+    }
 
     // Point "View Profile" at the VA's vanity URL (/firstnamelastname)
     const slug = (fn + ln).toLowerCase().replace(/[^a-z0-9]/g, '');
