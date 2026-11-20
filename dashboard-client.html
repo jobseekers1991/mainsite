@@ -104,17 +104,52 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
   const GUARANTEE_DAYS = 30;
-  const daysSince = t => Math.floor((Date.now() - t) / DAY_MS);
-  let disputeTarget = null;
+  const DAY_MS_LOCAL = 86400000;
+  const daysSince = t => Math.floor((Date.now() - t) / DAY_MS_LOCAL);
+  const fullName = o => ((o.vaFirstName || '') + ' ' + (o.vaLastName || '')).trim() || 'VA';
+
+  let jobs = [];
+  let hires = [];      // applications with status='hired', job title attached
+  let liveTrials = []; // trials without outcome
+  let invoices = [];
+  let newApplicants = 0;
 
   $('todayLine').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + ' · Here\'s your team at a glance.';
 
+  async function load() {
+    try {
+      const [jR, trR, iR] = await Promise.all([
+        fetch('/api/jobs/mine',  { cache: 'no-store' }),
+        fetch('/api/trials',     { cache: 'no-store' }),
+        fetch('/api/invoices',   { cache: 'no-store' }),
+      ]);
+      if (jR.status === 401) { location.href = 'auth'; return; }
+      jobs = jR.ok ? (await jR.json()).jobs || [] : [];
+      liveTrials = trR.ok ? ((await trR.json()).trials || []).filter(t => !t.outcome) : [];
+      invoices = iR.ok ? (await iR.json()).invoices || [] : [];
+
+      // Aggregate applications across every job owned by the client.
+      hires = [];
+      newApplicants = 0;
+      for (const j of jobs) {
+        const ar = await fetch('/api/applications?jobId=' + encodeURIComponent(j.id), { cache: 'no-store' });
+        if (!ar.ok) continue;
+        const apps = (await ar.json()).applications || [];
+        for (const a of apps) {
+          a.jobTitle = j.title;
+          a.jobId = j.id;
+          if (a.status === 'hired') hires.push(a);
+          if (a.status === 'submitted') newApplicants++;
+        }
+      }
+    } catch (e) {}
+    renderAll();
+  }
+
   function renderStats() {
-    const due = client.invoices.filter(i => i.status === 'due');
+    const due = invoices.filter(i => i.status === 'sent');
     const stat = (label, num, icon, color, sub) => `
       <div class="stat-card">
         <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}" aria-hidden="true"></i></div></div>
@@ -122,221 +157,136 @@
         <div class="stat-card-change">${sub}</div>
       </div>`;
     $('clientStats').innerHTML =
-      stat('Active hires', client.hires.length, 'fa-user-check', '#4F46E5', `${client.hires.reduce((h, x) => h + x.hoursWeek, 0)} hrs this week`) +
-      stat('Paid trials', client.trials.filter(t => t.status !== 'done' && t.status !== 'ended').length, 'fa-flask', '#10B981', 'in escrow') +
-      stat('To approve', money(due.reduce((s, i) => s + i.hours * i.rate, 0)), 'fa-file-invoice-dollar', '#F59E0B', `${due.length} invoice${due.length === 1 ? '' : 's'}`) +
-      stat('New applicants', client.applicants.filter(a => a.status === 'new').length, 'fa-user-plus', '#EC4899', '<a href="applicants" class="link-primary">Review now</a>');
+      stat('Active hires', hires.length, 'fa-user-check', '#4F46E5', `${jobs.filter(j => j.status === 'open').length} open job${jobs.filter(j => j.status === 'open').length === 1 ? '' : 's'}`) +
+      stat('Paid trials', liveTrials.length, 'fa-flask', '#10B981', liveTrials.length ? 'running now' : '—') +
+      stat('To approve', money(due.reduce((s, i) => s + Number(i.total || 0), 0)), 'fa-file-invoice-dollar', '#F59E0B', `${due.length} invoice${due.length === 1 ? '' : 's'}`) +
+      stat('New applicants', newApplicants, 'fa-user-plus', '#EC4899', '<a href="applicants" class="link-primary">Review now</a>');
 
     const todos = [];
-    const doneTrials = client.trials.filter(t => t.status === 'submitted');
-    if (doneTrials.length) todos.push(`<a href="#trials">${doneTrials.length} trial${doneTrials.length > 1 ? 's' : ''} ready for your approval</a>`);
-    if (due.length) todos.push(`<a href="#invoices">${due.length} invoice${due.length > 1 ? 's' : ''} waiting (auto-approved after 5 days)</a>`);
-    const flaggedInv = due.filter(i => i.note);
-    if (flaggedInv.length) todos.push(`<a href="#invoices">${flaggedInv.length} invoice${flaggedInv.length > 1 ? 's' : ''} with more hours than the contract</a>`);
+    if (liveTrials.length) todos.push(`<a href="#trials">${liveTrials.length} trial${liveTrials.length > 1 ? 's' : ''} in progress</a>`);
+    if (due.length) todos.push(`<a href="#invoices">${due.length} invoice${due.length > 1 ? 's' : ''} waiting for approval</a>`);
+    if (newApplicants) todos.push(`<a href="applicants">${newApplicants} new applicant${newApplicants > 1 ? 's' : ''} to review</a>`);
     $('todoBox').innerHTML = todos.length ? `<div class="alert alert-info" style="margin-top:1.25rem;"><i class="fas fa-tasks" style="margin-top:0.2rem;"></i><div><strong>To do:</strong> ${todos.join(' · ')}</div></div>` : '';
   }
 
   function renderHires() {
-    $('hiresCount').textContent = client.hires.length;
-    $('hireList').innerHTML = client.hires.map((h, i) => {
-      const va = vaById(h.vaId);
-      const days = daysSince(h.start);
+    $('hiresCount').textContent = hires.length;
+    $('hireList').innerHTML = hires.map(h => {
+      const days = daysSince(h.updatedAt || h.createdAt);
       const left = GUARANTEE_DAYS - days;
-      const requested = client.replacements.some(r => r.vaId === h.vaId);
+      const name = fullName(h);
       return `
         <div class="item-card">
           <div class="item-head">
-            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="${esc(va.name)}" />
+            <img src="/api/avatar/${encodeURIComponent(h.vaId)}" alt="${esc(name)}" onerror="this.src='https://ui-avatars.com/api/?size=100&background=E2E8F0&color=4F46E5&name=${encodeURIComponent(name)}'" />
             <div class="grow">
-              <h3>${esc(va.name)} ${va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''}</h3>
-              <p>${esc(h.role)} · $${h.rate}/hr · Started ${fmtDay(h.start)}</p>
+              <h3>${esc(name)}</h3>
+              <p>${esc(h.jobTitle || '—')} · $${Number(h.rate || 0).toFixed(2)}/hr · Hired ${fmtDay(h.updatedAt || h.createdAt)}</p>
             </div>
             ${left > 0 ? `<span class="days-left" title="Replacement Guarantee">🛡️ ${left} days of guarantee left</span>` : '<span class="days-left out">Guarantee period ended</span>'}
           </div>
-          <div class="item-meta">
-            <span>This week <strong>${h.hoursWeek} hrs</strong></span>
-            <span>Cost this week <strong>${money(h.hoursWeek * h.rate)}</strong></span>
-            <span><i class="fas fa-circle text-success-dot" aria-hidden="true"></i> Online · last EOD report today</span>
-          </div>
           <div class="item-actions">
-            <a href="messages?as=client&to=${h.vaId}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment" aria-hidden="true"></i> Message</a>
-            <a href="compliance" class="btn btn-ghost btn-sm"><i class="fas fa-file-contract" aria-hidden="true"></i> Contract &amp; NDA</a>
-            ${left > 0 && !requested ? `<button class="btn btn-ghost btn-sm" data-replace="${i}"><i class="fas fa-sync-alt" aria-hidden="true"></i> Request replacement</button>` : ''}
-            <button class="btn btn-ghost btn-ghost-danger btn-sm" data-end="${i}"><i class="fas fa-door-open" aria-hidden="true"></i> End contract</button>
-          </div>
-          <div class="inline-panel" data-replace-form="${i}" hidden>
-            <strong class="inline-panel-title">Why do you need a replacement?</strong>
-            <div class="option-grid" style="margin:0.75rem 0;">
-              <label class="option-tile"><input type="radio" name="rr${i}" value="VA resigned" checked /><span><strong>VA resigned</strong></span></label>
-              <label class="option-tile"><input type="radio" name="rr${i}" value="VA stopped responding" /><span><strong>Stopped responding (3+ days)</strong></span></label>
-              <label class="option-tile"><input type="radio" name="rr${i}" value="VA didn't show up" /><span><strong>Didn't show up for shifts</strong></span></label>
-            </div>
-            <div class="btn-group"><button class="btn btn-primary btn-sm" data-replace-submit="${i}">Request free replacement</button><button class="btn btn-ghost btn-sm" data-replace-cancel="${i}">Cancel</button></div>
+            <a href="messages?as=client&to=${encodeURIComponent(h.vaId)}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment" aria-hidden="true"></i> Message</a>
+            <a href="team" class="btn btn-ghost btn-sm"><i class="fas fa-clipboard" aria-hidden="true"></i> Notes &amp; timesheets</a>
+            <button class="btn btn-ghost btn-ghost-danger btn-sm" data-end-app="${h.id}"><i class="fas fa-door-open" aria-hidden="true"></i> End contract</button>
           </div>
         </div>`;
     }).join('') || '<div class="empty-state"><i class="fas fa-user-check" aria-hidden="true"></i>No active hires yet. Post a job to start receiving applicants.</div>';
   }
 
   function renderTrials() {
-    const live = client.trials.filter(t => t.status !== 'ended');
-    $('trialsCount').textContent = live.length;
-    const label = { 'pending-accept': ['Waiting for VA to accept', 'pending'], 'in-progress': ['In progress', 'active'], 'submitted': ['Ready for review', 'viewed'], 'done': ['Approved & paid', 'hired'] };
-    $('trialList').innerHTML = live.map(t => {
-      const va = vaById(t.vaId);
-      const cost = t.days * t.hours * t.rate;
-      const [lbl, pill] = label[t.status];
+    $('trialsCount').textContent = liveTrials.length;
+    $('trialList').innerHTML = liveTrials.map(t => {
+      const daysLeft = Math.max(0, Math.ceil((t.endsAt - Date.now()) / DAY_MS_LOCAL));
+      const totalDays = Math.max(1, Math.ceil((t.endsAt - t.startedAt) / DAY_MS_LOCAL));
+      const dayNow = Math.min(totalDays, totalDays - daysLeft + 1);
+      const name = ((t.vaFirstName || '') + ' ' + (t.vaLastName || '')).trim() || 'VA';
       return `
         <div class="item-card">
           <div class="item-head">
-            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="${esc(va.name)}" />
-            <div class="grow"><h3>${esc(va.name)}</h3><p>${esc(t.role)} · ${t.days} days × ${t.hours} hrs × $${t.rate}/hr</p></div>
-            <span class="status-pill ${pill}">${lbl}</span>
+            <img src="/api/avatar/${encodeURIComponent(t.vaId)}" alt="${esc(name)}" onerror="this.src='https://ui-avatars.com/api/?size=100&background=E2E8F0&color=4F46E5&name=${encodeURIComponent(name)}'" />
+            <div class="grow"><h3>${esc(name)}</h3><p>${esc(t.jobTitle || '—')} · ends ${fmtDay(t.endsAt)}</p></div>
+            <span class="status-pill active">In progress</span>
           </div>
-          <p class="item-quote">${esc(t.scope)}</p>
-          ${t.status === 'in-progress' ? `<div class="trial-progress"><div class="trial-progress-meta"><span>Day ${t.day} of ${t.days}</span><span>${money(cost)} in escrow</span></div><div class="progress-bar"><div class="progress-fill" style="width:${t.day / t.days * 100}%"></div></div></div>` : `<div class="item-meta"><span>Escrow <strong>${money(cost)}</strong></span></div>`}
+          ${t.scope ? `<p class="item-quote">${esc(t.scope)}</p>` : ''}
+          <div class="trial-progress">
+            <div class="trial-progress-meta"><span>Day ${dayNow} of ${totalDays}</span><span>${daysLeft} day${daysLeft === 1 ? '' : 's'} left</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${((totalDays - daysLeft) / totalDays * 100).toFixed(0)}%"></div></div>
+          </div>
           <div class="item-actions">
-            ${t.status === 'in-progress' ? `<button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-act="simulate"><i class="fas fa-forward" aria-hidden="true"></i> Mark trial delivered (demo)</button>` : ''}
-            ${t.status === 'submitted' ? `<button class="btn btn-primary btn-sm" data-trial="${t.id}" data-act="approve"><i class="fas fa-check" aria-hidden="true"></i> Approve &amp; release ${money(cost)}</button>` : ''}
-            ${t.status === 'done' ? `<button class="btn btn-primary btn-sm" data-trial="${t.id}" data-act="hire"><i class="fas fa-handshake" aria-hidden="true"></i> Hire ${esc(va.name.split(' ')[0])}</button><button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-act="pass">Not a fit</button>` : ''}
-            ${t.status === 'pending-accept' ? `<button class="btn btn-ghost btn-ghost-danger btn-sm" data-trial="${t.id}" data-act="cancel">Cancel offer &amp; refund</button>` : ''}
-            <a href="messages?as=client&to=${t.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment" aria-hidden="true"></i> Message</a>
+            <button class="btn btn-primary btn-sm" data-trial="${t.id}" data-act="hired"><i class="fas fa-handshake" aria-hidden="true"></i> Hire ${esc(name.split(' ')[0])}</button>
+            <button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-act="passed">Not a fit</button>
+            <a href="messages?as=client&to=${encodeURIComponent(t.vaId)}" class="btn btn-ghost btn-sm"><i class="fas fa-comment" aria-hidden="true"></i> Message</a>
           </div>
         </div>`;
     }).join('') || '<div class="empty-state"><i class="fas fa-flask" aria-hidden="true"></i>No trials running. Offer one from <a href="applicants" class="link-primary">Applicants</a>.</div>';
   }
 
   function renderInvoices() {
-    const due = client.invoices.filter(i => i.status === 'due');
+    const due = invoices.filter(i => i.status === 'sent');
     $('invCount').textContent = due.length;
-    const pill = { due: ['Awaiting approval', 'pending'], paid: ['Paid', 'hired'], disputed: ['In dispute', 'rejected'], refunded: ['Refunded', 'closed'] };
-    $('invBody').innerHTML = client.invoices.map(inv => {
-      const va = vaById(inv.vaId);
-      const [lbl, cls] = pill[inv.status];
+    const pill = { sent: ['Awaiting approval', 'pending'], paid: ['Paid', 'hired'], void: ['Voided', 'rejected'], draft: ['Draft', 'closed'] };
+    $('invBody').innerHTML = invoices.slice(0, 25).map(inv => {
+      const name = ((inv.vaFirstName || '') + ' ' + (inv.vaLastName || '')).trim() || 'VA';
+      const [lbl, cls] = pill[inv.status] || ['—', 'closed'];
       return `<tr>
-        <td><strong class="text-dark">${inv.id}</strong>${inv.note ? `<div class="text-warn-sm"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ${esc(inv.note)}</div>` : ''}</td>
-        <td>${esc(va.name)}</td><td>${inv.period}</td>
-        <td class="num">${inv.hours}</td>
-        <td class="num strong">${money(inv.hours * inv.rate)}</td>
+        <td><strong class="text-dark">${esc(inv.invoiceNo)}</strong></td>
+        <td>${esc(name)}</td><td>${esc(inv.issuedOn)}</td>
+        <td class="num">—</td>
+        <td class="num strong">${money(inv.total)}</td>
         <td><span class="status-pill ${cls}">${lbl}</span></td>
-        <td class="num nowrap">${inv.status === 'due' ? `<button class="btn btn-primary btn-xs" data-inv="${inv.id}" data-act="pay">Approve &amp; pay</button> <button class="btn btn-ghost btn-xs" data-inv="${inv.id}" data-act="dispute">Dispute</button>` : ''}</td>
+        <td class="num nowrap">${inv.status === 'sent' ? `<button class="btn btn-primary btn-xs" data-inv="${inv.id}" data-act="pay">Approve &amp; pay</button> <button class="btn btn-ghost btn-xs" data-inv="${inv.id}" data-act="void">Void</button>` : ''}</td>
       </tr>`;
-    }).join('');
+    }).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--text-light); padding:1.5rem;">No invoices yet.</td></tr>';
   }
 
   function renderReplacements() {
-    $('replacementList').innerHTML = client.replacements.map(r => {
-      const va = vaById(r.vaId);
-      const ready = Date.now() - r.date > 5000; // the demo "48 hours" passes in 5 seconds
-      const picks = VAS.filter(v => v.id !== r.vaId && v.shifts.includes('us-east')).slice(0, 3);
-      return `
-        <div class="item-card">
-          <div class="item-head">
-            <img src="https://i.pravatar.cc/100?img=${va.img}" alt="${esc(va.name)}" />
-            <div class="grow"><h3>Replacing ${esc(va.name)}</h3><p>${esc(r.role)} · ${esc(r.reason)} · Requested ${fmtDay(r.date)}</p></div>
-            <span class="status-pill ${ready ? 'hired' : 'pending'}">${ready ? 'Shortlist ready' : 'Building shortlist (≤48h)'}</span>
-          </div>
-          ${ready ? `<div class="shortlist-grid">${picks.map(p => `
-            <div class="shortlist-card">
-              <img src="https://i.pravatar.cc/80?img=${p.img}" alt="${esc(p.name)}" class="avatar-sm" />
-              <div class="meta-stack"><strong class="meta-name">${esc(p.name)}</strong><div class="meta-sub">$${p.rate}/hr · ${p.rating.toFixed(1)}★</div></div>
-              <a href="messages?as=client&to=${p.id}" class="btn btn-outline-primary btn-xs">Message</a>
-            </div>`).join('')}</div>` : '<p class="form-hint shortlist-loading"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> AI Match and a recruiter are picking VAs with the same role, shift and budget. No new job post or fee needed.</p>'}
-        </div>`;
-    }).join('');
+    $('replacementList').innerHTML = '<div class="empty-state"><i class="fas fa-sync-alt" aria-hidden="true"></i>Any hire who leaves in their first 30 days is covered. Contact support@jobseekers.ph to request a replacement shortlist.</div>';
   }
 
   function renderAll() { renderStats(); renderHires(); renderTrials(); renderInvoices(); renderReplacements(); }
 
-  document.querySelector('.dash-content').addEventListener('click', e => {
+  document.querySelector('.dash-content').addEventListener('click', async e => {
     const t = e.target.closest('button');
     if (!t) return;
     const d = t.dataset;
 
-    if (d.replace !== undefined) { document.querySelector(`[data-replace-form="${d.replace}"]`).hidden = false; return; }
-    if (d.replaceCancel !== undefined) { document.querySelector(`[data-replace-form="${d.replaceCancel}"]`).hidden = true; return; }
-    if (d.replaceSubmit !== undefined) {
-      const h = client.hires[Number(d.replaceSubmit)];
-      const reason = document.querySelector(`input[name="rr${d.replaceSubmit}"]:checked`).value;
-      client.replacements.unshift({ vaId: h.vaId, role: h.role, reason, date: Date.now() });
-      client.hires.splice(Number(d.replaceSubmit), 1);
-      showToast('Replacement requested. Your free shortlist is on its way.');
-      save(); renderAll();
-      setTimeout(renderReplacements, 5200);
-      $('guarantee').scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-    if (d.end !== undefined) {
+    if (d.endApp) {
       if (d.confirm !== '1') { t.dataset.confirm = '1'; t.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to end'; return; }
-      const h = client.hires.splice(Number(d.end), 1)[0];
-      showToast(`Contract with ${vaById(h.vaId).name} ended. Approved hours will still be paid.`);
+      await fetch('/api/applications/' + encodeURIComponent(d.endApp), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'rejected' }),
+      });
+      showToast && showToast('Contract ended.');
+      await load();
+      return;
     }
 
     if (d.trial) {
-      const tr = client.trials.find(x => x.id === d.trial);
-      const va = vaById(tr.vaId);
-      if (d.act === 'simulate') { tr.status = 'submitted'; showToast(`${va.name} delivered the trial scope`); }
-      if (d.act === 'approve') { tr.status = 'done'; showToast(`Released ${money(tr.days * tr.hours * tr.rate)} to ${va.name}`); }
-      if (d.act === 'hire') {
-        tr.status = 'ended';
-        client.hires.unshift({ vaId: tr.vaId, role: tr.role, rate: tr.rate, start: Date.now(), hoursWeek: 0 });
-        const app = client.applicants.find(a => a.vaId === tr.vaId);
-        if (app) app.status = 'hired';
-        showToast(`${va.name} hired! Guarantee starts today.`);
-      }
-      if (d.act === 'pass') { tr.status = 'ended'; showToast('Trial closed. Thanks for paying the VA for their time.'); }
-      if (d.act === 'cancel') { tr.status = 'ended'; showToast('Offer cancelled and escrow refunded.'); }
+      await fetch('/api/trials/' + encodeURIComponent(d.trial), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outcome: d.act }),
+      });
+      showToast && showToast(d.act === 'hired' ? 'Hire confirmed.' : 'Trial closed.');
+      await load();
+      return;
     }
 
     if (d.inv) {
-      const inv = client.invoices.find(x => x.id === d.inv);
-      if (d.act === 'pay') { inv.status = 'paid'; showToast(`${inv.id} paid. ${vaById(inv.vaId).name} will receive it in GCash within minutes.`); }
-      if (d.act === 'dispute') {
-        disputeTarget = inv;
-        $('disputeInv').textContent = inv.id;
-        $('disputeForm').hidden = false;
-        $('disputeNote').value = inv.note || '';
-        $('disputeNote').classList.remove('error');
-        $('disputeNoteError').hidden = true;
-        $('disputeForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-      }
-    }
-
-    if (t.id === 'disputeCancel') {
-      $('disputeForm').hidden = true;
-      $('disputeNote').classList.remove('error');
-      $('disputeNoteError').hidden = true;
+      const act = d.act === 'pay' ? 'paid' : 'void';
+      await fetch('/api/invoices/' + encodeURIComponent(d.inv), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: act }),
+      });
+      showToast && showToast(act === 'paid' ? 'Invoice marked paid.' : 'Invoice voided.');
+      await load();
       return;
     }
-    if (t.id === 'disputeSubmit' && disputeTarget) {
-      const note = $('disputeNote').value.trim();
-      if (!note) {
-        $('disputeNote').classList.add('error');
-        $('disputeNoteError').hidden = false;
-        $('disputeNote').focus();
-        return;
-      }
-      $('disputeNote').classList.remove('error');
-      $('disputeNoteError').hidden = true;
-      disputeTarget.status = 'disputed';
-      // Send it to the admin Trust & Safety queue
-      const admin = Store.get('jsph-admin', seedAdmin);
-      admin.disputes.unshift({
-        id: 'd' + Date.now(), client: 'Carter Digital Agency', va: vaById(disputeTarget.vaId).name,
-        amount: disputeTarget.hours * disputeTarget.rate, reason: `${$('disputeReason').value}. ${note}`,
-        evidence: `${disputeTarget.hours}h invoiced for ${disputeTarget.period} · contract and time log attached`, status: 'open', date: Date.now(),
-      });
-      Store.set('jsph-admin', admin);
-      $('disputeForm').hidden = true;
-      showToast(`Dispute opened for ${disputeTarget.id}. Funds stay in escrow until it's resolved.`);
-      disputeTarget = null;
-    }
 
-    if (d.act || d.end !== undefined || t.id === 'disputeSubmit') { save(); renderAll(); }
+    if (t.id === 'disputeCancel') { $('disputeForm').hidden = true; return; }
   });
 
-  renderAll();
-  if (client.replacements.some(r => Date.now() - r.date <= 5000)) setTimeout(renderReplacements, 5200);
+  load();
 </script>
 </body>
 </html>

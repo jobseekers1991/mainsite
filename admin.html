@@ -49,34 +49,53 @@
 
 <script src="js/main.js"></script>
 <script>
-  let admin = Store.get('jsph-admin', seedAdmin);
-  let verifyFilter = 'pending';
   const $ = id => document.getElementById(id);
-  const save = () => { Store.set('jsph-admin', admin); renderDashNav(); };
-  const log = (action, item, note = '') => admin.log.unshift({ t: Date.now(), action, item, note });
+  const fmtDay = t => new Date(t).toLocaleDateString();
+  let stats = {};
+  let flagged = [];
+  let contacts = [];
 
-  // A Brownout-ready claim made on setup-check joins the queue
-  try {
-    const claim = JSON.parse(localStorage.getItem('jsph-setup-badge') || 'null');
-    if (claim && !admin.verifications.some(v => v.claimDate === claim.date)) {
-      admin.verifications.unshift({
-        id: 'v' + claim.date, claimDate: claim.date, type: 'Brownout-ready', name: 'Maria Santos', img: 47,
-        detail: `${claim.down ? claim.down.toFixed(0) : '?'} ↓ / ${claim.up ? claim.up.toFixed(0) : '?'} ↑ Mbps · ${claim.ping ? Math.round(claim.ping) : '?'} ms · ${claim.isp} · power: ${claim.power} · backup: ${claim.backupNet}`,
-        status: 'pending', date: claim.date,
-      });
-      save();
-    }
-  } catch (e) {}
+  async function guard() {
+    // Only let admin accounts render this page. Others get sent home.
+    try {
+      const r = await fetch('/api/me', { cache: 'no-store' });
+      if (r.status !== 200) { location.href = 'auth'; return false; }
+      const { user } = await r.json();
+      if (!user || user.role !== 'admin') {
+        document.querySelector('.dash-content').innerHTML =
+          '<div class="dash-card" style="padding:2rem; text-align:center;"><h2>Admin only</h2><p>You need an admin account to see Trust &amp; Safety tools.</p></div>';
+        return false;
+      }
+      return true;
+    } catch (e) { return false; }
+  }
 
-  // Open the tab named in the URL hash (sidebar links use admin#verify etc.)
+  async function load() {
+    if (!(await guard())) return;
+    try {
+      const [sR, fR, cR] = await Promise.all([
+        fetch('/api/admin/stats', { cache: 'no-store' }),
+        fetch('/api/admin/flagged-jobs', { cache: 'no-store' }),
+        fetch('/api/admin/contact-messages', { cache: 'no-store' }),
+      ]);
+      if (sR.ok) stats = await sR.json();
+      if (fR.ok) flagged = (await fR.json()).jobs || [];
+      if (cR.ok) contacts = (await cR.json()).messages || [];
+    } catch (e) {}
+    renderAll();
+  }
+
   function openTabFromHash() {
     const tab = document.querySelector(`.how-tab[data-target="${location.hash.slice(1)}"]`);
     if (tab) tab.click();
   }
   window.addEventListener('hashchange', openTabFromHash);
   document.querySelectorAll('.how-tab').forEach(tab => tab.addEventListener('click', () => {
-    document.getElementById('dashSidebar').dataset.active = tab.dataset.target === 'log' ? 'overview' : tab.dataset.target;
-    renderDashNav();
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.how-tab').forEach(x => x.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.getElementById(tab.dataset.target);
+    if (panel) panel.classList.add('active');
   }));
 
   function renderStats() {
@@ -86,136 +105,78 @@
         <div class="stat-card-num">${num}</div>
         <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
       </div>`;
-    const openDisputes = admin.disputes.filter(d => d.status === 'open');
+    const accs = stats.accounts || {};
     $('adminStats').innerHTML =
-      stat('Flagged posts', admin.flagged.filter(f => f.status === 'open').length, 'fa-flag', '#EF4444', 'hidden from VAs until reviewed') +
-      stat('Verifications', admin.verifications.filter(v => v.status === 'pending').length, 'fa-id-card', '#4F46E5', 'target: under 24 hrs') +
-      stat('Open disputes', openDisputes.length, 'fa-balance-scale', '#F59E0B', `${money(openDisputes.reduce((s, d) => s + d.amount, 0))} in escrow`) +
-      stat('Actions today', admin.log.filter(l => Date.now() - l.t < DAY_MS).length, 'fa-check-double', '#10B981', 'by Trust &amp; Safety');
+      stat('Flagged posts', stats.flaggedJobs || 0, 'fa-flag', '#EF4444', 'hidden until reviewed') +
+      stat('Contact inbox', stats.contactMessages || 0, 'fa-envelope', '#4F46E5', 'all time') +
+      stat('Total accounts', (accs.client || 0) + (accs.va || 0) + (accs.admin || 0), 'fa-users', '#10B981', `${accs.client || 0} clients · ${accs.va || 0} VAs`) +
+      stat('Applications', stats.applications || 0, 'fa-file-alt', '#F59E0B', 'submitted');
   }
 
   function renderFlagged() {
-    const list = admin.flagged.slice().sort((a, b) => (a.status !== 'open') - (b.status !== 'open'));
-    $('flaggedList').innerHTML = list.map(f => `
-      <div class="item-card${f.status !== 'open' ? ' dim' : ''}">
+    $('flaggedList').innerHTML = flagged.map(f => `
+      <div class="item-card">
         <div class="item-head">
           <div class="job-logo" style="background:rgba(239,68,68,0.08); width:48px; height:48px; font-size:1.25rem;">⚠️</div>
           <div class="grow">
             <h3>${esc(f.title)}</h3>
-            <p>${esc(f.client)} <span class="trust-score ${trustLevel(f.trust)}" style="font-size:0.68rem;"><i class="fas fa-shield-alt"></i> ${f.trust}</span> · flagged ${fmtDay(f.date)}${f.reports ? ` · <strong style="color:var(--danger);">${f.reports} VA reports</strong>` : ''}</p>
+            <p>${esc(f.companyName || '—')} · ${esc(f.clientEmail || '')} · flagged ${fmtDay(f.createdAt)}</p>
           </div>
-          ${f.status === 'open' ? '<span class="status-pill pending">Needs review</span>' : `<span class="status-pill ${f.status === 'approved' ? 'hired' : 'rejected'}">${f.status === 'approved' ? 'Approved' : f.status === 'edit' ? 'Edit requested' : 'Removed'}</span>`}
+          <span class="status-pill pending">Needs review</span>
         </div>
-        <div class="alert alert-error" style="margin:0.875rem 0 0;"><i class="fas fa-robot" style="margin-top:0.2rem;"></i><div><strong>Auto-flag reasons:</strong><ul style="margin:0.25rem 0 0 1rem; list-style:disc;">${f.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div></div>
-        <p class="item-quote">${esc(f.excerpt)}</p>
-        ${f.status === 'open' ? `<div class="item-actions">
-          <button class="btn btn-primary btn-sm" data-flag="${f.id}" data-act="remove" style="background:var(--danger); box-shadow:none;"><i class="fas fa-ban"></i> Remove &amp; suspend client</button>
-          <button class="btn btn-outline-primary btn-sm" data-flag="${f.id}" data-act="edit"><i class="fas fa-edit"></i> Ask client to edit</button>
-          <button class="btn btn-ghost btn-sm" data-flag="${f.id}" data-act="approve"><i class="fas fa-check"></i> False alarm: publish</button>
-        </div>` : ''}
+        <p class="item-quote">${esc((f.description || '').slice(0, 400))}${(f.description || '').length > 400 ? '…' : ''}</p>
+        <div class="item-actions">
+          <button class="btn btn-ghost btn-sm" data-flag="${f.id}" data-act="approve"><i class="fas fa-check"></i> Publish</button>
+          <button class="btn btn-primary btn-sm" data-flag="${f.id}" data-act="remove" style="background:var(--danger); box-shadow:none;"><i class="fas fa-ban"></i> Remove</button>
+        </div>
       </div>`).join('') || '<div class="empty-state"><i class="fas fa-check-circle"></i>Queue is clear.</div>';
   }
 
   function renderVerify() {
-    const counts = s => admin.verifications.filter(v => s === 'all' || v.status === s).length;
-    $('verifyTabs').innerHTML = ['pending', 'approved', 'rejected', 'all'].map(s => `<button type="button" data-v="${s}" class="${s === verifyFilter ? 'active' : ''}">${s[0].toUpperCase() + s.slice(1)}<span>${counts(s)}</span></button>`).join('');
-    const icon = { 'ID': 'fa-id-card', 'Brownout-ready': 'fa-bolt', 'Business': 'fa-building', 'Certificate': 'fa-certificate' };
-    $('verifyList').innerHTML = admin.verifications.filter(v => verifyFilter === 'all' || v.status === verifyFilter).map(v => `
-      <div class="item-card">
-        <div class="item-head">
-          <img src="https://i.pravatar.cc/100?img=${v.img}" alt="" />
-          <div class="grow">
-            <h3>${esc(v.name)} <span class="feat-badge ${v.type === 'Brownout-ready' ? 'brownout' : 'cert'}"><i class="fas ${icon[v.type]}"></i> ${v.type}</span></h3>
-            <p>${esc(v.detail)}</p>
-            <p style="font-size:0.75rem;">Submitted ${fmtDay(v.date)}</p>
-          </div>
-          <span class="status-pill ${v.status === 'pending' ? 'pending' : v.status === 'approved' ? 'hired' : 'rejected'}">${v.status}</span>
-        </div>
-        ${v.status === 'pending' ? `
-          <div class="inline-panel" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center; font-size:0.8125rem; color:var(--text-light);">
-            <i class="fas fa-file-image" style="font-size:1.5rem; color:var(--border);"></i>
-            ${v.type === 'ID' ? 'ID front · ID back · selfie' : v.type === 'Business' ? 'Registration certificate · billing details' : v.type === 'Certificate' ? 'Proctoring recording · answer sheet' : 'Speed-test log · setup photo'}
-            <span style="margin-left:auto;"><i class="fas fa-lock"></i> Documents auto-delete 90 days after review</span>
-          </div>
-          <div class="form-group" style="margin:0.75rem 0 0;"><input class="form-control" data-note="${v.id}" placeholder="Note to user (required to reject)" /></div>
-          <div class="item-actions">
-            <button class="btn btn-primary btn-sm" data-ver="${v.id}" data-act="approve"><i class="fas fa-check"></i> Approve</button>
-            <button class="btn btn-ghost btn-sm" data-ver="${v.id}" data-act="reject" style="color:var(--danger);"><i class="fas fa-times"></i> Reject</button>
-          </div>` : (v.note ? `<p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.5rem;"><i class="fas fa-comment"></i> ${esc(v.note)}</p>` : '')}
-      </div>`).join('') || '<div class="empty-state"><i class="fas fa-check-circle"></i>Nothing here.</div>';
+    $('verifyList').innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i>Identity &amp; business verifications are coming soon. Users can request verification from their Settings page and it will land here.</div>';
+    $('verifyTabs').innerHTML = '';
   }
 
   function renderDisputes() {
-    $('disputeList').innerHTML = admin.disputes.map(d => `
-      <div class="item-card${d.status !== 'open' ? ' dim' : ''}">
+    // Mounted on the "disputes" panel, we use it for the contact inbox too.
+    $('disputeList').innerHTML = contacts.length ? contacts.map(c => `
+      <div class="item-card">
         <div class="item-head">
-          <div class="job-logo" style="background:rgba(245,158,11,0.1); width:48px; height:48px; font-size:1.25rem; color:var(--accent);"><i class="fas fa-balance-scale"></i></div>
+          <div class="job-logo" style="background:rgba(79,70,229,0.08); width:48px; height:48px; font-size:1.25rem;"><i class="fas fa-envelope" style="color:var(--primary);"></i></div>
           <div class="grow">
-            <h3>${esc(d.client)} vs ${esc(d.va)}</h3>
-            <p>Opened ${fmtDay(d.date)} · <strong style="color:var(--dark);">${money(d.amount)}</strong> held in escrow</p>
+            <h3>${esc(c.name)} — ${esc(c.subject || 'No subject')}</h3>
+            <p>${esc(c.email)} · ${fmtDay(c.createdAt)}</p>
           </div>
-          <span class="status-pill ${d.status === 'open' ? 'pending' : 'closed'}">${d.status === 'open' ? 'Open' : esc(d.resolution)}</span>
         </div>
-        <p class="item-quote">${esc(d.reason)}</p>
-        <div class="item-meta"><span><i class="fas fa-paperclip"></i> Evidence: <strong>${esc(d.evidence)}</strong></span></div>
-        ${d.status === 'open' ? `
-          <div class="form-group" style="margin:0.875rem 0 0;"><textarea class="form-control form-textarea" data-dnote="${d.id}" style="min-height:60px;" placeholder="Decision notes (sent to both parties)"></textarea></div>
-          <div class="item-actions">
-            <button class="btn btn-primary btn-sm" data-dis="${d.id}" data-act="va"><i class="fas fa-user"></i> Release to VA</button>
-            <button class="btn btn-outline-primary btn-sm" data-dis="${d.id}" data-act="client"><i class="fas fa-undo"></i> Refund client</button>
-            <button class="btn btn-ghost btn-sm" data-dis="${d.id}" data-act="split"><i class="fas fa-adjust"></i> Split 50/50</button>
-          </div>` : ''}
-      </div>`).join('') || '<div class="empty-state"><i class="fas fa-check-circle"></i>No disputes.</div>';
+        <p class="item-quote">${esc(c.body)}</p>
+        <div class="item-actions">
+          <a href="mailto:${encodeURIComponent(c.email)}?subject=Re: ${encodeURIComponent(c.subject || 'Jobseekers.ph contact')}" class="btn btn-primary btn-sm"><i class="fas fa-reply"></i> Reply via email</a>
+        </div>
+      </div>`).join('') : '<div class="empty-state"><i class="fas fa-check-circle"></i>No contact-form submissions yet.</div>';
   }
 
   function renderLog() {
-    $('logBody').innerHTML = admin.log.map(l => `<tr><td style="white-space:nowrap;">${new Date(l.t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td><td><strong>${esc(l.action)}</strong></td><td>${esc(l.item)}</td><td style="color:var(--text-light);">${esc(l.note)}</td></tr>`).join('')
-      || '<tr><td colspan="4" style="text-align:center; color:var(--text-light); padding:2rem;">No actions yet</td></tr>';
+    $('logBody').innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-light); padding:2rem;">Audit log is coming soon.</td></tr>';
   }
 
   function renderAll() { renderStats(); renderFlagged(); renderVerify(); renderDisputes(); renderLog(); }
 
-  document.querySelector('.dash-content').addEventListener('click', e => {
+  document.querySelector('.dash-content').addEventListener('click', async e => {
     const b = e.target.closest('button');
     if (!b) return;
     const d = b.dataset;
-
-    if (d.v) { verifyFilter = d.v; renderVerify(); return; }
-
     if (d.flag) {
-      const f = admin.flagged.find(x => x.id === d.flag);
-      f.status = { remove: 'removed', edit: 'edit', approve: 'approved' }[d.act];
-      log({ removed: 'Removed post & suspended client', edit: 'Asked client to edit', approved: 'Published flagged post' }[f.status], f.title);
-      showToast(f.status === 'removed' ? 'Post removed. Applicants were warned and the client is suspended.' : f.status === 'edit' ? 'Client asked to edit the post.' : 'Post published.');
+      const action = d.act === 'remove' ? 'remove' : 'approve';
+      const r = await fetch(`/api/admin/jobs/${encodeURIComponent(d.flag)}/${action}`, { method: 'POST' });
+      if (r.ok) {
+        flagged = flagged.filter(x => x.id !== d.flag);
+        showToast && showToast(action === 'remove' ? 'Post removed.' : 'Post published.');
+        renderFlagged();
+      }
     }
-
-    if (d.ver) {
-      const v = admin.verifications.find(x => x.id === d.ver);
-      const note = document.querySelector(`[data-note="${v.id}"]`).value.trim();
-      if (d.act === 'reject' && !note) { const input = document.querySelector(`[data-note="${v.id}"]`); input.style.borderColor = 'var(--danger)'; input.focus(); return; }
-      v.status = d.act === 'approve' ? 'approved' : 'rejected';
-      v.note = note;
-      log(`${v.type} ${v.status}`, v.name, note);
-      showToast(`${v.type} for ${v.name} ${v.status}`);
-    }
-
-    if (d.dis) {
-      const dis = admin.disputes.find(x => x.id === d.dis);
-      dis.status = 'resolved';
-      dis.resolution = { va: 'Released to VA', client: 'Refunded client', split: 'Split 50/50' }[d.act];
-      log(dis.resolution, `${dis.client} vs ${dis.va}`, document.querySelector(`[data-dnote="${dis.id}"]`).value.trim());
-      // Reflect the outcome on the client's invoice if it came from the client dashboard
-      const client = Store.get('jsph-client', seedClient);
-      const inv = client.invoices.find(i => i.status === 'disputed' && vaById(i.vaId).name === dis.va);
-      if (inv) { inv.status = d.act === 'client' ? 'refunded' : 'paid'; Store.set('jsph-client', client); }
-      showToast(`Dispute resolved: ${dis.resolution}. Both parties have been notified.`);
-    }
-
-    if (d.flag || d.ver || d.dis) { save(); renderAll(); }
   });
 
-  renderAll();
-  openTabFromHash();
+  load().then(openTabFromHash);
 </script>
 </body>
 </html>

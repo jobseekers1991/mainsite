@@ -60,10 +60,10 @@
       <a href="va-profile" class="dash-nav-item" target="_blank" rel="noopener" id="dashSidebarViewProfile">
         <i class="fas fa-eye"></i> View Profile
       </a>
-      <a href="#" class="dash-nav-item">
+      <a href="edit-profile#portfolio" class="dash-nav-item">
         <i class="fas fa-images"></i> Portfolio
       </a>
-      <a href="#" class="dash-nav-item">
+      <a href="va-profile#reviews" class="dash-nav-item" target="_blank" rel="noopener">
         <i class="fas fa-star"></i> Reviews
       </a>
 
@@ -76,10 +76,10 @@
 
       <div class="dash-nav-divider"></div>
 
-      <a href="#" class="dash-nav-item">
+      <a href="settings" class="dash-nav-item">
         <i class="fas fa-cog"></i> Settings
       </a>
-      <a href="auth" class="dash-nav-item" style="color:rgba(239,68,68,0.7);">
+      <a href="#" id="vaLogoutLink" class="dash-nav-item" style="color:rgba(239,68,68,0.7);">
         <i class="fas fa-sign-out-alt"></i> Log Out
       </a>
     </nav>
@@ -441,53 +441,8 @@
               <span class="dash-card-title">Messages</span>
               <a href="messages" class="dash-card-link">View All</a>
             </div>
-            <div class="dash-card-body">
-
-              <div class="msg-item unread">
-                <img src="https://i.pravatar.cc/150?img=12" alt="" class="msg-avatar" />
-                <div class="msg-body">
-                  <div class="msg-name">James Carter</div>
-                  <div class="msg-text">Hi Maria! I reviewed your application and...</div>
-                </div>
-                <span class="msg-time">2m</span>
-              </div>
-
-              <div class="msg-item unread">
-                <img src="https://i.pravatar.cc/150?img=22" alt="" class="msg-avatar" />
-                <div class="msg-body">
-                  <div class="msg-name">Sarah Liu</div>
-                  <div class="msg-text">Can you start on Monday? The job is...</div>
-                </div>
-                <span class="msg-time">1h</span>
-              </div>
-
-              <div class="msg-item">
-                <img src="https://i.pravatar.cc/150?img=33" alt="" class="msg-avatar" />
-                <div class="msg-body">
-                  <div class="msg-name">Robert Kim</div>
-                  <div class="msg-text">Thanks for applying. We'll get back to you.</div>
-                </div>
-                <span class="msg-time">3h</span>
-              </div>
-
-              <div class="msg-item">
-                <img src="https://i.pravatar.cc/150?img=44" alt="" class="msg-avatar" />
-                <div class="msg-body">
-                  <div class="msg-name">Ana Reyes</div>
-                  <div class="msg-text">Your profile looks great! Let's schedule...</div>
-                </div>
-                <span class="msg-time">Yesterday</span>
-              </div>
-
-              <div class="msg-item">
-                <img src="https://i.pravatar.cc/150?img=55" alt="" class="msg-avatar" />
-                <div class="msg-body">
-                  <div class="msg-name">Mark Johnson</div>
-                  <div class="msg-text">We've decided to move forward with another...</div>
-                </div>
-                <span class="msg-time">Oct 20</span>
-              </div>
-
+            <div class="dash-card-body" id="vaMessagesList">
+              <div class="msg-item" style="opacity:0.6;"><div class="msg-body"><div class="msg-text">Loading…</div></div></div>
             </div>
           </div>
 
@@ -497,33 +452,11 @@
               <span class="dash-card-title">Earnings</span>
               <a href="work-tools" class="dash-card-link">Details</a>
             </div>
-            <div class="dash-card-body">
+            <div class="dash-card-body" id="vaEarningsCard">
               <div style="text-align:center; padding:0.75rem 0 1rem;">
-                <div style="font-size:0.8rem; color:var(--text-light); margin-bottom:0.25rem;">This Month</div>
-                <div style="font-family:'Poppins',sans-serif; font-size:2.25rem; font-weight:900; color:var(--dark);">$320</div>
-                <div style="font-size:0.8rem; color:#059669; font-weight:600;"><i class="fas fa-arrow-up"></i> +$80 vs last month</div>
+                <div style="font-size:0.8rem; color:var(--text-light); margin-bottom:0.25rem;">Loading…</div>
+                <div style="font-family:'Poppins',sans-serif; font-size:2.25rem; font-weight:900; color:var(--dark);">—</div>
               </div>
-              <div style="display:flex; flex-direction:column; gap:0.625rem; border-top:1px solid var(--border); padding-top:1rem;">
-                <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
-                  <span style="color:var(--text-light);">Oct Week 1</span>
-                  <span style="font-weight:600; color:var(--dark);">$80.00</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
-                  <span style="color:var(--text-light);">Oct Week 2</span>
-                  <span style="font-weight:600; color:var(--dark);">$80.00</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
-                  <span style="color:var(--text-light);">Oct Week 3</span>
-                  <span style="font-weight:600; color:var(--dark);">$80.00</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
-                  <span style="color:var(--text-light);">Oct Week 4 (current)</span>
-                  <span style="font-weight:600; color:var(--primary);">$80.00</span>
-                </div>
-              </div>
-              <a href="#" class="btn btn-outline-primary btn-sm" style="width:100%; margin-top:1rem; text-align:center;">
-                <i class="fas fa-download"></i> Download Invoice
-              </a>
             </div>
           </div>
 
@@ -555,6 +488,85 @@
   });
 
   dashOverlay.addEventListener('click', closeSidebar);
+
+  /* ---------- Real logout: POST /api/logout then go to auth ---------- */
+  const vaLogoutLink = document.getElementById('vaLogoutLink');
+  if (vaLogoutLink) {
+    vaLogoutLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try { await fetch('/api/logout', { method: 'POST', cache: 'no-store' }); } catch (_) {}
+      location.href = 'auth';
+    });
+  }
+
+  /* ---------- Populate Messages + Earnings cards from real APIs ---------- */
+  (function hydrateVaDashCards() {
+    const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+    const relTime = ms => {
+      const d = Date.now() - ms;
+      if (d < 60000) return 'now';
+      if (d < 3600000) return Math.round(d / 60000) + 'm';
+      if (d < 86400000) return Math.round(d / 3600000) + 'h';
+      if (d < 7 * 86400000) return Math.round(d / 86400000) + 'd';
+      return new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    fetch('/api/threads', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(data => {
+      const el = document.getElementById('vaMessagesList');
+      if (!el) return;
+      if (!data || !data.ok) { el.innerHTML = '<div class="msg-item"><div class="msg-body"><div class="msg-text">Sign in to see your messages.</div></div></div>'; return; }
+      const threads = (data.threads || []).slice(0, 5);
+      if (!threads.length) {
+        el.innerHTML = '<div class="msg-item"><div class="msg-body"><div class="msg-text" style="color:var(--text-light);">No messages yet. Apply to jobs and clients will reach out.</div></div></div>';
+        return;
+      }
+      el.innerHTML = threads.map(t => {
+        const name = ((t.otherFirstName || '') + ' ' + (t.otherLastName || '')).trim() || 'User';
+        const preview = t.lastMessage ? t.lastMessage.body.slice(0, 80) : '—';
+        const unread = t.unreadCount > 0;
+        const otherId = t.clientId && t.vaId ? (t.lastMessage && t.lastMessage.mine ? (t.clientId === t.vaId ? t.clientId : (t.clientId)) : (t.clientId)) : '';
+        // Use the first other-party we know about for the avatar link
+        return `
+          <a href="messages?thread=${encodeURIComponent(t.id)}" class="msg-item${unread ? ' unread' : ''}" style="text-decoration:none; color:inherit;">
+            <img src="/api/avatar/${encodeURIComponent(t.clientId === undefined ? '' : (t.lastMessage && !t.lastMessage.mine ? t.lastMessage.senderId : t.clientId))}" alt="" class="msg-avatar" onerror="this.src='https://ui-avatars.com/api/?size=60&background=E2E8F0&color=4F46E5&name=${encodeURIComponent(name)}'" />
+            <div class="msg-body">
+              <div class="msg-name">${escapeHtml(name)}</div>
+              <div class="msg-text">${escapeHtml(preview)}</div>
+            </div>
+            <span class="msg-time">${relTime(t.lastMessageAt)}</span>
+          </a>`;
+      }).join('');
+    }).catch(() => {});
+
+    fetch('/api/invoices', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(data => {
+      const el = document.getElementById('vaEarningsCard');
+      if (!el) return;
+      if (!data || !data.ok) { el.innerHTML = '<div style="text-align:center; padding:1rem 0;"><div style="font-size:0.9rem; color:var(--text-light);">Sign in to see your earnings.</div></div>'; return; }
+      const invoices = data.invoices || [];
+      const paid = invoices.filter(i => i.status === 'paid');
+      const pending = invoices.filter(i => i.status === 'sent');
+      const thisMonth = paid.filter(i => (i.paidAt || i.updatedAt) > Date.now() - 30 * 86400000)
+        .reduce((s, i) => s + Number(i.total || 0), 0);
+      const pendingTotal = pending.reduce((s, i) => s + Number(i.total || 0), 0);
+      const money = n => '$' + Number(n || 0).toFixed(2);
+      el.innerHTML = `
+        <div style="text-align:center; padding:0.75rem 0 1rem;">
+          <div style="font-size:0.8rem; color:var(--text-light); margin-bottom:0.25rem;">Paid in last 30 days</div>
+          <div style="font-family:'Poppins',sans-serif; font-size:2.25rem; font-weight:900; color:var(--dark);">${money(thisMonth)}</div>
+          <div style="font-size:0.8rem; color:${pending.length ? '#F59E0B' : 'var(--text-light)'}; font-weight:600;">${pending.length ? `<i class="fas fa-hourglass-half"></i> ${money(pendingTotal)} pending` : 'No open invoices'}</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.625rem; border-top:1px solid var(--border); padding-top:1rem;">
+          ${paid.slice(0, 4).map(inv => `
+            <div style="display:flex; justify-content:space-between; font-size:0.8125rem;">
+              <span style="color:var(--text-light);">${escapeHtml(inv.invoiceNo)} · ${escapeHtml(inv.issuedOn)}</span>
+              <span style="font-weight:600; color:var(--dark);">${money(inv.total)}</span>
+            </div>`).join('') || '<div style="font-size:0.8125rem; color:var(--text-light); text-align:center;">No invoices yet. Submit one from the Invoices tab.</div>'}
+        </div>
+        <a href="invoices" class="btn btn-outline-primary btn-sm" style="width:100%; margin-top:1rem; text-align:center; display:block;">
+          <i class="fas fa-file-invoice-dollar"></i> Open invoices
+        </a>`;
+    }).catch(() => {});
+  })();
 </script>
 </body>
 </html>

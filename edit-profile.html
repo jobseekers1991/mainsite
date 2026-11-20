@@ -52,7 +52,7 @@
 
       <div class="dash-nav-divider"></div>
       <a href="#" class="dash-nav-item"><i class="fas fa-cog"></i> Settings</a>
-      <a href="auth" class="dash-nav-item" style="color:rgba(239,68,68,0.7);"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+      <a href="#" id="editProfileLogout" class="dash-nav-item" style="color:rgba(239,68,68,0.7);"><i class="fas fa-sign-out-alt"></i> Log Out</a>
     </nav>
   </aside>
 
@@ -807,6 +807,16 @@
     dashOverlay.classList.remove('visible');
   });
 
+  // Real logout: invalidate the session on the server, then redirect.
+  const editProfileLogout = document.getElementById('editProfileLogout');
+  if (editProfileLogout) {
+    editProfileLogout.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try { await fetch('/api/logout', { method: 'POST', cache: 'no-store' }); } catch (_) {}
+      location.href = 'auth';
+    });
+  }
+
   /* ── Photo upload — Avatar ── */
   const avatarInput   = document.getElementById('avatarInput');
   const avatarPreview = document.getElementById('avatarPreview');
@@ -1502,7 +1512,16 @@
       const { user } = await res.json();
       if (!user) return;
       currentAccountId = user.id;
-      if (user.hasAvatar) swapAvatar('/api/avatar/' + encodeURIComponent(user.id) + '?v=' + Date.now());
+      if (user.hasAvatar) {
+        swapAvatar('/api/avatar/' + encodeURIComponent(user.id) + '?v=' + Date.now());
+      } else {
+        // No upload yet — replace the Maria placeholder with a neutral initials avatar
+        // so a new signup never sees "Maria Santos" on their own profile page.
+        const first = (user.firstName || '').trim();
+        const initial = (first[0] || user.email[0] || '?').toUpperCase();
+        const fallback = 'https://ui-avatars.com/api/?size=150&background=E2E8F0&color=4F46E5&name=' + encodeURIComponent(((user.firstName || '') + ' ' + (user.lastName || '')).trim() || initial);
+        swapAvatar(fallback);
+      }
       firstNameInput.value = user.firstName || '';
       lastNameInput.value  = user.lastName  || '';
       titleInput.value     = user.title     || user.skill || '';

@@ -173,3 +173,308 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE INDEX IF NOT EXISTS idx_messages_thread_created ON messages (thread_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id      ON messages (sender_id);
+
+-- ============================================================
+-- Admin role: allow a third role so admin.html and /api/admin/* can gate on it.
+-- The CHECK constraint on accounts.role is replaced to accept 'admin' too.
+-- ============================================================
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'accounts_role_check') THEN
+    ALTER TABLE accounts DROP CONSTRAINT accounts_role_check;
+  END IF;
+EXCEPTION WHEN undefined_table THEN NULL;
+END$$;
+
+ALTER TABLE accounts ADD CONSTRAINT accounts_role_check
+  CHECK (role IN ('client', 'va', 'admin'));
+
+-- ============================================================
+-- Per-user key/value settings. Used by settings.html (notifications toggles,
+-- language, timezone, etc.). Shape is intentionally open — one JSONB column so
+-- we can add new preference keys without migrations.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS user_settings (
+  account_id   TEXT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+  data         JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at   BIGINT NOT NULL
+);
+
+-- ============================================================
+-- Notifications. One row per delivered in-app notification. The frontend
+-- polls /api/notifications; read_at is nulled until the user opens the page.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id           TEXT PRIMARY KEY,
+  account_id   TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  kind         TEXT NOT NULL,        -- application, message, interview, timesheet, invoice, system
+  title        TEXT NOT NULL,
+  body         TEXT,
+  link         TEXT,                 -- optional deep-link path
+  read_at      BIGINT,
+  created_at   BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_account_created
+  ON notifications (account_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread
+  ON notifications (account_id) WHERE read_at IS NULL;
+
+-- ============================================================
+-- Talent-pool favorites. One row per (client, saved_va). Deduped.
+-- saved_va_id is nullable so clients can save directory profiles too;
+-- for those we store the slug in saved_va_slug and leave the id NULL.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS favorites (
+  id             TEXT PRIMARY KEY,
+  client_id      TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  saved_va_id    TEXT REFERENCES accounts(id) ON DELETE CASCADE,
+  saved_va_slug  TEXT,
+  note           TEXT,
+  created_at     BIGINT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_client_vaid
+  ON favorites (client_id, saved_va_id) WHERE saved_va_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_client_slug
+  ON favorites (client_id, saved_va_slug) WHERE saved_va_slug IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_favorites_client ON favorites (client_id, created_at DESC);
+
+-- ============================================================
+-- Job templates. Pre-saved job post drafts a client can reuse.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS job_templates (
+  id             TEXT PRIMARY KEY,
+  client_id      TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  name           TEXT NOT NULL,
+  data           JSONB NOT NULL DEFAULT '{}'::jsonb,   -- mirrors the job post form shape
+  created_at     BIGINT NOT NULL,
+  updated_at     BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_templates_client ON job_templates (client_id, created_at DESC);
+
+-- ============================================================
+-- Interviews. Scheduled video/phone/in-platform interviews between client+VA.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS interviews (
+  id             TEXT PRIMARY KEY,
+  client_id      TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  va_id          TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  job_id         TEXT REFERENCES jobs(id) ON DELETE SET NULL,
+  application_id TEXT REFERENCES applications(id) ON DELETE SET NULL,
+  scheduled_for  BIGINT NOT NULL,
+  duration_min   INTEGER NOT NULL DEFAULT 30,
+  platform       TEXT NOT NULL DEFAULT 'zoom',   -- zoom, meet, phone, inplatform
+  meeting_url    TEXT,
+  notes          TEXT,
+  status         TEXT NOT NULL DEFAULT 'upcoming'
+                   CHECK (status IN ('upcoming', 'completed', 'cancelled', 'no-show')),
+  created_at     BIGINT NOT NULL,
+  updated_at     BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_interviews_client ON interviews (client_id, scheduled_for DESC);
+CREATE INDEX IF NOT EXISTS idx_interviews_va     ON interviews (va_id, scheduled_for DESC);
+CREATE INDEX IF NOT EXISTS idx_interviews_job    ON interviews (job_id);
+
+-- ============================================================
+-- Timesheets. VA submits weekly hours; client approves. Hours stored in
+-- whole minutes to avoid float.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS timesheets (
+  id            TEXT PRIMARY KEY,
+  client_id     TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  va_id         TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  job_id        TEXT REFERENCES jobs(id) ON DELETE SET NULL,
+  week_start    TEXT NOT NULL,        -- YYYY-MM-DD, Monday of the week
+  minutes       INTEGER NOT NULL,
+  rate          NUMERIC(10,2) NOT NULL,
+  summary       TEXT,
+  status        TEXT NOT NULL DEFAULT 'pending'
+                  CHECK (status IN ('pending', 'approved', 'rejected')),
+  decided_at    BIGINT,
+  created_at    BIGINT NOT NULL,
+  updated_at    BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_timesheets_client  ON timesheets (client_id, week_start DESC);
+CREATE INDEX IF NOT EXISTS idx_timesheets_va      ON timesheets (va_id, week_start DESC);
+CREATE INDEX IF NOT EXISTS idx_timesheets_pending ON timesheets (client_id) WHERE status = 'pending';
+
+-- ============================================================
+-- Invoices. VA bills a client. Status: draft / sent / paid / void.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS invoices (
+  id            TEXT PRIMARY KEY,
+  client_id     TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  va_id         TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  job_id        TEXT REFERENCES jobs(id) ON DELETE SET NULL,
+  invoice_no    TEXT NOT NULL,
+  issued_on     TEXT NOT NULL,        -- YYYY-MM-DD
+  due_on        TEXT,                 -- YYYY-MM-DD
+  currency      TEXT NOT NULL DEFAULT 'USD',
+  subtotal      NUMERIC(12,2) NOT NULL,
+  total         NUMERIC(12,2) NOT NULL,
+  items         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  notes         TEXT,
+  status        TEXT NOT NULL DEFAULT 'sent'
+                  CHECK (status IN ('draft', 'sent', 'paid', 'void')),
+  paid_at       BIGINT,
+  created_at    BIGINT NOT NULL,
+  updated_at    BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoices_client ON invoices (client_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_invoices_va     ON invoices (va_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices (status);
+
+-- ============================================================
+-- Reviews. Mutual ratings between client and VA after a hire. One review per
+-- (reviewer, hire) pair.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id            TEXT PRIMARY KEY,
+  reviewer_id   TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  subject_id    TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  job_id        TEXT REFERENCES jobs(id) ON DELETE SET NULL,
+  rating        INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  body          TEXT,
+  created_at    BIGINT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_reviewer_subject_job
+  ON reviews (reviewer_id, subject_id, COALESCE(job_id, ''));
+CREATE INDEX IF NOT EXISTS idx_reviews_subject ON reviews (subject_id, created_at DESC);
+
+-- ============================================================
+-- Teams (client-side workspaces). A client account owns a team and can
+-- invite other clients as members.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS teams (
+  id            TEXT PRIMARY KEY,
+  owner_id      TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  name          TEXT NOT NULL,
+  created_at    BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_teams_owner ON teams (owner_id);
+
+CREATE TABLE IF NOT EXISTS team_members (
+  id            TEXT PRIMARY KEY,
+  team_id       TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  account_id    TEXT REFERENCES accounts(id) ON DELETE CASCADE,
+  invite_email  TEXT,
+  role          TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member')),
+  status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'invited', 'removed')),
+  created_at    BIGINT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_team_members_unique
+  ON team_members (team_id, COALESCE(account_id, invite_email, ''));
+CREATE INDEX IF NOT EXISTS idx_team_members_team ON team_members (team_id);
+
+-- ============================================================
+-- Trials. Separate table for active trial periods — ties to an application
+-- and records hours/days committed. When the trial ends, the client either
+-- hires (updates application to 'hired') or passes.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS trials (
+  id              TEXT PRIMARY KEY,
+  application_id  TEXT NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+  job_id          TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  client_id       TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  va_id           TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  started_at      BIGINT NOT NULL,
+  ends_at         BIGINT NOT NULL,
+  scope           TEXT,
+  outcome         TEXT CHECK (outcome IN ('hired', 'passed', 'cancelled')),
+  decided_at      BIGINT,
+  created_at      BIGINT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_trials_application ON trials (application_id);
+CREATE INDEX IF NOT EXISTS idx_trials_client ON trials (client_id, ends_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trials_va     ON trials (va_id, ends_at DESC);
+
+-- ============================================================
+-- Academy course progress. One row per (va, course) with the furthest step
+-- reached and last activity. Certificates (existing va_certificates) are the
+-- completion artifact.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS academy_progress (
+  account_id    TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  course        TEXT NOT NULL,
+  step          INTEGER NOT NULL DEFAULT 0,
+  score         INTEGER,
+  updated_at    BIGINT NOT NULL,
+  PRIMARY KEY (account_id, course)
+);
+
+-- ============================================================
+-- Contact-form submissions. Written when a visitor submits contact.html.
+-- No email yet — Trust & Safety can scan these via /api/admin/contact.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id         TEXT PRIMARY KEY,
+  name       TEXT NOT NULL,
+  email      TEXT NOT NULL,
+  subject    TEXT,
+  body       TEXT NOT NULL,
+  ip         TEXT,
+  created_at BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_created ON contact_messages (created_at DESC);
+
+-- ============================================================
+-- Community forum. Threads + nested replies. Soft-moderated —
+-- status flips to 'flagged' when the scam/off-platform rules trip.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS forum_threads (
+  id            TEXT PRIMARY KEY,
+  author_id     TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  category      TEXT NOT NULL,
+  title         TEXT NOT NULL,
+  body          TEXT,
+  views         INTEGER NOT NULL DEFAULT 0,
+  status        TEXT NOT NULL DEFAULT 'open'
+                  CHECK (status IN ('open', 'closed', 'flagged', 'removed')),
+  last_reply_at BIGINT NOT NULL,
+  created_at    BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_forum_threads_cat_time
+  ON forum_threads (category, last_reply_at DESC);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_time
+  ON forum_threads (last_reply_at DESC);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_author
+  ON forum_threads (author_id);
+
+CREATE TABLE IF NOT EXISTS forum_replies (
+  id            TEXT PRIMARY KEY,
+  thread_id     TEXT NOT NULL REFERENCES forum_threads(id) ON DELETE CASCADE,
+  author_id     TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  body          TEXT NOT NULL,
+  flagged       BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at    BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_forum_replies_thread
+  ON forum_replies (thread_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_forum_replies_author
+  ON forum_replies (author_id);

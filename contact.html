@@ -95,15 +95,15 @@
         <h2 style="font-size:1.5rem; font-weight:700; color:var(--dark); margin-bottom:0.5rem;">Send us a Message</h2>
         <p style="color:var(--text-light); font-size:0.9rem; margin-bottom:2rem;">Fill in the form below and we'll get back to you within 1–2 hours during business hours.</p>
 
-        <form data-validate>
+        <form id="contactForm">
           <div class="form-row-2">
             <div class="form-group">
               <label class="form-label">First Name <span class="form-required">*</span></label>
-              <input type="text" class="form-control" placeholder="Juan" required />
+              <input id="cFirst" type="text" class="form-control" placeholder="Juan" required />
             </div>
             <div class="form-group">
               <label class="form-label">Last Name <span class="form-required">*</span></label>
-              <input type="text" class="form-control" placeholder="dela Cruz" required />
+              <input id="cLast" type="text" class="form-control" placeholder="dela Cruz" required />
             </div>
           </div>
 
@@ -111,7 +111,7 @@
             <label class="form-label">Email Address <span class="form-required">*</span></label>
             <div class="input-icon-wrap">
               <i class="fas fa-envelope"></i>
-              <input type="email" class="form-control" placeholder="you@example.com" required />
+              <input id="cEmail" type="email" class="form-control" placeholder="you@example.com" required />
             </div>
           </div>
 
@@ -132,7 +132,7 @@
 
           <div class="form-group">
             <label class="form-label">Subject <span class="form-required">*</span></label>
-            <select class="form-control" required>
+            <select id="cSubject" class="form-control" required>
               <option value="">Select a topic</option>
               <option>General Inquiry</option>
               <option>Help Finding a VA</option>
@@ -148,7 +148,7 @@
 
           <div class="form-group">
             <label class="form-label">Message <span class="form-required">*</span></label>
-            <textarea class="form-control" placeholder="Tell us how we can help you. The more detail you provide, the better we can assist you..." style="min-height:160px;" required></textarea>
+            <textarea id="cBody" class="form-control" placeholder="Tell us how we can help you. The more detail you provide, the better we can assist you..." style="min-height:160px;" required></textarea>
           </div>
 
           <div class="form-group">
@@ -158,10 +158,54 @@
             </label>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">
+          <div id="cStatus" style="font-size:0.875rem; margin-bottom:0.5rem;"></div>
+
+          <button id="cSubmit" type="submit" class="btn btn-primary btn-lg" style="width:100%;">
             <i class="fas fa-paper-plane"></i> Send Message
           </button>
         </form>
+        <script>
+        (function () {
+          const form = document.getElementById('contactForm');
+          if (!form) return;
+          const $ = id => document.getElementById(id);
+          form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const name = ($('cFirst').value.trim() + ' ' + $('cLast').value.trim()).trim();
+            const email = $('cEmail').value.trim();
+            const subject = $('cSubject').value.trim();
+            const body = $('cBody').value.trim();
+            $('cStatus').textContent = '';
+            $('cStatus').style.color = '';
+            if (!name || !email || !body) {
+              $('cStatus').textContent = 'Please fill in your name, email, and message.';
+              $('cStatus').style.color = 'var(--danger)';
+              return;
+            }
+            $('cSubmit').disabled = true;
+            try {
+              const r = await fetch('/api/contact', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, subject, body }),
+              });
+              const data = await r.json().catch(() => ({}));
+              if (r.ok && data.ok) {
+                form.reset();
+                $('cStatus').textContent = 'Thanks! We got your message and will respond within 1–2 business hours.';
+                $('cStatus').style.color = 'var(--success)';
+              } else {
+                $('cStatus').textContent = data.error || 'Could not send. Try again later.';
+                $('cStatus').style.color = 'var(--danger)';
+              }
+            } catch (err) {
+              $('cStatus').textContent = 'Network error. Try again.';
+              $('cStatus').style.color = 'var(--danger)';
+            } finally {
+              $('cSubmit').disabled = false;
+            }
+          });
+        })();
+        </script>
       </div>
 
       <!-- RIGHT SIDEBAR -->

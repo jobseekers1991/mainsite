@@ -474,8 +474,11 @@
         }
         return;
       }
-      // Success → send them to the verify-email page.
-      const url = 'verify-email?sent=1&email=' + encodeURIComponent(payload.email || data.email) + '&role=' + encodeURIComponent(payload.role);
+      // Success → send them to the verify-email page. Preserve ?next= so we
+      // can bounce them back to where they came from once verified / logged in.
+      const nextParam = new URLSearchParams(location.search).get('next');
+      const nextTail = nextParam ? ('&next=' + encodeURIComponent(nextParam)) : '';
+      const url = 'verify-email?sent=1&email=' + encodeURIComponent(payload.email || data.email) + '&role=' + encodeURIComponent(payload.role) + nextTail;
       window.location.href = url;
     } catch (err) {
       showError('registerFormError', 'Could not reach the server. Check your connection and try again.');
@@ -509,8 +512,13 @@
         showError('loginFormError', payload.error || 'Email or password is incorrect.');
         return;
       }
-      const dest = payload.role === 'client' ? 'dashboard-client' : 'dashboard-va';
-      window.location.href = payload.verified ? dest : 'verify-email?role=' + encodeURIComponent(payload.role);
+      // If a ?next= was supplied (e.g. from community ?next=community), honor it.
+      // Only allow same-origin relative paths so we can't be used as an open redirect.
+      const nextParam = new URLSearchParams(location.search).get('next');
+      const safeNext = nextParam && /^[a-z0-9][a-z0-9/_\-?&=.#]*$/i.test(nextParam) ? nextParam : null;
+      const fallback = payload.role === 'client' ? 'dashboard-client' : 'dashboard-va';
+      const dest = safeNext || fallback;
+      window.location.href = payload.verified ? dest : 'verify-email?role=' + encodeURIComponent(payload.role) + (safeNext ? '&next=' + encodeURIComponent(safeNext) : '');
     } catch (err) {
       showError('loginFormError', 'Could not reach the server. Check your connection and try again.');
     } finally {

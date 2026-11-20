@@ -470,7 +470,30 @@
   const pager      = document.getElementById('vaPagination');
   const searchInput = document.querySelector('.filter-bar input[type="text"]');
 
-  const state = { q: '', page: 1, limit: 24 };
+  const state = { q: '', page: 1, limit: 24, skill: '', city: '' };
+
+  // We fetch the current client's saved slugs once so the heart icon state is
+  // accurate on first render. Null when the viewer isn't a client.
+  let savedSlugs = null;        // Set of slugs saved by the signed-in client
+  let savedIdBySlug = null;     // slug -> favorite row id, for toggle/delete
+  let viewerRole = null;        // 'client' | 'va' | 'admin' | null
+  async function loadFavorites() {
+    try {
+      const [meR, favR] = await Promise.all([
+        fetch('/api/me', { cache: 'no-store' }),
+        fetch('/api/favorites', { cache: 'no-store' }),
+      ]);
+      if (meR.ok) {
+        const d = await meR.json();
+        viewerRole = d.user && d.user.role;
+      }
+      if (favR.ok && viewerRole === 'client') {
+        const favs = (await favR.json()).favorites || [];
+        savedSlugs = new Set(favs.map(f => f.savedVaSlug).filter(Boolean));
+        savedIdBySlug = new Map(favs.filter(f => f.savedVaSlug).map(f => [f.savedVaSlug, f.id]));
+      }
+    } catch (e) {}
+  }
 
   // Consistent "initials chip" color per VA — hash their name into a hue.
   function nameHue(s) {
@@ -484,7 +507,7 @@
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
-  function cardHTML(v) {
+  function cardHTML(v, isSaved) {
     const hue = nameHue(v.name || v.slug || '');
     const avatar = `
       <div class="va-avatar">
@@ -497,6 +520,7 @@
     const certBadge = (v.certs && v.certs.length)
       ? `<div class="va-badges"><span class="feat-badge cert"><i class="fas fa-certificate"></i> Training-center certified</span></div>`
       : '';
+    const saveBtn = `<button type="button" class="btn btn-ghost btn-sm va-save-btn" data-slug="${esc(v.slug)}" title="${isSaved ? 'Saved to your Talent Pool' : 'Save to Talent Pool'}"><i class="${isSaved ? 'fas' : 'far'} fa-heart"></i></button>`;
     return `
       <div class="va-card">
         ${featured}
@@ -511,7 +535,10 @@
         ${certBadge}
         <div class="va-card-foot">
           <div class="va-location"><i class="fas fa-map-marker-alt"></i> ${location}</div>
-          <a href="/${encodeURIComponent(v.slug)}" class="btn btn-primary btn-sm">View Profile</a>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            ${saveBtn}
+            <a href="/${encodeURIComponent(v.slug)}" class="btn btn-primary btn-sm">View Profile</a>
+          </div>
         </div>
       </div>`;
   }
@@ -548,6 +575,8 @@
     noMatchBox.hidden = true;
     const params = new URLSearchParams({ page: state.page, limit: state.limit });
     if (state.q) params.set('q', state.q);
+    if (state.skill) params.set('skill', state.skill);
+    if (state.city) params.set('city', state.city);
     let data;
     try {
       const res = await fetch('/api/vas?' + params.toString());
@@ -563,7 +592,7 @@
       pager.innerHTML = '';
       return;
     }
-    grid.innerHTML = data.vas.map(cardHTML).join('');
+    grid.innerHTML = data.vas.map(v => cardHTML(v, savedSlugs && savedSlugs.has(v.slug))).join('');
     vaCount.textContent = data.total.toLocaleString();
     if (heroCount) heroCount.textContent = data.total.toLocaleString();
     renderPager(data.page, data.pages);
@@ -586,11 +615,113 @@
     });
   }
 
-  // Deep links: ?q=foo
+  // Deep links: ?q=foo&skill=social&city=cebu
   const qp = new URLSearchParams(location.search);
   if (qp.get('q')) { state.q = qp.get('q'); if (searchInput) searchInput.value = state.q; }
+  if (qp.get('skill')) state.skill = qp.get('skill');
+  if (qp.get('city'))  state.city  = qp.get('city');
 
-  load();
+  // Top-bar Category select maps to the skill filter. We take the first select
+  // in the filter-bar and derive a lowercase skill keyword from the chosen label.
+  const topSelects = document.querySelectorAll('.filter-bar .filter-sel');
+  const CATEGORY_TO_SKILL = {
+    'Virtual Assistant': 'admin',
+    'Social Media Manager': 'social',
+    'Bookkeeper': 'bookkeep',
+    'Content Writer': 'writ',
+    'Graphic Designer': 'design',
+    'Customer Support': 'customer support',
+    'Web Developer': 'web develop',
+  };
+  if (topSelects[0]) {
+    topSelects[0].addEventListener('change', (e) => {
+      const label = e.target.value;
+      state.skill = CATEGORY_TO_SKILL[label] || '';
+      state.page = 1; load();
+    });
+  }
+
+  // Sidebar "Top Skills" checkboxes — first checked box wins for the skill param.
+  // (The VA directory field is a free-text skill string, not an array, so we
+  // keep this simple: pick the first match. More advanced AND/OR filtering
+  // would need a backend change.)
+  const SKILL_CHECKBOXES = {
+    'Email Management': 'email',
+    'Calendar Management': 'calendar',
+    'Social Media': 'social',
+    'Data Entry': 'data entry',
+    'Research': 'research',
+    'WordPress': 'wordpress',
+    'QuickBooks': 'quickbooks',
+    'Canva': 'canva',
+  };
+  document.querySelectorAll('aside .sidebar-card').forEach(card => {
+    const title = card.querySelector('.sidebar-title');
+    if (!title) return;
+    if (!/Top Skills/i.test(title.textContent)) return;
+    card.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        // Uncheck siblings — the API only accepts one skill at a time.
+        card.querySelectorAll('input[type="checkbox"]').forEach(other => { if (other !== cb) other.checked = false; });
+        if (cb.checked) {
+          const label = cb.parentElement.textContent.trim().split(/\s{2,}|\d/)[0].trim();
+          state.skill = SKILL_CHECKBOXES[label] || label.toLowerCase();
+        } else {
+          state.skill = '';
+        }
+        state.page = 1; load();
+      });
+    });
+  });
+
+  // Save/unsave buttons on each VA card. Routes signed-out users to /auth.
+  grid.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.va-save-btn');
+    if (!btn) return;
+    e.preventDefault();
+    const slug = btn.dataset.slug;
+    if (!slug) return;
+    if (viewerRole !== 'client') {
+      if (viewerRole === null) {
+        location.href = 'auth?next=' + encodeURIComponent('find-vas');
+      } else {
+        if (typeof showToast === 'function') showToast('Only clients can save VAs to a Talent Pool.');
+      }
+      return;
+    }
+    btn.disabled = true;
+    try {
+      const alreadyId = savedIdBySlug && savedIdBySlug.get(slug);
+      if (alreadyId) {
+        await fetch('/api/favorites/' + encodeURIComponent(alreadyId), { method: 'DELETE' });
+        savedSlugs.delete(slug);
+        savedIdBySlug.delete(slug);
+        btn.querySelector('i').className = 'far fa-heart';
+        if (typeof showToast === 'function') showToast('Removed from Talent Pool');
+      } else {
+        const r = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ savedVaSlug: slug }),
+        });
+        const d = await r.json();
+        if (r.ok && d.ok) {
+          savedSlugs.add(slug);
+          savedIdBySlug.set(slug, d.id);
+          btn.querySelector('i').className = 'fas fa-heart';
+          if (typeof showToast === 'function') showToast('Saved to Talent Pool');
+        } else {
+          if (typeof showToast === 'function') showToast(d.error || 'Could not save.');
+        }
+      }
+    } catch (e) {
+      if (typeof showToast === 'function') showToast('Network error.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  loadFavorites().then(load);
 </script>
 </body>
 </html>

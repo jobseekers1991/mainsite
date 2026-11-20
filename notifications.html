@@ -51,39 +51,55 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  if (!client.notifications) client.notifications = [];
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
   let filter = 'all';
+  let notifications = [];
 
   const KINDS = {
-    all:        { label: 'All',         icon: 'fa-bell',             color: '#4F46E5' },
-    unread:     { label: 'Unread',      icon: 'fa-circle',           color: '#EC4899' },
-    applicant:  { label: 'Applicants',  icon: 'fa-user-plus',        color: '#4F46E5' },
-    interview:  { label: 'Interviews',  icon: 'fa-video',            color: '#10B981' },
-    timesheet:  { label: 'Timesheets',  icon: 'fa-clock',            color: '#F59E0B' },
-    invoice:    { label: 'Invoices',    icon: 'fa-file-invoice-dollar', color: '#EC4899' },
-    trial:      { label: 'Trials',      icon: 'fa-flask',            color: '#10B981' },
+    all:         { label: 'All',         icon: 'fa-bell',                 color: '#4F46E5' },
+    unread:      { label: 'Unread',      icon: 'fa-circle',               color: '#EC4899' },
+    application: { label: 'Applicants',  icon: 'fa-user-plus',            color: '#4F46E5' },
+    interview:   { label: 'Interviews',  icon: 'fa-video',                color: '#10B981' },
+    message:     { label: 'Messages',    icon: 'fa-comments',             color: '#06B6D4' },
+    timesheet:   { label: 'Timesheets',  icon: 'fa-clock',                color: '#F59E0B' },
+    invoice:     { label: 'Invoices',    icon: 'fa-file-invoice-dollar',  color: '#EC4899' },
+    trial:       { label: 'Trials',      icon: 'fa-flask',                color: '#10B981' },
+    review:      { label: 'Reviews',     icon: 'fa-star',                 color: '#F59E0B' },
+    team:        { label: 'Team',        icon: 'fa-users',                color: '#4F46E5' },
+    system:      { label: 'System',      icon: 'fa-cog',                  color: '#64748B' },
   };
 
+  const DAY_MS_LOCAL = 86400000;
   const ago = t => {
     const d = Date.now() - t;
+    if (d < 60000) return 'just now';
     if (d < 3600000) return Math.round(d / 60000) + 'm ago';
-    if (d < DAY_MS) return Math.round(d / 3600000) + 'h ago';
-    if (d < 7 * DAY_MS) return Math.round(d / DAY_MS) + 'd ago';
-    return fmtDay(t);
+    if (d < DAY_MS_LOCAL) return Math.round(d / 3600000) + 'h ago';
+    if (d < 7 * DAY_MS_LOCAL) return Math.round(d / DAY_MS_LOCAL) + 'd ago';
+    return new Date(t).toLocaleDateString();
   };
 
+  async function load() {
+    try {
+      const r = await fetch('/api/notifications', { cache: 'no-store' });
+      if (r.status === 401) { location.href = 'auth'; return; }
+      const data = await r.json();
+      notifications = data.notifications || [];
+    } catch (e) { notifications = []; }
+    renderAll();
+  }
+
   function filtered() {
-    if (filter === 'all') return client.notifications;
-    if (filter === 'unread') return client.notifications.filter(n => !n.read);
-    return client.notifications.filter(n => n.kind === filter);
+    if (filter === 'all') return notifications;
+    if (filter === 'unread') return notifications.filter(n => !n.readAt);
+    return notifications.filter(n => n.kind === filter);
   }
 
   function renderTabs() {
     $('notifTabs').innerHTML = Object.entries(KINDS).map(([k, v]) => {
-      const count = k === 'all' ? client.notifications.length : k === 'unread' ? client.notifications.filter(n => !n.read).length : client.notifications.filter(n => n.kind === k).length;
+      const count = k === 'all' ? notifications.length
+        : k === 'unread' ? notifications.filter(n => !n.readAt).length
+        : notifications.filter(n => n.kind === k).length;
       return `<button type="button" data-f="${k}" class="${k === filter ? 'active' : ''}">${v.label}<span>${count}</span></button>`;
     }).join('');
   }
@@ -91,12 +107,12 @@
   function renderList() {
     const list = filtered();
     $('notifList').innerHTML = list.length ? list.map(n => {
-      const kind = KINDS[n.kind] || KINDS.all;
+      const kind = KINDS[n.kind] || KINDS.system;
       return `
-        <a class="notif${n.read ? '' : ' unread'}" href="${esc(n.link || '#')}" data-id="${n.id}" style="text-decoration:none; color:inherit;">
+        <a class="notif${n.readAt ? '' : ' unread'}" href="${esc(n.link || '#')}" data-id="${n.id}" style="text-decoration:none; color:inherit;">
           <div class="notif-ico" style="background:${kind.color}1a; color:${kind.color};"><i class="fas ${kind.icon}"></i></div>
           <div style="flex:1; min-width:0;">
-            <div style="display:flex; justify-content:space-between; gap:0.5rem;"><strong style="color:var(--dark); font-size:0.9375rem;">${esc(n.title)}</strong><span class="notif-time">${ago(n.t)}</span></div>
+            <div style="display:flex; justify-content:space-between; gap:0.5rem;"><strong style="color:var(--dark); font-size:0.9375rem;">${esc(n.title)}</strong><span class="notif-time">${ago(n.createdAt)}</span></div>
             <p style="font-size:0.8125rem; color:var(--text-light); margin:0.25rem 0 0;">${esc(n.body || '')}</p>
           </div>
           <button class="notif-close" data-act="delete" data-id="${n.id}" title="Dismiss"><i class="fas fa-times"></i></button>
@@ -111,36 +127,44 @@
     if (btn) { filter = btn.dataset.f; renderAll(); }
   });
 
-  $('notifList').addEventListener('click', e => {
+  $('notifList').addEventListener('click', async e => {
     const close = e.target.closest('[data-act="delete"]');
     if (close) {
       e.preventDefault();
-      client.notifications = client.notifications.filter(n => n.id !== close.dataset.id);
-      save(); renderAll();
+      const id = close.dataset.id;
+      notifications = notifications.filter(n => n.id !== id);
+      renderAll();
+      try { await fetch('/api/notifications/' + encodeURIComponent(id), { method: 'DELETE' }); } catch (_) {}
       return;
     }
     const link = e.target.closest('a.notif');
     if (link) {
-      const n = client.notifications.find(x => x.id === link.dataset.id);
-      if (n && !n.read) { n.read = true; save(); }
-      // Allow navigation to proceed
+      const id = link.dataset.id;
+      const n = notifications.find(x => x.id === id);
+      if (n && !n.readAt) {
+        n.readAt = Date.now();
+        try { fetch('/api/notifications/' + encodeURIComponent(id) + '/read', { method: 'POST' }); } catch (_) {}
+      }
     }
   });
 
-  $('markAll').addEventListener('click', () => {
-    client.notifications.forEach(n => n.read = true);
-    save(); renderAll();
-    showToast('All marked as read');
+  $('markAll').addEventListener('click', async () => {
+    notifications.forEach(n => n.readAt = n.readAt || Date.now());
+    renderAll();
+    try { await fetch('/api/notifications/read-all', { method: 'POST' }); } catch (_) {}
+    if (typeof showToast === 'function') showToast('All marked as read');
   });
 
-  $('clearAll').addEventListener('click', e => {
+  $('clearAll').addEventListener('click', async e => {
     if (e.target.dataset.confirm !== '1') { e.target.dataset.confirm = '1'; e.target.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to clear'; return; }
-    client.notifications = [];
-    save(); renderAll();
-    showToast('Notifications cleared');
+    const ids = notifications.map(n => n.id);
+    notifications = [];
+    renderAll();
+    await Promise.allSettled(ids.map(id => fetch('/api/notifications/' + encodeURIComponent(id), { method: 'DELETE' })));
+    if (typeof showToast === 'function') showToast('Notifications cleared');
   });
 
-  renderAll();
+  load();
 </script>
 </body>
 </html>

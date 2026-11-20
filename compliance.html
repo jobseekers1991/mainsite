@@ -198,6 +198,22 @@
 
   $('pStart').value = new Date().toISOString().slice(0, 10);
 
+  // Prefill the signing party inputs with the signed-in user's own details so
+  // no VA ever ships a contract that still says "Maria Santos". For clients we
+  // fill the client/company fields; for VAs we fill the contractor fields.
+  fetch('/api/me', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => {
+    if (!d || !d.ok || !d.user) return;
+    const u = d.user;
+    const full = ((u.firstName || '') + ' ' + (u.lastName || '')).trim();
+    if (u.role === 'va') {
+      if (full) $('pVa').value = full;
+      if (u.city) $('pVaLoc').value = u.city + ', Philippines';
+      if (u.title || u.skill) $('pRole').value = u.title || u.skill;
+    } else if (u.role === 'client') {
+      if (u.companyName) $('pClient').value = u.companyName;
+    }
+  }).catch(() => {});
+
   // Party details only matter for the two document tabs
   document.querySelectorAll('.how-tab').forEach(tab => tab.addEventListener('click', () => {
     $('partyCard').hidden = tab.dataset.target === 'tab-bir';

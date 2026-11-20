@@ -66,18 +66,42 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
   let search = '';
   let sort = 'recent';
-  let inviteTarget = null;
+  let inviteTarget = null;  // { id: favoriteId, vaId, slug, name }
+  let favorites = [];
+  let jobs = [];
+
+  async function load() {
+    try {
+      const [fRes, jRes] = await Promise.all([
+        fetch('/api/favorites', { cache: 'no-store' }),
+        fetch('/api/jobs/mine', { cache: 'no-store' }),
+      ]);
+      if (fRes.status === 401) { location.href = 'auth'; return; }
+      if (fRes.ok) favorites = (await fRes.json()).favorites || [];
+      if (jRes.ok) jobs = (await jRes.json()).jobs || [];
+    } catch (e) {}
+    renderAll();
+  }
+
+  function entryName(f) {
+    if (f.va) return ((f.va.firstName || '') + ' ' + (f.va.lastName || '')).trim() || 'VA';
+    return f.savedVaSlug || 'Saved VA';
+  }
+  function entryTitle(f) {
+    if (f.va) return f.va.title || f.va.skill || 'Virtual Assistant';
+    return 'Virtual Assistant';
+  }
+  function entryCity(f) { return (f.va && f.va.city) || ''; }
+  function entryAvatar(f) {
+    if (f.savedVaId) return '/api/avatar/' + encodeURIComponent(f.savedVaId);
+    return 'https://ui-avatars.com/api/?size=100&background=E2E8F0&color=4F46E5&name=' + encodeURIComponent(entryName(f));
+  }
 
   function renderStats() {
-    const pool = client.favorites || [];
-    const vas = pool.map(vaById).filter(Boolean);
-    const avgRate = vas.length ? Math.round(vas.reduce((s, v) => s + (v.rate || 0), 0) / vas.length) : 0;
-    const brownout = vas.filter(v => v.brownout).length;
+    const openJobs = jobs.filter(j => j.status === 'open').length;
     const stat = (label, num, icon, color, sub) => `
       <div class="stat-card">
         <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
@@ -85,55 +109,52 @@
         <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
       </div>`;
     $('poolStats').innerHTML =
-      stat('Saved VAs', pool.length, 'fa-star', '#F59E0B', 'in your talent pool') +
-      stat('Average rate', pool.length ? '$' + avgRate + '/hr' : '—', 'fa-dollar-sign', '#10B981', 'blended across pool') +
-      stat('Brownout-ready', brownout, 'fa-bolt', '#EC4899', 'verified setup') +
-      stat('Open roles to invite to', client.jobs.filter(j => (j.status || 'Open') === 'Open').length, 'fa-briefcase', '#4F46E5', 'ready for invites');
+      stat('Saved VAs', favorites.length, 'fa-star', '#F59E0B', 'in your talent pool') +
+      stat('Directory saves', favorites.filter(f => !f.savedVaId).length, 'fa-bookmark', '#10B981', 'from directory') +
+      stat('Jobseekers VAs', favorites.filter(f => f.savedVaId).length, 'fa-user-check', '#EC4899', 'signed-up accounts') +
+      stat('Open roles to invite to', openJobs, 'fa-briefcase', '#4F46E5', 'ready for invites');
   }
 
   function filtered() {
     const q = search.trim().toLowerCase();
-    let vas = (client.favorites || []).map(vaById).filter(Boolean);
-    if (q) vas = vas.filter(v => (v.name + ' ' + (v.title || '') + ' ' + (v.location || '') + ' ' + (v.skills || []).join(' ')).toLowerCase().includes(q));
-    if (sort === 'rate') vas.sort((a, b) => (a.rate || 0) - (b.rate || 0));
-    else if (sort === 'rating') vas.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    return vas;
+    let list = favorites.slice();
+    if (q) list = list.filter(f => (entryName(f) + ' ' + entryTitle(f) + ' ' + entryCity(f)).toLowerCase().includes(q));
+    if (sort === 'rate') list.sort((a, b) => a.createdAt - b.createdAt);
+    else list.sort((a, b) => b.createdAt - a.createdAt);
+    return list;
   }
 
   function renderList() {
-    const vas = filtered();
-    $('poolList').innerHTML = vas.map(va => `
+    const list = filtered();
+    $('poolList').innerHTML = list.map(f => `
       <div class="item-card">
         <div class="item-head">
-          <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+          <img src="${esc(entryAvatar(f))}" alt="" onerror="this.src='https://ui-avatars.com/api/?size=100&background=E2E8F0&color=4F46E5&name=${encodeURIComponent(entryName(f))}'" />
           <div class="grow">
-            <h3><a href="va-profile?id=${va.id}">${esc(va.name)}</a> ${va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''} ${va.rising ? '<span class="feat-badge rising"><i class="fas fa-seedling"></i> Rising</span>' : ''}</h3>
-            <p>${esc(va.title || 'Virtual Assistant')} · ${esc(va.location || '')} · ${va.reviews ? `${(va.rating || 0).toFixed(1)}★ (${va.reviews})` : 'New VA'}</p>
-            <div class="va-badges" style="margin:0.5rem 0 0;">
-              ${(va.certs || []).slice(0, 3).map(c => `<span class="feat-badge cert"><i class="fas fa-certificate"></i> ${esc(c)}</span>`).join('')}
-              ${(va.skills || []).slice(0, 4).map(s => `<span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(s)}</span>`).join('')}
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:1.125rem; font-weight:800; color:var(--dark);">$${va.rate || 0}/hr</div>
-            <div style="font-size:0.72rem; color:var(--text-light);">${(va.shifts || []).slice(0, 2).map(s => SHIFT_LABELS[s]?.label.replace(' hours', '')).join(', ') || '—'}</div>
+            <h3>${esc(entryName(f))}</h3>
+            <p>${esc(entryTitle(f))}${entryCity(f) ? ' · ' + esc(entryCity(f)) : ''}</p>
+            ${f.note ? `<p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.25rem;"><i class="fas fa-sticky-note"></i> ${esc(f.note)}</p>` : ''}
           </div>
         </div>
         <div class="item-actions">
-          <button class="btn btn-primary btn-sm" data-act="invite" data-id="${va.id}"><i class="fas fa-paper-plane"></i> Invite to apply</button>
-          <a href="messages?as=client&to=${va.id}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Message</a>
-          <a href="va-profile?id=${va.id}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i> View profile</a>
-          <button class="btn btn-ghost btn-sm" data-act="remove" data-id="${va.id}" style="color:var(--danger);"><i class="fas fa-star" style="opacity:0.5;"></i> Remove</button>
+          ${f.savedVaId ? `<button class="btn btn-primary btn-sm" data-act="invite" data-id="${f.id}" data-vaid="${f.savedVaId}" data-name="${esc(entryName(f))}"><i class="fas fa-paper-plane"></i> Message</button>` : ''}
+          ${f.savedVaId ? `<a href="messages?as=client&to=${encodeURIComponent(f.savedVaId)}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Message</a>` : ''}
+          <a href="${f.savedVaSlug ? '/' + encodeURIComponent(f.savedVaSlug) : 'va-profile?id=' + encodeURIComponent(f.savedVaId || '')}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i> View profile</a>
+          <button class="btn btn-ghost btn-sm" data-act="remove" data-id="${f.id}" style="color:var(--danger);"><i class="fas fa-star" style="opacity:0.5;"></i> Remove</button>
         </div>
       </div>`).join('') || `<div class="empty-state"><i class="fas fa-star"></i>No saved VAs yet. Click the star on any VA profile to save them. <a href="find-vas" style="color:var(--primary); font-weight:600;">Browse VAs</a></div>`;
   }
 
-  function openInvite(vaId) {
-    inviteTarget = vaId;
-    const va = vaById(vaId);
-    $('inviteName').textContent = va.name;
-    $('inviteJob').innerHTML = client.jobs.filter(j => (j.status || 'Open') === 'Open').map(j => `<option value="${j.id}">${esc(j.title)}</option>`).join('') || '<option disabled>No open roles — post a job first</option>';
-    $('inviteMsg').value = `Hi ${va.name.split(' ')[0]} — I'm hiring for ${client.jobs[0] ? client.jobs[0].title : 'a new role'} and your profile stood out. Would you be open to applying?`;
+  function renderAll() { renderStats(); renderList(); }
+
+  function openInvite(vaId, name) {
+    inviteTarget = { vaId, name };
+    $('inviteName').textContent = name;
+    const openJobs = jobs.filter(j => j.status === 'open');
+    $('inviteJob').innerHTML = openJobs.length
+      ? openJobs.map(j => `<option value="${j.id}">${esc(j.title)}</option>`).join('')
+      : '<option disabled>No open roles — post a job first</option>';
+    $('inviteMsg').value = `Hi ${name.split(' ')[0]} — I'm hiring and your profile stood out. Would you be open to chatting about a role?`;
     $('inviteModal').hidden = false;
     $('inviteBackdrop').hidden = false;
   }
@@ -143,34 +164,43 @@
   $('sortPool').addEventListener('change', e => { sort = e.target.value; renderList(); });
   $('inviteBackdrop').addEventListener('click', closeInvite);
   $('inviteCancel').addEventListener('click', closeInvite);
-  $('inviteSend').addEventListener('click', () => {
+  $('inviteSend').addEventListener('click', async () => {
     if (!inviteTarget) return;
-    const va = vaById(inviteTarget);
-    const job = client.jobs.find(j => j.id === $('inviteJob').value);
-    if (!job) { closeInvite(); return; }
-    // Drop a seed applicant entry if they haven't applied yet
-    if (!client.applicants.some(a => a.vaId === va.id && a.jobId === job.id)) {
-      client.applicants.unshift({ vaId: va.id, jobId: job.id, status: 'new', rate: va.rate || 8, match: 80, date: Date.now(), cover: '(Invited by you)', answers: ['(To be answered)', '(To be answered)'], invited: true });
+    const jobId = $('inviteJob').value || null;
+    const msg = $('inviteMsg').value.trim();
+    if (!msg) { showToast && showToast('Write a short message first.'); return; }
+    try {
+      const tr = await fetch('/api/threads', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ otherId: inviteTarget.vaId, jobId }),
+      });
+      const td = await tr.json();
+      if (!td.ok) { showToast && showToast(td.error || 'Could not open thread.'); return; }
+      await fetch('/api/threads/' + encodeURIComponent(td.id) + '/messages', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: msg }),
+      });
+      showToast && showToast(`Message sent to ${inviteTarget.name}.`);
+      closeInvite();
+    } catch (e) {
+      showToast && showToast('Could not send message.');
     }
-    (client.notifications ||= []).unshift({ id: 'n' + Date.now(), kind: 'applicant', title: `Invite sent to ${va.name}`, body: `For ${job.title}`, link: `applicants?job=${job.id}`, t: Date.now(), read: false });
-    save();
-    showToast(`Invite sent to ${va.name} for ${job.title}`);
-    closeInvite();
   });
 
-  $('poolList').addEventListener('click', e => {
+  $('poolList').addEventListener('click', async e => {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
-    const id = btn.dataset.id;
-    if (btn.dataset.act === 'invite') { openInvite(id); return; }
+    if (btn.dataset.act === 'invite') { openInvite(btn.dataset.vaid, btn.dataset.name); return; }
     if (btn.dataset.act === 'remove') {
-      client.favorites = (client.favorites || []).filter(v => v !== id);
-      save(); renderStats(); renderList();
-      showToast('Removed from Talent Pool');
+      const favId = btn.dataset.id;
+      favorites = favorites.filter(f => f.id !== favId);
+      renderAll();
+      await fetch('/api/favorites/' + encodeURIComponent(favId), { method: 'DELETE' });
+      showToast && showToast('Removed from Talent Pool');
     }
   });
 
-  renderStats(); renderList();
+  load();
 </script>
 </body>
 </html>

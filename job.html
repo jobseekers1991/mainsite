@@ -304,13 +304,25 @@
       ${job.startMode === 'trial' ? '<div><i class="fas fa-flask" style="color:var(--success); width:18px;"></i> Starts with a paid trial</div>' : ''}
       ${job.applicationDeadline ? `<div><i class="fas fa-flag-checkered" style="color:var(--accent); width:18px;"></i> Closes ${esc(job.applicationDeadline)}</div>` : ''}`;
 
-    // Client info card — spare, since we don't have hire history etc. yet.
-    const memberYear = new Date(Number(job.clientCreatedAt || Date.now())).getFullYear();
+    // Client info card. The /api/jobs/:id response now carries hire count,
+    // open job count, and total job count so VAs can gauge the client before
+    // applying — the equivalent of Upwork's "client has made 23 hires · 98%
+    // response rate" trust strip.
+    const memberDate = new Date(Number(job.clientCreatedAt || Date.now()));
+    const memberLabel = memberDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const hires = Number(job.clientHireCount || 0);
+    const openJobs = Number(job.clientOpenJobs || 0);
+    const totalJobs = Number(job.clientTotalJobs || 0);
     $('clientCard').innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:0.375rem; font-size:0.8125rem; color:var(--text-light);">
-        <div><i class="fas fa-building" style="width:16px;"></i> ${esc(job.companyName || 'Private client')}</div>
-        <div><i class="fas fa-calendar" style="width:16px;"></i> Member since ${memberYear}</div>
-        ${job.clientVerified ? '<div><i class="fas fa-shield-alt" style="width:16px; color:var(--success);"></i> Email verified</div>' : '<div class="warn"><i class="fas fa-exclamation-circle" style="width:16px;"></i> Email not verified yet</div>'}
+      <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.8125rem; color:var(--text-light);">
+        <div><i class="fas fa-building" style="width:16px; color:var(--primary);"></i> <strong style="color:var(--dark);">${esc(job.companyName || 'Private client')}</strong></div>
+        ${job.clientCompanySize ? `<div><i class="fas fa-users" style="width:16px;"></i> ${esc(job.clientCompanySize)} team</div>` : ''}
+        <div><i class="fas fa-calendar" style="width:16px;"></i> Member since ${esc(memberLabel)}</div>
+        ${job.clientVerified
+          ? '<div><i class="fas fa-shield-alt" style="width:16px; color:var(--success);"></i> <strong style="color:var(--success);">Email verified</strong></div>'
+          : '<div class="warn"><i class="fas fa-exclamation-circle" style="width:16px;"></i> Email not verified — apply with caution</div>'}
+        ${hires > 0 ? `<div><i class="fas fa-handshake" style="width:16px; color:#047857;"></i> <strong style="color:var(--dark);">${hires}</strong> hire${hires === 1 ? '' : 's'} on Jobseekers</div>` : ''}
+        ${totalJobs > 1 ? `<div><i class="fas fa-briefcase" style="width:16px;"></i> ${totalJobs} total post${totalJobs === 1 ? '' : 's'}${openJobs > 0 ? ` · <strong style="color:var(--primary);">${openJobs} open now</strong>` : ''}</div>` : ''}
       </div>`;
 
     $('similarJobs').innerHTML = '';

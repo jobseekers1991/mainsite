@@ -69,8 +69,8 @@
     rejected:  { label: 'Declined',    pill: 'rejected' },
     withdrawn: { label: 'Withdrawn',   pill: 'closed' },
   };
-  const TABS = ['all', 'submitted', 'viewed', 'interview', 'hired', 'rejected'];
-  const TAB_LABEL = { all: 'All', submitted: 'New', viewed: 'Viewed', interview: 'Interview', hired: 'Hired', rejected: 'Declined' };
+  const TABS = ['all', 'submitted', 'viewed', 'interview', 'trialing', 'hired', 'rejected'];
+  const TAB_LABEL = { all: 'All', submitted: 'New', viewed: 'Viewed', interview: 'Interview', trialing: 'Trialing', hired: 'Hired', rejected: 'Declined' };
 
   const _params = new URLSearchParams(location.search);
   let jobs = [];
@@ -179,7 +179,8 @@
           <div class="item-actions">
             ${a.status === 'submitted' ? `<button class="btn btn-outline-primary btn-sm" data-act="viewed" data-id="${a.id}"><i class="fas fa-eye"></i> Mark viewed</button>` : ''}
             ${['submitted', 'viewed'].includes(a.status) ? `<button class="btn btn-primary btn-sm" data-act="interview" data-id="${a.id}"><i class="fas fa-video"></i> Move to interview</button>` : ''}
-            ${['submitted', 'viewed', 'interview'].includes(a.status) ? `<button class="btn btn-outline-primary btn-sm" data-act="hired" data-id="${a.id}"><i class="fas fa-handshake"></i> Mark hired</button>` : ''}
+            ${(job.startMode === 'trial' || job.trialDays) && ['submitted', 'viewed', 'interview'].includes(a.status) ? `<button class="btn btn-outline-primary btn-sm" data-act="trial" data-id="${a.id}"><i class="fas fa-flask"></i> Start paid trial</button>` : ''}
+            ${['submitted', 'viewed', 'interview', 'trialing'].includes(a.status) ? `<button class="btn btn-outline-primary btn-sm" data-act="hired" data-id="${a.id}"><i class="fas fa-handshake"></i> Mark hired</button>` : ''}
             <button class="btn btn-ghost btn-sm" data-act="message" data-va="${a.vaId}"><i class="fas fa-comment"></i> Message</button>
             ${['submitted', 'viewed', 'interview'].includes(a.status) ? `<button class="btn btn-ghost btn-sm" data-act="rejected" data-id="${a.id}" style="color:var(--danger);"><i class="fas fa-times"></i> Decline</button>` : ''}
             ${a.status === 'rejected' ? `<button class="btn btn-ghost btn-sm" data-act="submitted" data-id="${a.id}"><i class="fas fa-undo"></i> Undo</button>` : ''}
@@ -204,6 +205,24 @@
         const data = await res.json();
         if (data.ok) location.href = 'messages?thread=' + encodeURIComponent(data.id);
         else { showToast(data.error || 'Could not open thread.'); btn.disabled = false; }
+      } catch (err) { showToast('Network error.'); btn.disabled = false; }
+      return;
+    }
+    if (act === 'trial') {
+      const id = btn.dataset.id;
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/trials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ applicationId: id }),
+        });
+        const data = await res.json();
+        if (!data.ok) { showToast(data.error || 'Could not start trial.'); btn.disabled = false; return; }
+        const app = applicants.find(a => a.id === id);
+        if (app) app.status = 'trialing';
+        render();
+        showToast('Paid trial started. The VA is notified.');
       } catch (err) { showToast('Network error.'); btn.disabled = false; }
       return;
     }

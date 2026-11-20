@@ -105,15 +105,42 @@
         </div>
 
         <form id="newTopicForm" class="sidebar-card" hidden>
-          <div class="form-group"><label class="form-label" for="topicTitle">Title</label><input id="topicTitle" class="form-control" placeholder="e.g. Paano mag-negotiate ng raise after 6 months?" required /></div>
+          <div class="form-group"><label class="form-label" for="topicTitle">Title</label><input id="topicTitle" class="form-control" placeholder="e.g. Paano mag-negotiate ng raise after 6 months?" maxlength="200" required /></div>
+          <div class="form-group"><label class="form-label" for="topicBody">Details (optional)</label><textarea id="topicBody" class="form-control form-textarea" style="min-height:90px;" placeholder="Share more context so people can actually help." maxlength="8000"></textarea></div>
           <div class="form-row-2">
             <div class="form-group"><label class="form-label" for="topicCat">Topic</label>
-              <select id="topicCat" class="form-control"><option>Newbies</option><option>Night Shift</option><option>Taxes</option><option>Rates</option><option>Tools</option><option>Scam Alert</option></select></div>
+              <select id="topicCat" class="form-control"><option>Newbies</option><option>Night Shift</option><option>Taxes</option><option>Rates</option><option>Tools</option><option>Scam Alert</option><option>Stories</option><option>General</option></select></div>
             <div class="form-group" style="display:flex; align-items:flex-end;"><button class="btn btn-primary" style="width:100%;" type="submit">Post topic</button></div>
           </div>
+          <p id="topicError" style="font-size:0.78rem; color:var(--danger); margin:0;" hidden></p>
         </form>
 
         <div class="sidebar-card" style="padding:0; overflow:hidden;" id="threadList"></div>
+
+        <!-- Thread detail panel, shown when a thread is clicked. Everything is rendered
+             inline so we avoid a page change — faster, and preserves the salary
+             benchmarks scroll position. -->
+        <div class="sidebar-card" id="threadDetail" hidden style="margin-top:1rem;">
+          <button class="btn btn-ghost btn-sm" id="threadBack" style="padding:0; color:var(--primary);"><i class="fas fa-arrow-left"></i> Back to topics</button>
+          <h3 id="threadTitle" style="font-size:1.25rem; color:var(--dark); margin:0.75rem 0 0.25rem;"></h3>
+          <p id="threadMeta" style="font-size:0.8125rem; color:var(--text-light); margin:0;"></p>
+          <p id="threadBody" style="font-size:0.9375rem; color:var(--text); line-height:1.65; margin:1rem 0 0; white-space:pre-wrap;"></p>
+          <hr style="margin:1.25rem 0; border:0; border-top:1px solid var(--border);" />
+          <strong style="font-size:0.9375rem; color:var(--dark);"><span id="replyCount">0</span> replies</strong>
+          <div id="replyList" style="margin-top:0.75rem;"></div>
+          <form id="replyForm" style="margin-top:1rem;" hidden>
+            <div class="form-group" style="margin-bottom:0.5rem;">
+              <textarea id="replyBody" class="form-control form-textarea" style="min-height:70px;" placeholder="Write a helpful reply…" maxlength="4000" required></textarea>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <button class="btn btn-primary btn-sm" type="submit">Post reply</button>
+              <p id="replyError" style="font-size:0.78rem; color:var(--danger); margin:0;" hidden></p>
+            </div>
+          </form>
+          <p id="replyAuthWarn" style="font-size:0.8125rem; color:var(--text-light); margin-top:1rem; text-align:center;" hidden>
+            <a href="auth" style="color:var(--primary); font-weight:600;">Sign in</a> to join the conversation.
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -168,10 +195,25 @@
       </div>
     </div>
     <div style="text-align:center; margin-top:2rem;">
-      <a href="auth" class="btn btn-primary"><i class="fas fa-pen"></i> Share your story</a>
+      <a href="#forum" class="btn btn-primary" id="shareStoryBtn"><i class="fas fa-pen"></i> Share your story</a>
     </div>
   </div>
 </section>
+<script>
+  // "Share your story" scrolls to the forum, pre-selects the Stories category,
+  // and opens the new-topic form (routing signed-out users to sign in).
+  document.getElementById('shareStoryBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('newTopicBtn');
+    if (!btn) return;
+    document.getElementById('forum').scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      btn.click();
+      const cat = document.getElementById('topicCat');
+      if (cat) cat.value = 'Stories';
+    }, 300);
+  });
+</script>
 
 <!-- FOOTER -->
 <footer class="footer">
@@ -196,55 +238,234 @@
 
 <script src="js/main.js"></script>
 <script>
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const DAY_MS_LOCAL = 86400000;
+  const relTime = ms => {
+    const d = Date.now() - Number(ms);
+    if (d < 60000) return 'just now';
+    if (d < 3600000) return Math.round(d / 60000) + ' min ago';
+    if (d < DAY_MS_LOCAL) return Math.round(d / 3600000) + ' hr ago';
+    if (d < 2 * DAY_MS_LOCAL) return 'Yesterday';
+    if (d < 7 * DAY_MS_LOCAL) return Math.round(d / DAY_MS_LOCAL) + ' days ago';
+    return new Date(Number(ms)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+  const authorName = t => {
+    const f = (t.authorFirstName || '').trim();
+    const l = (t.authorLastName  || '').trim();
+    return (f + (l ? ' ' + l[0] + '.' : '')) || 'A VA';
+  };
+  const authorAvatar = t => t.authorHasAvatar
+    ? '/api/avatar/' + encodeURIComponent(t.authorId)
+    : ('https://ui-avatars.com/api/?size=80&background=E2E8F0&color=4F46E5&name=' + encodeURIComponent(authorName(t)));
 
-  /* ---------- Forum ---------- */
-  const THREADS = [
-    { img: 44, cat: 'Newbies', title: 'First client interview bukas — anong usually tinatanong?', author: 'Kim N.', ago: '12 min ago', replies: 23, views: 410 },
-    { img: 32, cat: 'Scam Alert', title: '🚨 "Shopify Store Manager" post asking for ₱2,000 "laptop deposit". Reported na', author: 'Leo B.', ago: '40 min ago', replies: 41, views: 1890 },
-    { img: 25, cat: 'Night Shift', title: 'How do you sleep properly on a 9PM–5AM EST shift? Share your routine', author: 'Grace V.', ago: '1 hr ago', replies: 67, views: 2304 },
-    { img: 12, cat: 'Taxes', title: '8% vs graduated: alin ang mas tipid if ₱60k/month ka?', author: 'Ramon D.', ago: '3 hrs ago', replies: 35, views: 1502 },
-    { img: 5, cat: 'Rates', title: 'Client wants to cut my rate from $10 to $7 after 1 year. Paano sasagot?', author: 'Jessa C.', ago: '5 hrs ago', replies: 52, views: 1977 },
-    { img: 16, cat: 'Tools', title: 'Best UPS for a PC + modem setup under ₱6k? (Brownout-ready badge)', author: 'Carlo M.', ago: 'Yesterday', replies: 29, views: 980 },
-    { img: 41, cat: 'Newbies', title: 'Got my first paid trial through AI Match! Tips for nailing the 3 days?', author: 'Diana F.', ago: 'Yesterday', replies: 18, views: 640 },
-  ];
+  /* ---------- Forum state ---------- */
   let activeCat = 'all';
+  let me = null;            // current user, null if signed out
+  let threads = [];         // current list
+  let currentThreadId = null;
+
+  const threadListEl = document.getElementById('threadList');
+  const threadDetailEl = document.getElementById('threadDetail');
+  const topicForm = document.getElementById('newTopicForm');
+
+  // Fetch /api/me once on page load so we know whether to let the user post.
+  fetch('/api/me', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => {
+    me = d && d.ok ? d.user : null;
+    updateAuthUI();
+  }).catch(() => { me = null; updateAuthUI(); });
+
+  function updateAuthUI() {
+    const replyForm = document.getElementById('replyForm');
+    const replyWarn = document.getElementById('replyAuthWarn');
+    if (replyForm && replyWarn) {
+      if (me) { replyForm.hidden = false; replyWarn.hidden = true; }
+      else    { replyForm.hidden = true;  replyWarn.hidden = false; }
+    }
+  }
+
+  async function loadThreads() {
+    threadListEl.innerHTML = '<p style="padding:2rem; text-align:center; color:var(--text-light);">Loading…</p>';
+    const qs = new URLSearchParams({ limit: '30' });
+    if (activeCat && activeCat !== 'all') qs.set('category', activeCat);
+    try {
+      const r = await fetch('/api/forum/threads?' + qs.toString(), { cache: 'no-store' });
+      const data = await r.json();
+      threads = data.threads || [];
+    } catch (e) { threads = []; }
+    renderThreads();
+  }
 
   function renderThreads() {
-    const list = THREADS.filter(t => activeCat === 'all' || t.cat === activeCat);
-    document.getElementById('threadList').innerHTML = list.map(t => `
-      <a href="#" class="forum-thread">
-        <img src="https://i.pravatar.cc/80?img=${t.img}" alt="" />
+    if (!threads.length) {
+      threadListEl.innerHTML = `
+        <p style="padding:2.5rem 1.5rem; text-align:center; color:var(--text-light);">
+          <i class="fas fa-comments" style="font-size:2rem; color:var(--border); display:block; margin-bottom:0.75rem;"></i>
+          No topics in ${activeCat === 'all' ? 'the community' : activeCat} yet.<br>
+          Be the first — click <strong>Start New Topic</strong>.
+        </p>`;
+      return;
+    }
+    threadListEl.innerHTML = threads.map(t => `
+      <a href="#" class="forum-thread" data-tid="${esc(t.id)}">
+        <img src="${esc(authorAvatar(t))}" alt="" onerror="this.src='https://ui-avatars.com/api/?size=80&background=E2E8F0&color=4F46E5&name=${encodeURIComponent(authorName(t))}'" />
         <div>
           <h4>${esc(t.title)}</h4>
-          <p><span class="forum-tag">${t.cat}</span>${esc(t.author)} · ${t.ago}</p>
+          <p><span class="forum-tag">${esc(t.category)}</span>${esc(authorName(t))} · ${relTime(t.lastReplyAt || t.createdAt)}</p>
         </div>
-        <div class="forum-stats"><div><strong>${t.replies}</strong>replies</div><div><strong>${t.views.toLocaleString()}</strong>views</div></div>
-      </a>`).join('') || '<p style="padding:2rem; text-align:center; color:var(--text-light);">No topics here yet. Start one!</p>';
+        <div class="forum-stats">
+          <div><strong>${t.replyCount || 0}</strong>replies</div>
+          <div><strong>${Number(t.views || 0).toLocaleString()}</strong>views</div>
+        </div>
+      </a>`).join('');
   }
+
+  threadListEl.addEventListener('click', (e) => {
+    const link = e.target.closest('[data-tid]');
+    if (!link) return;
+    e.preventDefault();
+    openThread(link.dataset.tid);
+  });
 
   document.querySelectorAll('.cat-filter').forEach(btn => btn.addEventListener('click', () => {
     document.querySelectorAll('.cat-filter').forEach(b => { b.classList.remove('active'); b.style.color = ''; });
     btn.classList.add('active');
     btn.style.color = 'var(--primary)';
     activeCat = btn.dataset.cat;
-    renderThreads();
+    // If we were viewing a thread, go back to the list when switching categories.
+    threadDetailEl.hidden = true;
+    threadListEl.hidden = false;
+    loadThreads();
   }));
   document.querySelector('.cat-filter.active').style.color = 'var(--primary)';
 
-  const topicForm = document.getElementById('newTopicForm');
+  /* ---------- New topic ---------- */
   document.getElementById('newTopicBtn').addEventListener('click', () => {
+    if (!me) { location.href = 'auth?next=community'; return; }
     topicForm.hidden = !topicForm.hidden;
     if (!topicForm.hidden) document.getElementById('topicTitle').focus();
   });
-  topicForm.addEventListener('submit', (e) => {
+
+  topicForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    THREADS.unshift({ img: 47, cat: document.getElementById('topicCat').value, title: document.getElementById('topicTitle').value.trim(), author: 'You', ago: 'just now', replies: 0, views: 1 });
-    topicForm.reset();
-    topicForm.hidden = true;
-    renderThreads();
-    showToast('Topic posted!');
+    const errorEl = document.getElementById('topicError');
+    errorEl.hidden = true; errorEl.textContent = '';
+    const title = document.getElementById('topicTitle').value.trim();
+    const body  = document.getElementById('topicBody').value.trim();
+    const cat   = document.getElementById('topicCat').value;
+    try {
+      const r = await fetch('/api/forum/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, category: cat }),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) {
+        const msg = data.error || (data.errors && Object.values(data.errors)[0]) || 'Could not post.';
+        errorEl.textContent = msg; errorEl.hidden = false;
+        return;
+      }
+      topicForm.reset();
+      topicForm.hidden = true;
+      if (data.flagged) {
+        showToast('Topic submitted — held for a quick Trust & Safety review.');
+      } else {
+        showToast('Topic posted!');
+      }
+      await loadThreads();
+      if (!data.flagged) openThread(data.id);
+    } catch (err) {
+      errorEl.textContent = 'Network error. Try again.'; errorEl.hidden = false;
+    }
   });
+
+  /* ---------- Thread detail ---------- */
+  async function openThread(id) {
+    currentThreadId = id;
+    threadListEl.hidden = true;
+    threadDetailEl.hidden = false;
+    document.getElementById('threadTitle').textContent = 'Loading…';
+    document.getElementById('threadMeta').textContent = '';
+    document.getElementById('threadBody').textContent = '';
+    document.getElementById('replyList').innerHTML = '';
+    document.getElementById('replyCount').textContent = '0';
+    threadDetailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    history.replaceState(null, '', '?thread=' + encodeURIComponent(id) + '#forum');
+
+    try {
+      const r = await fetch('/api/forum/threads/' + encodeURIComponent(id), { cache: 'no-store' });
+      const data = await r.json();
+      if (!r.ok || !data.ok) {
+        document.getElementById('threadTitle').textContent = 'Not found';
+        document.getElementById('threadBody').textContent = 'This topic may have been removed or is under review.';
+        return;
+      }
+      const t = data.thread;
+      document.getElementById('threadTitle').textContent = t.title;
+      document.getElementById('threadMeta').innerHTML = `
+        <span class="forum-tag">${esc(t.category)}</span>
+        ${esc(authorName(t))} · ${relTime(t.createdAt)} · ${Number(t.views).toLocaleString()} views`;
+      document.getElementById('threadBody').textContent = t.body || '';
+      document.getElementById('replyCount').textContent = data.replies.length;
+      renderReplies(data.replies);
+    } catch (e) {
+      document.getElementById('threadTitle').textContent = 'Error';
+      document.getElementById('threadBody').textContent = 'Could not load this topic. Check your connection.';
+    }
+  }
+
+  function renderReplies(replies) {
+    document.getElementById('replyList').innerHTML = replies.length ? replies.map(r => `
+      <div style="display:flex; gap:0.75rem; padding:0.9rem 0; border-top:1px solid var(--border);">
+        <img src="${esc(r.authorHasAvatar ? '/api/avatar/' + encodeURIComponent(r.authorId) : 'https://ui-avatars.com/api/?size=50&background=E2E8F0&color=4F46E5&name=' + encodeURIComponent(((r.authorFirstName || '') + ' ' + (r.authorLastName || '')).trim() || 'VA'))}" alt="" style="width:36px; height:36px; border-radius:50%; flex-shrink:0; object-fit:cover;" />
+        <div style="flex:1;">
+          <div style="font-size:0.8125rem; color:var(--text-light); margin-bottom:0.2rem;"><strong style="color:var(--dark);">${esc(((r.authorFirstName || '') + ' ' + ((r.authorLastName || '')[0] || '')).trim() + (r.authorLastName ? '.' : '') || 'A VA')}</strong> · ${relTime(r.createdAt)}</div>
+          <div style="font-size:0.9375rem; color:var(--text); line-height:1.6; white-space:pre-wrap;">${esc(r.body)}</div>
+        </div>
+      </div>`).join('') : '<p style="font-size:0.875rem; color:var(--text-light); padding:0.75rem 0;">No replies yet. Be the first to help.</p>';
+  }
+
+  document.getElementById('threadBack').addEventListener('click', () => {
+    currentThreadId = null;
+    threadDetailEl.hidden = true;
+    threadListEl.hidden = false;
+    history.replaceState(null, '', location.pathname + '#forum');
+  });
+
+  document.getElementById('replyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!currentThreadId) return;
+    const errorEl = document.getElementById('replyError');
+    errorEl.hidden = true; errorEl.textContent = '';
+    const text = document.getElementById('replyBody').value.trim();
+    if (!text) return;
+    try {
+      const r = await fetch('/api/forum/threads/' + encodeURIComponent(currentThreadId) + '/replies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: text }),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) {
+        errorEl.textContent = data.error || 'Could not post reply.';
+        errorEl.hidden = false;
+        return;
+      }
+      if (data.flagged) {
+        showToast('Reply held for review (looked like off-platform contact).');
+      } else {
+        showToast('Reply posted!');
+      }
+      document.getElementById('replyBody').value = '';
+      await openThread(currentThreadId);
+      await loadThreads();
+    } catch (err) {
+      errorEl.textContent = 'Network error. Try again.'; errorEl.hidden = false;
+    }
+  });
+
+  // Deep-link support: ?thread=ft_xxx opens the thread straight away.
+  const _tid = new URLSearchParams(location.search).get('thread');
+  loadThreads().then(() => { if (_tid) openThread(_tid); });
 
   /* ---------- Salary benchmarks (USD per hour: 25th, median, 75th percentile) ---------- */
   const BENCH = [

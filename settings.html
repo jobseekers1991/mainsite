@@ -112,47 +112,61 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  if (!client.profile) client.profile = { company: '', industry: '', size: '11–50', country: '', timezone: 'America/New_York', website: '', about: '', logo: '', businessVerified: false, paymentVerified: false };
-  if (!client.members) client.members = [];
-  if (!client.emailPrefs) client.emailPrefs = { applicants: true, interviews: true, timesheets: true, invoices: true, trials: true, product: false };
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
+  const fmtDay = t => new Date(t).toLocaleDateString();
+  let me = null;
+  let settings = {};
+  let team = { team: null, members: [] };
+
+  const DEFAULT_PREFS = { pref_applicants: true, pref_interviews: true, pref_timesheets: true, pref_invoices: true, pref_trials: true, pref_product: false };
+
+  async function load() {
+    try {
+      const [meR, sR, tR] = await Promise.all([
+        fetch('/api/me', { cache: 'no-store' }),
+        fetch('/api/settings', { cache: 'no-store' }),
+        fetch('/api/team', { cache: 'no-store' }),
+      ]);
+      if (meR.status === 401) { location.href = 'auth'; return; }
+      if (meR.ok) me = (await meR.json()).user;
+      if (sR.ok)  settings = (await sR.json()).settings || {};
+      if (tR.ok)  team = await tR.json();
+    } catch (e) {}
+    fillCompany();
+  }
 
   function fillCompany() {
-    const p = client.profile;
-    $('fCompany').value = p.company || '';
-    $('fIndustry').value = p.industry || '';
-    $('fSize').value = p.size || '11–50';
-    $('fCountry').value = p.country || '';
-    $('fTz').value = p.timezone || 'America/New_York';
-    $('fWebsite').value = p.website || '';
-    $('fAbout').value = p.about || '';
-    $('fLogo').value = p.logo || '';
+    $('fCompany').value = settings.company || (me && me.companyName) || '';
+    $('fIndustry').value = settings.industry || '';
+    $('fSize').value = settings.company_size || (me && me.companySize) || '11–50';
+    $('fCountry').value = settings.country || '';
+    $('fTz').value = settings.timezone || 'America/New_York';
+    $('fWebsite').value = settings.website || '';
+    $('fAbout').value = settings.about || '';
+    $('fLogo').value = settings.logo || '';
   }
 
   function renderMembers() {
-    $('membersBody').innerHTML = client.members.map((m, i) => `
+    $('membersBody').innerHTML = team.members.map(m => `
       <tr>
-        <td>${esc(m.name || '—')}</td>
-        <td>${esc(m.email)}</td>
-        <td><select class="form-control form-control-sm" data-role="${i}" style="padding:0.25rem 0.5rem; font-size:0.8125rem;"><option value="admin"${m.role === 'admin' ? ' selected' : ''}>Admin</option><option value="recruiter"${m.role === 'recruiter' ? ' selected' : ''}>Recruiter</option><option value="billing"${m.role === 'billing' ? ' selected' : ''}>Billing</option></select></td>
+        <td>${esc((m.firstName || '') + ' ' + (m.lastName || '') || '—')}</td>
+        <td>${esc(m.email || '—')}</td>
+        <td><span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(m.role)}</span></td>
         <td><span class="status-pill ${m.status === 'active' ? 'hired' : 'pending'}">${m.status}</span></td>
-        <td style="color:var(--text-light); font-size:0.8125rem;">${m.lastActive ? fmtDay(m.lastActive) : 'Never'}</td>
+        <td style="color:var(--text-light); font-size:0.8125rem;">${m.createdAt ? fmtDay(m.createdAt) : '—'}</td>
         <td style="text-align:right;">
-          ${m.status === 'invited' ? `<button class="btn btn-ghost btn-xs" data-mact="resend" data-i="${i}"><i class="fas fa-paper-plane"></i> Resend</button>` : ''}
-          <button class="btn btn-ghost btn-xs" data-mact="remove" data-i="${i}" style="color:var(--danger);"><i class="fas fa-times"></i> Remove</button>
+          ${m.role === 'owner' ? '<span style="color:var(--text-light); font-size:0.75rem;">Owner</span>' : `<button class="btn btn-ghost btn-xs" data-mact="remove" data-id="${m.id}" style="color:var(--danger);"><i class="fas fa-times"></i> Remove</button>`}
         </td>
       </tr>`).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--text-light); padding:1rem;">You\'re the only one here. Invite a teammate.</td></tr>';
   }
 
   function renderVerify() {
     const items = [
-      { key: 'paymentVerified', label: 'Payment verified', icon: 'fa-credit-card', desc: 'Confirmed with a successful charge' },
-      { key: 'businessVerified', label: 'Business verified', icon: 'fa-building', desc: 'Registration certificate reviewed by Trust & Safety' },
+      { key: 'payment_verified', label: 'Payment verified', icon: 'fa-credit-card', desc: 'Confirmed with a successful charge' },
+      { key: 'business_verified', label: 'Business verified', icon: 'fa-building', desc: 'Registration certificate reviewed by Trust & Safety' },
     ];
     $('verifyList').innerHTML = items.map(it => {
-      const ok = !!client.profile[it.key];
+      const ok = !!settings[it.key];
       return `
         <div class="pay-card" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem; background:#fff; border:1px solid var(--border); border-radius:0.75rem; margin-bottom:0.5rem;">
           <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -166,18 +180,29 @@
 
   function renderPrefs() {
     const prefs = [
-      ['applicants', 'New applicants', 'When a VA applies to one of your posts'],
-      ['interviews', 'Interview updates', 'Confirmations, reschedules, reminders'],
-      ['timesheets', 'Timesheet submissions', 'When a VA logs their hours'],
-      ['invoices', 'Invoices', 'Invoices created, flagged, or disputed'],
-      ['trials', 'Trial updates', 'Milestones in paid trials'],
-      ['product', 'Product news', 'Features and tips (max 1/month)'],
+      ['pref_applicants', 'New applicants', 'When a VA applies to one of your posts'],
+      ['pref_interviews', 'Interview updates', 'Confirmations, reschedules, reminders'],
+      ['pref_timesheets', 'Timesheet submissions', 'When a VA logs their hours'],
+      ['pref_invoices',   'Invoices',           'Invoices created, flagged, or disputed'],
+      ['pref_trials',     'Trial updates',      'Milestones in paid trials'],
+      ['pref_product',    'Product news',       'Features and tips (max 1/month)'],
     ];
-    $('prefsList').innerHTML = prefs.map(([k, label, desc]) => `
+    $('prefsList').innerHTML = prefs.map(([k, label, desc]) => {
+      const checked = settings[k] !== undefined ? !!settings[k] : !!DEFAULT_PREFS[k];
+      return `
       <div style="display:flex; justify-content:space-between; gap:1rem; align-items:center; padding:0.75rem 0; border-bottom:1px solid var(--border);">
         <div><strong style="color:var(--dark); font-size:0.9375rem;">${label}</strong><div style="font-size:0.8125rem; color:var(--text-light);">${desc}</div></div>
-        <label class="switch"><input type="checkbox" data-pref="${k}" ${client.emailPrefs[k] ? 'checked' : ''} /><span class="slider"></span></label>
-      </div>`).join('');
+        <label class="switch"><input type="checkbox" data-pref="${k}" ${checked ? 'checked' : ''} /><span class="slider"></span></label>
+      </div>`;
+    }).join('');
+  }
+
+  async function saveSettings(patch) {
+    Object.assign(settings, patch);
+    await fetch('/api/settings', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
   }
 
   function switchTab(tab) {
@@ -191,73 +216,76 @@
 
   document.querySelectorAll('.how-tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
-  $('saveCompany').addEventListener('click', () => {
-    Object.assign(client.profile, {
+  $('saveCompany').addEventListener('click', async () => {
+    await saveSettings({
       company: $('fCompany').value.trim(),
       industry: $('fIndustry').value.trim(),
-      size: $('fSize').value,
+      company_size: $('fSize').value,
       country: $('fCountry').value.trim(),
       timezone: $('fTz').value,
       website: $('fWebsite').value.trim(),
       about: $('fAbout').value.trim(),
       logo: $('fLogo').value.trim(),
     });
-    save(); showToast('Company profile saved');
+    showToast && showToast('Company profile saved');
   });
 
-  // Members
   $('inviteMember').addEventListener('click', () => {
-    $('mEmail').value = ''; $('mName').value = ''; $('mRole').value = 'recruiter';
+    $('mEmail').value = ''; $('mName').value = ''; $('mRole').value = 'member';
+    document.querySelectorAll('#mRole option').forEach(o => {
+      if (o.value === 'recruiter' || o.value === 'billing') o.value = 'member';
+    });
     $('memberModal').hidden = false; $('mBackdrop').hidden = false;
   });
   const closeMember = () => { $('memberModal').hidden = true; $('mBackdrop').hidden = true; };
   $('mCancel').addEventListener('click', closeMember);
   $('mBackdrop').addEventListener('click', closeMember);
-  $('mSave').addEventListener('click', () => {
+  $('mSave').addEventListener('click', async () => {
     const email = $('mEmail').value.trim();
     if (!email.includes('@')) { $('mEmail').style.borderColor = 'var(--danger)'; return; }
-    client.members.push({ email, name: $('mName').value.trim(), role: $('mRole').value, status: 'invited', lastActive: null });
-    save(); renderMembers(); closeMember();
-    showToast(`Invite sent to ${email}`);
+    const roleSel = $('mRole').value;
+    const role = roleSel === 'admin' ? 'admin' : 'member';
+    const r = await fetch('/api/team/invite', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, role }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) { showToast && showToast(data.error || 'Could not send invite'); return; }
+    const tR = await fetch('/api/team', { cache: 'no-store' });
+    if (tR.ok) team = await tR.json();
+    closeMember();
+    renderMembers();
+    showToast && showToast(`Invite sent to ${email}`);
   });
 
-  $('membersBody').addEventListener('click', e => {
+  $('membersBody').addEventListener('click', async e => {
     const btn = e.target.closest('[data-mact]');
     if (!btn) return;
-    const i = Number(btn.dataset.i);
-    if (btn.dataset.mact === 'resend') { showToast('Invite re-sent.'); return; }
     if (btn.dataset.mact === 'remove') {
       if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = 'Confirm?'; return; }
-      client.members.splice(i, 1);
-      save(); renderMembers();
-      showToast('Member removed');
+      await fetch('/api/team/members/' + encodeURIComponent(btn.dataset.id), { method: 'DELETE' });
+      const tR = await fetch('/api/team', { cache: 'no-store' });
+      if (tR.ok) team = await tR.json();
+      renderMembers();
+      showToast && showToast('Member removed');
     }
   });
-  $('membersBody').addEventListener('change', e => {
-    const sel = e.target.closest('[data-role]');
-    if (!sel) return;
-    client.members[Number(sel.dataset.role)].role = sel.value;
-    save(); showToast('Role updated');
-  });
 
-  // Verification
-  $('verifyList').addEventListener('click', e => {
+  $('verifyList').addEventListener('click', async e => {
     const btn = e.target.closest('[data-vact]');
     if (!btn) return;
-    // Simulate submission by adding to the admin queue
-    const admin = Store.get('jsph-admin', seedAdmin);
-    admin.verifications.unshift({ id: 'v' + Date.now(), type: 'Business', name: client.profile.company || 'Your business', img: 33, detail: 'Company registration docs submitted', status: 'pending', date: Date.now() });
-    Store.set('jsph-admin', admin);
-    showToast('Submitted. Trust & Safety usually reviews within 24 hours.');
+    await saveSettings({ [btn.dataset.vact + '_pending']: true });
+    showToast && showToast('Submitted. Trust & Safety usually reviews within 24 hours.');
   });
 
-  // Prefs
-  $('savePrefs').addEventListener('click', () => {
-    $('prefsList').querySelectorAll('[data-pref]').forEach(el => client.emailPrefs[el.dataset.pref] = el.checked);
-    save(); showToast('Preferences saved');
+  $('savePrefs').addEventListener('click', async () => {
+    const patch = {};
+    $('prefsList').querySelectorAll('[data-pref]').forEach(el => { patch[el.dataset.pref] = el.checked; });
+    await saveSettings(patch);
+    showToast && showToast('Preferences saved');
   });
 
-  fillCompany();
+  load();
 </script>
 </body>
 </html>

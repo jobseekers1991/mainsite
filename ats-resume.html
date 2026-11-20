@@ -842,6 +842,161 @@
         '<strong>To save as PDF:</strong> Click Download PDF → In the print dialog, set destination to "Save as PDF" → Save. ATS Mode strips all styling for maximum scanner compatibility.';
     }
   });
+
+  /* ---------- Hydrate with real signed-in user data ---------- */
+  // If the viewer is a signed-in VA, their resume replaces the Maria Santos
+  // sample. Clients or signed-out visitors see the sample (with a top banner
+  // nudging them to sign in). We query by CSS class because the modern /
+  // classic / minimal formats all share the same markup structure.
+  const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+  const q  = (sel) => document.querySelector(sel);
+  const qa = (sel) => document.querySelectorAll(sel);
+
+  function showNotice(html) {
+    const notice = document.createElement('div');
+    notice.className = 'resume-hint';
+    notice.style.background = '#FEF3C7';
+    notice.style.borderColor = '#F59E0B';
+    notice.innerHTML = '<i class="fas fa-info-circle" style="color:#B45309;"></i><span style="color:#92400E;">' + html + '</span>';
+    hint.after(notice);
+  }
+
+  async function hydrateResume() {
+    let user = null;
+    try {
+      const r = await fetch('/api/me', { cache: 'no-store' });
+      if (r.status === 200) user = (await r.json()).user;
+    } catch (_) {}
+
+    if (!user) {
+      showNotice('<strong>You\'re viewing a sample resume.</strong> <a href="auth" style="color:#92400E; font-weight:700;">Sign in as a VA</a> and we\'ll build this from your real profile.');
+      return;
+    }
+    if (user.role !== 'va') {
+      showNotice('<strong>This tool is for VA accounts.</strong> The sample below shows what a VA\'s resume looks like.');
+      return;
+    }
+
+    const pd = user.profileData || {};
+    const fullName = ((user.firstName || '') + ' ' + (user.lastName || '')).trim() || 'Virtual Assistant';
+    const slug = (user.firstName + user.lastName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Header
+    q('.r-name').textContent = fullName;
+    q('.r-title').textContent = user.title || user.skill || 'Virtual Assistant';
+    document.title = 'ATS Resume — ' + fullName + ' | Jobseekers.ph';
+
+    // Contact strip. We rebuild it from scratch so it only shows what the user
+    // actually set (no ghost LinkedIn / Notion placeholders).
+    const contacts = [];
+    if (user.city) contacts.push({ icon: 'fas fa-map-marker-alt', text: user.city + ', Philippines' });
+    const tz = (pd.preferences && pd.preferences.timezone) || 'UTC+8 (Philippine Standard Time)';
+    contacts.push({ icon: 'fas fa-clock', text: tz });
+    if (slug) contacts.push({ icon: 'fas fa-globe', text: 'jobseekers.ph/' + slug });
+    const socials = pd.socials || {};
+    if (socials.linkedin) contacts.push({ icon: 'fab fa-linkedin-in', text: socials.linkedin });
+    if (socials.website)  contacts.push({ icon: 'fas fa-globe',       text: socials.website });
+    if (socials.github)   contacts.push({ icon: 'fab fa-github',      text: socials.github });
+    q('.r-contact').innerHTML = contacts.map(c => `<span><i class="${c.icon}"></i> ${escapeHtml(c.text)}</span>`).join('');
+
+    // Professional summary. Prefer the long bio; fall back to the short tagline.
+    const summary = (pd.bio || user.tagline || '').trim();
+    const summaryEl = q('.r-section-title + p');
+    if (summaryEl) {
+      summaryEl.textContent = summary || 'Add a bio in your profile to fill this section.';
+      if (!summary) summaryEl.style.color = '#94A3B8';
+    }
+
+    // Core Skills — one <span class="r-skill"> per skill.
+    const skillsBox = q('.r-skills');
+    const skills = Array.isArray(pd.skills) ? pd.skills.filter(Boolean) : [];
+    if (skillsBox) {
+      skillsBox.innerHTML = skills.length
+        ? skills.map(s => `<span class="r-skill">${escapeHtml(s)}</span>`).join('')
+        : '<span class="r-skill" style="opacity:0.5;">Add skills in your profile</span>';
+    }
+
+    // Work Experience — rebuild the experience section from pd.experience.
+    const expItems = qa('.r-exp-item');
+    const workSectionTitle = [...qa('.r-section-title')].find(el => /Work Experience/i.test(el.textContent));
+    if (workSectionTitle) {
+      // Remove existing hardcoded experience items.
+      expItems.forEach(it => it.remove());
+      const exp = Array.isArray(pd.experience) ? pd.experience : [];
+      const html = exp.length ? exp.map(e => `
+        <div class="r-exp-item">
+          <div class="r-exp-head">
+            <span class="r-exp-title">${escapeHtml(e.title || 'Role')}</span>
+            <span class="r-exp-dates">${escapeHtml(e.startDate || '')} ${(e.endDate || e.current) ? '– ' + (e.current ? 'Present' : escapeHtml(e.endDate)) : ''}</span>
+          </div>
+          <div class="r-exp-company">${escapeHtml(e.company || '')}${e.location ? ' · ' + escapeHtml(e.location) : ''}</div>
+          ${e.description ? `<div class="r-exp-desc">${escapeHtml(e.description)}</div>` : ''}
+        </div>`).join('')
+        : `<div class="r-exp-item" style="opacity:0.5;"><div class="r-exp-desc">Add work experience in your profile.</div></div>`;
+      workSectionTitle.insertAdjacentHTML('afterend', html);
+    }
+
+    // Education
+    const eduItems = qa('.r-edu-item');
+    const eduTitle = [...qa('.r-section-title')].find(el => /Education/i.test(el.textContent));
+    if (eduTitle) {
+      eduItems.forEach(it => it.remove());
+      const edu = Array.isArray(pd.education) ? pd.education : [];
+      const html = edu.length ? edu.map(e => `
+        <div class="r-edu-item">
+          <div class="r-edu-school">${escapeHtml(e.school || 'School')}</div>
+          <div class="r-edu-degree">${escapeHtml([e.degree, e.field].filter(Boolean).join(' · '))}</div>
+          ${e.year ? `<div class="r-edu-date">${escapeHtml(e.year)}</div>` : ''}
+        </div>`).join('')
+        : `<div class="r-edu-item" style="opacity:0.5;"><div class="r-edu-degree">Add education in your profile.</div></div>`;
+      eduTitle.insertAdjacentHTML('afterend', html);
+    }
+
+    // Certifications — pulled from /api/certificates (both academy + external).
+    try {
+      const cR = await fetch('/api/certificates', { cache: 'no-store' });
+      if (cR.ok) {
+        const certData = await cR.json();
+        const certs = certData.certificates || [];
+        const certItems = qa('.r-cert-item');
+        const certTitle = [...qa('.r-section-title')].find(el => /Certifications/i.test(el.textContent));
+        if (certTitle) {
+          certItems.forEach(it => it.remove());
+          const html = certs.length ? certs.map(c => `
+            <div class="r-cert-item">
+              <div>
+                <div class="r-cert-name">${escapeHtml(c.title)}</div>
+                ${c.issuer ? `<div class="r-cert-issuer">${escapeHtml(c.issuer)}</div>` : ''}
+              </div>
+              ${c.issueDate ? `<div class="r-cert-date">${escapeHtml(c.issueDate)}</div>` : ''}
+            </div>`).join('')
+            : `<div class="r-cert-item" style="opacity:0.5;"><div><div class="r-cert-name">No certificates yet</div><div class="r-cert-issuer">Finish a VA Academy course to earn one.</div></div></div>`;
+          certTitle.insertAdjacentHTML('afterend', html);
+        }
+      }
+    } catch (_) {}
+
+    // Languages
+    const langItems = qa('.r-lang-row');
+    const langTitle = [...qa('.r-section-title')].find(el => /Languages/i.test(el.textContent));
+    if (langTitle && Array.isArray(pd.languages) && pd.languages.length) {
+      langItems.forEach(it => it.remove());
+      langTitle.insertAdjacentHTML('afterend', pd.languages.map(l => `
+        <div class="r-lang-row">
+          <span class="r-lang-name">${escapeHtml(l.name)}</span>
+          <span class="r-lang-level">${escapeHtml(l.level || '')}</span>
+        </div>`).join(''));
+    }
+
+    // Hide the English test box — that's a feature we don't ship yet (no proctoring).
+    const etsTitle = [...qa('.r-section-title')].find(el => /English Proficiency/i.test(el.textContent));
+    if (etsTitle) {
+      const etsBox = etsTitle.nextElementSibling;
+      etsTitle.remove();
+      if (etsBox && etsBox.classList.contains('r-ets-box')) etsBox.remove();
+    }
+  }
+  hydrateResume();
 </script>
 </body>
 </html>

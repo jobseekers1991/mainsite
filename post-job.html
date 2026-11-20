@@ -448,8 +448,49 @@
     // If ?id=jobId is present, load the existing job into edit mode.
     const editId = new URLSearchParams(location.search).get('id');
     if (editId) await loadJobForEdit(editId);
+    // If ?tpl=tplId is present (from the Templates page's "Post from template"
+    // link), fill the form with the saved template as a starting point.
+    const tplId = new URLSearchParams(location.search).get('tpl');
+    if (tplId && !editId) await loadFromTemplate(tplId);
   }
   loadMe();
+
+  // Load a saved job template into the form. Fields in the template that
+  // don't map 1:1 to the post-job form (notably payMin/payMax — we only
+  // store a free-text "rate band") are left blank; everything else carries
+  // over so the user can tweak and submit.
+  async function loadFromTemplate(tplId) {
+    try {
+      const res = await fetch('/api/templates/' + encodeURIComponent(tplId));
+      if (res.status !== 200) return;
+      const data = await res.json();
+      if (!data.ok || !data.template) return;
+      const t = data.template;
+      const d = (t.data && typeof t.data === 'object') ? t.data : {};
+
+      if (!document.getElementById('jobTitle').value) {
+        document.getElementById('jobTitle').value = t.name || '';
+      }
+      if (d.summary && !document.getElementById('jobDesc').value) {
+        document.getElementById('jobDesc').value = d.summary;
+      }
+      if (d.shift) {
+        const sh = document.querySelector(`input[name="shift"][value="${d.shift}"]`);
+        if (sh) sh.checked = true;
+      }
+      if (Array.isArray(d.skills) && d.skills.length) {
+        document.getElementById('skillsInput').value = d.skills.join(', ');
+        if (typeof updateSkillsCount === 'function') updateSkillsCount();
+      }
+      if (Array.isArray(d.screening) && d.screening.length) {
+        document.getElementById('screeningQs').value = d.screening.join('\n');
+      }
+      // Give the user a quick visual cue that we filled the form from a template.
+      setBanner('info', '<i class="fas fa-magic"></i><div>Prefilled from your <strong>' + (t.name || 'template') + '</strong> template. Tweak and post.</div>');
+      if (typeof scanPost === 'function') scanPost();
+      if (typeof updateTrial === 'function') updateTrial();
+    } catch (_) { /* silently ignore — a bad tpl id just means an empty form */ }
+  }
 
   /* ---------- Edit mode ---------- */
   let editingJobId = null;

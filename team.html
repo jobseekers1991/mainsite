@@ -63,22 +63,63 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  if (!client.notes) client.notes = {};
-  if (!client.past) client.past = [];
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
+  const fmtDay = t => new Date(t).toLocaleDateString();
+  const money = n => '$' + Number(n || 0).toFixed(2);
+  const DAY_MS_LOCAL = 86400000;
   const GUARANTEE_DAYS = 30;
-  let noteTarget = null;
+  let noteTarget = null;        // vaId when the notes modal is open
+  let notesSettings = {};        // { vaId: [ {t, kind, text} ] }
+  let hiredApps = [];
+  let endedApps = [];
+  let trials = [];
 
-  const daysOn = t => Math.floor((Date.now() - t) / DAY_MS);
   const noteKindColor = { 'general': '#4F46E5', '30-day': '#10B981', '60-day': '#10B981', '90-day': '#10B981', 'praise': '#F59E0B', 'concern': '#EF4444' };
 
+  async function load() {
+    try {
+      const [jR, sR, trR] = await Promise.all([
+        fetch('/api/jobs/mine', { cache: 'no-store' }),
+        fetch('/api/settings', { cache: 'no-store' }),
+        fetch('/api/trials',   { cache: 'no-store' }),
+      ]);
+      if (jR.status === 401) { location.href = 'auth'; return; }
+      // Aggregate applications across every job owned by the client
+      const jobs = jR.ok ? (await jR.json()).jobs || [] : [];
+      hiredApps = [];
+      endedApps = [];
+      for (const j of jobs) {
+        const ar = await fetch('/api/applications?jobId=' + encodeURIComponent(j.id), { cache: 'no-store' });
+        if (!ar.ok) continue;
+        const apps = (await ar.json()).applications || [];
+        apps.forEach(a => {
+          a.jobTitle = j.title;
+          a.jobId = j.id;
+          if (a.status === 'hired')   hiredApps.push(a);
+          if (a.status === 'rejected' || a.status === 'withdrawn') endedApps.push(a);
+        });
+      }
+      if (sR.ok) {
+        const data = await sR.json();
+        try { notesSettings = data.settings && data.settings.team_notes ? JSON.parse(data.settings.team_notes) : {}; } catch (e) { notesSettings = {}; }
+      }
+      if (trR.ok) trials = (await trR.json()).trials || [];
+    } catch (e) {}
+    renderAll();
+  }
+
+  async function saveNotes() {
+    await fetch('/api/settings', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team_notes: JSON.stringify(notesSettings) }),
+    });
+  }
+
+  function daysOn(t) { return Math.floor((Date.now() - t) / DAY_MS_LOCAL); }
+
   function renderStats() {
-    const hires = client.hires;
-    const totalHours = hires.reduce((s, h) => s + (h.hoursWeek || 0), 0);
-    const totalCost = hires.reduce((s, h) => s + (h.hoursWeek || 0) * h.rate, 0);
-    const trials = client.trials.filter(t => t.status !== 'ended' && t.status !== 'done').length;
+    const totalRate = hiredApps.reduce((s, a) => s + Number(a.rate || 0), 0);
+    const live = trials.filter(t => !t.outcome).length;
     const stat = (label, num, icon, color, sub) => `
       <div class="stat-card">
         <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
@@ -86,81 +127,79 @@
         <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
       </div>`;
     $('teamStats').innerHTML =
-      stat('Active hires', hires.length, 'fa-user-check', '#4F46E5', 'on contract') +
-      stat('On trial', trials, 'fa-flask', '#10B981', 'running now') +
-      stat('Weekly hours', totalHours.toFixed(1), 'fa-clock', '#EC4899', 'this week combined') +
-      stat('Weekly cost', money(totalCost), 'fa-dollar-sign', '#F59E0B', 'at contract rates');
+      stat('Active hires', hiredApps.length, 'fa-user-check', '#4F46E5', 'on contract') +
+      stat('On trial', live, 'fa-flask', '#10B981', 'running now') +
+      stat('Avg rate', hiredApps.length ? money(totalRate / hiredApps.length) + '/hr' : '—', 'fa-dollar-sign', '#EC4899', '') +
+      stat('Past hires', endedApps.length, 'fa-history', '#F59E0B', 'ended contracts');
   }
 
-  function hireCard(h) {
-    const va = vaById(h.vaId);
-    const days = daysOn(h.start);
+  function fullName(a) { return ((a.vaFirstName || '') + ' ' + (a.vaLastName || '')).trim() || 'VA'; }
+
+  function hireCard(a) {
+    const days = daysOn(a.updatedAt || a.createdAt);
     const left = GUARANTEE_DAYS - days;
-    const notes = client.notes[h.vaId] || [];
+    const notes = notesSettings[a.vaId] || [];
     return `
       <div class="item-card">
         <div class="item-head">
-          <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+          <img src="/api/avatar/${encodeURIComponent(a.vaId)}" alt="" onerror="this.src='https://ui-avatars.com/api/?size=100&background=E2E8F0&color=4F46E5&name=${encodeURIComponent(fullName(a))}'" />
           <div class="grow">
-            <h3>${esc(va.name)} ${va.brownout ? '<span class="feat-badge brownout">⚡ Brownout-ready</span>' : ''}</h3>
-            <p>${esc(h.role)} · $${h.rate}/hr · Day ${days} · Started ${fmtDay(h.start)}</p>
+            <h3>${esc(fullName(a))}</h3>
+            <p>${esc(a.jobTitle || '—')} · $${Number(a.rate || 0).toFixed(2)}/hr · Day ${days} · Hired ${fmtDay(a.updatedAt || a.createdAt)}</p>
             ${notes.length ? `<p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.25rem;"><i class="fas fa-sticky-note"></i> ${notes.length} note${notes.length === 1 ? '' : 's'} · last: <strong style="color:var(--dark);">${esc((notes[0].text || '').slice(0, 60))}${notes[0].text && notes[0].text.length > 60 ? '…' : ''}</strong></p>` : ''}
           </div>
           ${left > 0 ? `<span class="days-left">🛡️ ${left}d guarantee</span>` : '<span class="days-left out">Past guarantee</span>'}
         </div>
-        <div class="item-meta">
-          <span>This week <strong>${(h.hoursWeek || 0)} hrs</strong></span>
-          <span>Cost <strong>${money((h.hoursWeek || 0) * h.rate)}</strong></span>
-          <span><i class="fas fa-circle" style="color:var(--success); font-size:0.5rem;"></i> Online today</span>
-        </div>
         <div class="item-actions">
-          <button class="btn btn-outline-primary btn-sm" data-act="notes" data-id="${h.vaId}"><i class="fas fa-sticky-note"></i> Notes (${notes.length})</button>
-          <a href="timesheets?va=${h.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-clock"></i> Timesheets</a>
-          <a href="messages?as=client&to=${h.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
-          <a href="calendar?va=${h.vaId}&schedule=1" class="btn btn-ghost btn-sm"><i class="fas fa-calendar-plus"></i> Schedule 1:1</a>
-          <button class="btn btn-ghost btn-sm" data-act="offboard" data-id="${h.vaId}" style="color:var(--danger);"><i class="fas fa-door-open"></i> End contract</button>
+          <button class="btn btn-outline-primary btn-sm" data-act="notes" data-id="${a.vaId}"><i class="fas fa-sticky-note"></i> Notes (${notes.length})</button>
+          <a href="timesheets" class="btn btn-ghost btn-sm"><i class="fas fa-clock"></i> Timesheets</a>
+          <a href="messages?as=client&to=${encodeURIComponent(a.vaId)}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
+          <a href="calendar?va=${encodeURIComponent(a.vaId)}&schedule=1" class="btn btn-ghost btn-sm"><i class="fas fa-calendar-plus"></i> Schedule 1:1</a>
+          <button class="btn btn-ghost btn-sm" data-act="offboard" data-id="${a.id}" style="color:var(--danger);"><i class="fas fa-door-open"></i> End contract</button>
         </div>
       </div>`;
   }
 
   function trialCard(t) {
-    const va = vaById(t.vaId);
     return `
       <div class="item-card">
         <div class="item-head">
-          <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
-          <div class="grow"><h3>${esc(va.name)}</h3><p>${esc(t.role)} · ${t.days} days × ${t.hours}h × $${t.rate}/hr</p></div>
-          <span class="status-pill ${t.status === 'in-progress' ? 'active' : 'pending'}">${t.status}</span>
+          <img src="/api/avatar/${encodeURIComponent(t.vaId)}" alt="" onerror="this.src='https://ui-avatars.com/api/?size=100&background=E2E8F0&color=4F46E5&name=${encodeURIComponent(t.vaFirstName || 'VA')}'" />
+          <div class="grow"><h3>${esc((t.vaFirstName || '') + ' ' + (t.vaLastName || ''))}</h3><p>${esc(t.jobTitle || '—')} · ends ${fmtDay(t.endsAt)}</p></div>
+          <span class="status-pill ${t.outcome ? 'closed' : 'pending'}">${t.outcome || 'in progress'}</span>
         </div>
-        <p class="item-quote">${esc(t.scope)}</p>
+        ${t.scope ? `<p class="item-quote">${esc(t.scope)}</p>` : ''}
         <div class="item-actions">
-          <a href="dashboard-client#trials" class="btn btn-outline-primary btn-sm"><i class="fas fa-flask"></i> Review on Overview</a>
-          <a href="messages?as=client&to=${t.vaId}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
+          <button class="btn btn-primary btn-sm" data-trial="${t.id}" data-outcome="hired"><i class="fas fa-check"></i> Convert to hire</button>
+          <button class="btn btn-ghost btn-sm" data-trial="${t.id}" data-outcome="passed">Pass</button>
+          <a href="messages?as=client&to=${encodeURIComponent(t.vaId)}" class="btn btn-ghost btn-sm"><i class="fas fa-comment"></i> Message</a>
         </div>
       </div>`;
   }
 
   function renderActive() {
-    $('activeView').innerHTML = client.hires.map(hireCard).join('') || '<div class="empty-state"><i class="fas fa-user-check"></i>No active hires yet. <a href="applicants" style="color:var(--primary); font-weight:600;">Review applicants</a></div>';
+    $('activeView').innerHTML = hiredApps.map(hireCard).join('')
+      || '<div class="empty-state"><i class="fas fa-user-check"></i>No active hires yet. <a href="applicants" style="color:var(--primary); font-weight:600;">Review applicants</a></div>';
   }
   function renderTrials() {
-    const live = client.trials.filter(t => t.status !== 'ended');
+    const live = trials.filter(t => !t.outcome);
     $('trialsView').innerHTML = live.map(trialCard).join('') || '<div class="empty-state"><i class="fas fa-flask"></i>No trials in progress.</div>';
   }
   function renderPast() {
-    $('pastView').innerHTML = (client.past || []).length ? client.past.map(h => `
+    $('pastView').innerHTML = endedApps.length ? endedApps.map(a => `
       <div class="item-card dim">
         <div class="item-head">
-          <img src="https://i.pravatar.cc/100?img=${vaById(h.vaId).img}" alt="" />
-          <div class="grow"><h3>${esc(vaById(h.vaId).name)}</h3><p>${esc(h.role)} · $${h.rate}/hr · ${fmtDay(h.start)} → ${fmtDay(h.end)}</p></div>
-          <span class="status-pill closed">Ended</span>
+          <img src="/api/avatar/${encodeURIComponent(a.vaId)}" alt="" onerror="this.src='https://ui-avatars.com/api/?size=100&background=E2E8F0&color=4F46E5&name=${encodeURIComponent(fullName(a))}'" />
+          <div class="grow"><h3>${esc(fullName(a))}</h3><p>${esc(a.jobTitle || '—')} · $${Number(a.rate || 0).toFixed(2)}/hr · ${fmtDay(a.updatedAt || a.createdAt)}</p></div>
+          <span class="status-pill closed">${esc(a.status)}</span>
         </div>
-        ${h.reason ? `<p class="item-quote">${esc(h.reason)}</p>` : ''}
-      </div>`).join('') : '<div class="empty-state"><i class="fas fa-history"></i>No past hires. Ended contracts show here with reason + notes.</div>';
+      </div>`).join('') : '<div class="empty-state"><i class="fas fa-history"></i>No past hires.</div>';
   }
 
+  function renderAll() { renderStats(); renderActive(); renderTrials(); renderPast(); }
+
   function renderNotes() {
-    const list = client.notes[noteTarget] || [];
+    const list = notesSettings[noteTarget] || [];
     $('noteList').innerHTML = list.length ? list.map((n, i) => `
       <div style="padding:0.6rem; border-left:3px solid ${noteKindColor[n.kind] || '#4F46E5'}; background:#F8FAFC; margin-bottom:0.5rem; border-radius:0.3rem;">
         <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-light); margin-bottom:0.25rem;"><strong style="color:var(--dark); text-transform:uppercase; letter-spacing:0.05em;">${esc(n.kind)}</strong><span>${fmtDay(n.t)} · <button class="btn btn-ghost btn-xs" style="padding:0; color:var(--danger);" data-noteact="del" data-i="${i}">delete</button></span></div>
@@ -170,8 +209,8 @@
 
   function openNotes(vaId) {
     noteTarget = vaId;
-    const va = vaById(vaId);
-    $('noteVa').textContent = va.name;
+    const a = hiredApps.find(x => x.vaId === vaId);
+    $('noteVa').textContent = a ? fullName(a) : vaId;
     $('noteDate').value = new Date().toISOString().slice(0, 10);
     $('noteKind').value = 'general';
     $('noteText').value = '';
@@ -189,41 +228,53 @@
     $('pastView').hidden = tab !== 'past';
   }));
 
-  $('activeView').addEventListener('click', e => {
+  $('activeView').addEventListener('click', async e => {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
-    const id = btn.dataset.id;
-    if (btn.dataset.act === 'notes') { openNotes(id); return; }
+    if (btn.dataset.act === 'notes') { openNotes(btn.dataset.id); return; }
     if (btn.dataset.act === 'offboard') {
       if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to end'; return; }
-      const h = client.hires.find(x => x.vaId === id);
-      client.hires = client.hires.filter(x => x.vaId !== id);
-      (client.past ||= []).unshift({ ...h, end: Date.now(), reason: 'Contract ended by client' });
-      save(); renderStats(); renderActive(); renderPast();
-      showToast(`Contract with ${vaById(id).name} ended.`);
+      await fetch('/api/applications/' + encodeURIComponent(btn.dataset.id), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'rejected' }),
+      });
+      await load();
+      showToast && showToast('Contract ended.');
     }
   });
 
-  $('noteSave').addEventListener('click', () => {
+  $('trialsView').addEventListener('click', async e => {
+    const btn = e.target.closest('[data-trial]');
+    if (!btn) return;
+    await fetch('/api/trials/' + encodeURIComponent(btn.dataset.trial), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outcome: btn.dataset.outcome }),
+    });
+    await load();
+  });
+
+  $('noteSave').addEventListener('click', async () => {
     const text = $('noteText').value.trim();
     if (!text || !noteTarget) return;
-    (client.notes[noteTarget] ||= []).unshift({ t: new Date($('noteDate').value || Date.now()).getTime(), kind: $('noteKind').value, text });
-    save(); renderNotes(); renderActive();
+    (notesSettings[noteTarget] ||= []).unshift({ t: new Date($('noteDate').value || Date.now()).getTime(), kind: $('noteKind').value, text });
+    await saveNotes();
+    renderNotes(); renderActive();
     $('noteText').value = '';
-    showToast('Note added');
+    showToast && showToast('Note added');
   });
   $('noteClose').addEventListener('click', closeNotes);
   $('noteBackdrop').addEventListener('click', closeNotes);
-  $('noteList').addEventListener('click', e => {
+  $('noteList').addEventListener('click', async e => {
     const btn = e.target.closest('[data-noteact]');
     if (!btn || !noteTarget) return;
     if (btn.dataset.noteact === 'del') {
-      client.notes[noteTarget].splice(Number(btn.dataset.i), 1);
-      save(); renderNotes(); renderActive();
+      notesSettings[noteTarget].splice(Number(btn.dataset.i), 1);
+      await saveNotes();
+      renderNotes(); renderActive();
     }
   });
 
-  renderStats(); renderActive(); renderTrials(); renderPast();
+  load();
 </script>
 </body>
 </html>

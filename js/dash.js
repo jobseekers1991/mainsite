@@ -113,9 +113,20 @@ function renderDashNav() {
         ? `<div class="dash-nav-section">${key}</div>`
         : `<a href="${href}"${NEW_TAB.has(href) ? ' target="_blank" rel="noopener"' : ''} class="dash-nav-item${key === active ? ' active' : ''}"><i class="fas ${icon}"></i> ${label}${badge && badges[badge] ? ` <span class="dash-nav-badge">${badges[badge]}</span>` : ''}</a>`).join('')}
       <div class="dash-nav-divider"></div>
-      ${roleKey === 'admin' ? '' : '<a href="#" class="dash-nav-item"><i class="fas fa-cog"></i> Settings</a>'}
-      <a href="auth" class="dash-nav-item" style="color:rgba(239,68,68,0.7);"><i class="fas fa-sign-out-alt"></i> Log Out</a>`;
-  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      ${roleKey === 'admin' ? '' : '<a href="settings" class="dash-nav-item"><i class="fas fa-cog"></i> Settings</a>'}
+      <a href="#" data-logout="1" class="dash-nav-item" style="color:rgba(239,68,68,0.7);"><i class="fas fa-sign-out-alt"></i> Log Out</a>`;
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', async (e) => {
+    // Actual logout: POST /api/logout to invalidate the session cookie, then
+    // redirect to auth. Falling back to a plain redirect if the API call fails
+    // so the user is never stuck with a half-signed-in state.
+    if (a.dataset.logout === '1') {
+      e.preventDefault();
+      try {
+        await fetch('/api/logout', { method: 'POST', cache: 'no-store' });
+      } catch (_) {}
+      location.href = 'auth';
+      return;
+    }
     sidebar.classList.remove('open');
     const overlay = document.getElementById('dashOverlay');
     if (overlay) overlay.classList.remove('visible');

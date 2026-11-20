@@ -14,66 +14,12 @@
 
 <div class="dash-wrapper">
 
-  <!-- ===================== SIDEBAR ===================== -->
-  <aside class="dash-sidebar" id="dashSidebar">
-    <a href="/" class="dash-brand">
-      <div class="dash-brand-icon"><i class="fas fa-briefcase"></i></div>
-      <span class="dash-brand-name">Jobseekers<span>.ph</span></span>
-    </a>
-
-    <div class="dash-user-card">
-      <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" class="dash-user-avatar" />
-      <div>
-        <div class="dash-user-name">Maria Santos</div>
-        <div class="dash-user-role">Virtual Assistant</div>
-      </div>
-      <div class="dash-online-dot" title="Online"></div>
-    </div>
-
-    <nav class="dash-nav">
-      <div class="dash-nav-section">Main</div>
-      <a href="dashboard-va" class="dash-nav-item"><i class="fas fa-th-large"></i> Overview</a>
-      <a href="my-applications" class="dash-nav-item"><i class="fas fa-file-alt"></i> My Applications <span class="dash-nav-badge">3</span></a>
-      <a href="browse-jobs" class="dash-nav-item" target="_blank" rel="noopener"><i class="fas fa-search"></i> Browse Jobs</a>
-      <a href="messages" class="dash-nav-item"><i class="fas fa-comments"></i> Messages <span class="dash-nav-badge">5</span></a>
-
-      <div class="dash-nav-section">My Account</div>
-      <a href="edit-profile" class="dash-nav-item"><i class="fas fa-user-circle"></i> My Profile</a>
-      <a href="work-tools" class="dash-nav-item"><i class="fas fa-wallet"></i> Earnings</a>
-      <a href="#" class="dash-nav-item"><i class="fas fa-star"></i> Reviews</a>
-
-      <div class="dash-nav-section">Grow &amp; Tools</div>
-      <a href="work-tools" class="dash-nav-item active"><i class="fas fa-stopwatch"></i> Work Tools</a>
-      <a href="academy" class="dash-nav-item"><i class="fas fa-graduation-cap"></i> VA Academy</a>
-      <a href="setup-check" class="dash-nav-item"><i class="fas fa-bolt"></i> Setup Check</a>
-      <a href="compliance" class="dash-nav-item"><i class="fas fa-file-signature"></i> Contracts &amp; Taxes</a>
-      <a href="community" class="dash-nav-item" target="_blank" rel="noopener"><i class="fas fa-users"></i> Community</a>
-
-      <div class="dash-nav-divider"></div>
-      <a href="#" class="dash-nav-item"><i class="fas fa-cog"></i> Settings</a>
-      <a href="auth" class="dash-nav-item" style="color:rgba(239,68,68,0.7);"><i class="fas fa-sign-out-alt"></i> Log Out</a>
-    </nav>
-  </aside>
-
+  <aside class="dash-sidebar" id="dashSidebar" data-role="va" data-active="tools"></aside>
   <div class="dash-overlay" id="dashOverlay"></div>
 
-  <!-- ===================== MAIN ===================== -->
   <div class="dash-main">
-    <header class="dash-topbar">
-      <button class="dash-topbar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
-      <div class="dash-search-wrap">
-        <i class="fas fa-search" style="color:var(--text-light); font-size:0.8125rem; flex-shrink:0;"></i>
-        <input type="text" placeholder="Search jobs, companies…" />
-      </div>
-      <div class="dash-topbar-right">
-        <button class="dash-icon-btn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-dot"></span></button>
-        <button class="dash-avatar-btn">
-          <img src="https://i.pravatar.cc/150?img=47" alt="Maria Santos" />
-          <span>Maria</span>
-          <i class="fas fa-chevron-down" style="font-size:0.625rem; color:var(--text-light);"></i>
-        </button>
-      </div>
-    </header>
+    <header class="dash-topbar" id="dashTopbar"></header>
+<script src="js/dash.js"></script>
 
     <main class="dash-content">
       <div class="dash-page-header">
@@ -336,6 +282,22 @@
   const eodFields = ['eClient', 'eHours', 'eDone', 'eProgress', 'eBlockers', 'eTomorrow'].map(id => document.getElementById(id));
   const bullets = text => text.split('\n').map(l => l.trim()).filter(Boolean).map(l => `  • ${l}`).join('\n') || '  • —';
 
+  // Signature + invoice "from" fields pull the signed-in user's name so neither
+  // EOD reports nor generated invoices are signed "Maria Santos".
+  let signatureName = 'Your VA';
+  let invoiceTitle = 'Virtual Assistant';
+  let invoiceLocation = 'Philippines';
+  fetch('/api/me', { cache: 'no-store' }).then(r => r.json()).then(d => {
+    if (d && d.ok && d.user) {
+      const n = ((d.user.firstName || '') + ' ' + (d.user.lastName || '')).trim();
+      if (n) signatureName = n;
+      if (d.user.title || d.user.skill) invoiceTitle = d.user.title || d.user.skill;
+      if (d.user.city) invoiceLocation = d.user.city + ', Philippines';
+      renderEod();
+      if (typeof renderInvoice === 'function') renderInvoice();
+    }
+  }).catch(() => {});
+
   function renderEod() {
     const [client, hours, done, progress, blockers, tomorrow] = eodFields.map(f => f.value);
     const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -355,7 +317,7 @@ ${bullets(blockers)}
 📅 Plan for tomorrow
 ${bullets(tomorrow)}
 
-— Maria Santos, via Jobseekers.ph`;
+— ${signatureName}, via Jobseekers.ph`;
   }
   eodFields.forEach(f => f.addEventListener('input', renderEod));
 
@@ -411,7 +373,7 @@ ${bullets(tomorrow)}
           <div style="color:var(--text-light); font-size:0.8125rem;">${invNo} · ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
         </div>
         <div style="text-align:right; font-size:0.8125rem;">
-          <strong style="color:var(--dark);">Maria Santos</strong><br>Executive Virtual Assistant<br>Cebu City, Philippines
+          <strong style="color:var(--dark);">${esc(signatureName)}</strong><br>${esc(invoiceTitle)}<br>${esc(invoiceLocation)}
         </div>
       </div>
       <div style="font-size:0.8125rem; margin-bottom:1rem;"><span style="color:var(--text-light);">Bill to:</span> <strong style="color:var(--dark);">${esc(client)}</strong></div>

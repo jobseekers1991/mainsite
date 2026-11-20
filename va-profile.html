@@ -199,7 +199,7 @@
 
         <div class="profile-actions">
           <a id="pfMessageBtn" href="messages" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send Message</a>
-          <a href="#" class="btn btn-ghost btn-sm"><i class="fas fa-heart"></i> Save Profile</a>
+          <button type="button" id="pfSaveBtn" class="btn btn-ghost btn-sm"><i class="far fa-heart"></i> <span id="pfSaveLabel">Save Profile</span></button>
         </div>
       </div>
     </div>
@@ -237,7 +237,16 @@
             <div class="pf-portfolio-grid" id="pfPortfolio"></div>
           </div>
 
-          <!-- Testimonials -->
+          <!-- Reviews from hires (real) -->
+          <div class="sidebar-card" id="pfReviewsCard">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
+              <h2 style="font-size:1.25rem; font-weight:700; color:var(--dark); margin:0;">Reviews</h2>
+              <div id="pfReviewsSummary" style="font-size:0.875rem; color:var(--text-light);"></div>
+            </div>
+            <div id="pfReviewsList"></div>
+          </div>
+
+          <!-- Testimonials (curated, imported directory VAs) -->
           <div class="sidebar-card" id="pfTestimonialsCard">
             <h2 style="font-size:1.25rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">Client Testimonials</h2>
             <div id="pfTestimonials"></div>
@@ -390,6 +399,141 @@
   function text(id, s) { const el = document.getElementById(id); if (el) el.textContent = s; }
   function html(id, s) { const el = document.getElementById(id); if (el) el.innerHTML = s; }
 
+  // Render real reviews — only for signed-up VA accounts (imported directory VAs
+  // don't have a subjectId to query). Shows the Upwork-style "4.9 (23 reviews)"
+  // summary plus a scrollable list of real client reviews.
+  async function renderReviews(v) {
+    const card = document.getElementById('pfReviewsCard');
+    if (!v.accountId) { hide('pfReviewsCard'); return; }
+    try {
+      const r = await fetch('/api/reviews?subjectId=' + encodeURIComponent(v.accountId), { cache: 'no-store' });
+      if (!r.ok) { hide('pfReviewsCard'); return; }
+      const data = await r.json();
+      const count = data.count || 0;
+      const avg = data.average;
+      const list = data.reviews || [];
+      if (count === 0) {
+        document.getElementById('pfReviewsSummary').innerHTML = '<span style="color:var(--text-light);">No reviews yet</span>';
+        document.getElementById('pfReviewsList').innerHTML = `
+          <p style="font-size:0.875rem; color:var(--text-light); padding:1.25rem; text-align:center; background:var(--bg); border-radius:0.5rem;">
+            <i class="far fa-star" style="color:var(--text-light); font-size:1.5rem; display:block; margin-bottom:0.5rem;"></i>
+            This VA hasn't received any reviews yet. Be the first — hire them and leave a review after the trial.
+          </p>`;
+        return;
+      }
+      const stars = n => {
+        const full = Math.floor(n);
+        const half = n - full >= 0.5 ? 1 : 0;
+        const empty = 5 - full - half;
+        return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+      };
+      document.getElementById('pfReviewsSummary').innerHTML = `
+        <span style="font-weight:700; color:var(--dark); font-size:1rem;">${avg.toFixed(1)}</span>
+        <span style="color:#F59E0B; margin:0 0.25rem;">${stars(avg)}</span>
+        <span style="color:var(--text-light);">(${count} review${count === 1 ? '' : 's'})</span>`;
+      document.getElementById('pfReviewsList').innerHTML = list.map(rv => {
+        const name = ((rv.reviewerFirstName || '') + ' ' + ((rv.reviewerLastName || '')[0] || '')).trim() + (rv.reviewerLastName ? '.' : '');
+        const avatarSrc = '/api/avatar/' + encodeURIComponent(rv.reviewerId);
+        const fallback = 'https://ui-avatars.com/api/?size=60&background=E2E8F0&color=4F46E5&name=' + encodeURIComponent(name || 'Client');
+        return `
+          <div style="padding:1rem 0; border-top:1px solid var(--border); display:flex; gap:0.875rem;">
+            <img src="${esc(avatarSrc)}" onerror="this.src='${esc(fallback)}'" alt="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;" />
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; gap:0.5rem; margin-bottom:0.25rem;">
+                <strong style="color:var(--dark); font-size:0.9375rem;">${esc(name || 'Client')}</strong>
+                <span style="color:#F59E0B; font-size:0.875rem;">${stars(rv.rating)}</span>
+              </div>
+              ${rv.reviewerCompany ? `<div style="font-size:0.75rem; color:var(--text-light); margin-bottom:0.4rem;">${esc(rv.reviewerCompany)}</div>` : ''}
+              ${rv.body ? `<p style="font-size:0.875rem; color:var(--text); line-height:1.6; margin:0;">${esc(rv.body)}</p>` : ''}
+              <div style="font-size:0.72rem; color:var(--text-light); margin-top:0.4rem;">${new Date(rv.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (e) {
+      hide('pfReviewsCard');
+    }
+  }
+
+  // Save-to-talent-pool for the currently viewed VA. Checks auth, flips the
+  // icon state, and calls /api/favorites. Signed-out visitors are routed to
+  // /auth with a ?next= back to this profile.
+  function setupSaveButton(v) {
+    const btn = document.getElementById('pfSaveBtn');
+    const label = document.getElementById('pfSaveLabel');
+    if (!btn) return;
+    let saved = false;
+    let savedFavId = null;
+
+    async function hydrate() {
+      try {
+        const [meR, favR] = await Promise.all([
+          fetch('/api/me', { cache: 'no-store' }),
+          fetch('/api/favorites', { cache: 'no-store' }),
+        ]);
+        if (meR.status !== 200) return;
+        const me = (await meR.json()).user;
+        if (!me || me.role !== 'client') {
+          // VA → hide the save button; it isn't a client feature.
+          if (me && me.role === 'va') btn.style.display = 'none';
+          return;
+        }
+        if (favR.ok) {
+          const favs = (await favR.json()).favorites || [];
+          const match = favs.find(f =>
+            (v.accountId && f.savedVaId === v.accountId) ||
+            (f.savedVaSlug && f.savedVaSlug === v.slug)
+          );
+          if (match) {
+            saved = true; savedFavId = match.id;
+            btn.querySelector('i').className = 'fas fa-heart';
+            label.textContent = 'Saved';
+          }
+        }
+      } catch (e) {}
+    }
+    hydrate();
+
+    btn.addEventListener('click', async () => {
+      const meR = await fetch('/api/me', { cache: 'no-store' });
+      if (meR.status !== 200) {
+        location.href = 'auth?next=' + encodeURIComponent('/' + v.slug);
+        return;
+      }
+      btn.disabled = true;
+      try {
+        if (saved && savedFavId) {
+          await fetch('/api/favorites/' + encodeURIComponent(savedFavId), { method: 'DELETE' });
+          saved = false; savedFavId = null;
+          btn.querySelector('i').className = 'far fa-heart';
+          label.textContent = 'Save Profile';
+          if (typeof showToast === 'function') showToast('Removed from Talent Pool');
+        } else {
+          const body = v.accountId ? { savedVaId: v.accountId } : { savedVaSlug: v.slug };
+          const r = await fetch('/api/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          const data = await r.json();
+          if (r.ok && data.ok) {
+            saved = true; savedFavId = data.id;
+            btn.querySelector('i').className = 'fas fa-heart';
+            label.textContent = 'Saved';
+            if (typeof showToast === 'function') showToast('Added to your Talent Pool');
+          } else if (r.status === 403) {
+            if (typeof showToast === 'function') showToast('Only clients can save VAs.');
+          } else {
+            if (typeof showToast === 'function') showToast(data.error || 'Could not save.');
+          }
+        }
+      } catch (e) {
+        if (typeof showToast === 'function') showToast('Network error.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
   // ------------------------------------------------------------
   // Build a plausible "About" paragraph from title + top skills,
   // since the DB doesn't store a bio. This is a template, not an
@@ -447,9 +591,25 @@
       av.style.background = `hsl(${hue},62%,52%)`;
     }
 
-    const badges = [`<span class="verified"><i class="fas fa-check-circle"></i> Email verified</span>`];
+    // Trust badges — only show the ones the VA has actually earned so the row
+    // doesn't lie. Imported directory VAs don't have "verified" (no account),
+    // so we treat them as verified by default — they came from the training-
+    // center dump, which is itself a trust signal.
+    const badges = [];
+    if (v.accountId ? v.verified : true) {
+      badges.push(`<span class="verified"><i class="fas fa-check-circle"></i> Email verified</span>`);
+    }
     if (v.featured) badges.push(`<span class="badge badge-featured"><i class="fas fa-crown"></i> Featured</span>`);
-    if (v.certs && v.certs.length) badges.push(`<span class="feat-badge cert"><i class="fas fa-certificate"></i> Training-center certified</span>`);
+    if (v.certs && v.certs.length) badges.push(`<span class="feat-badge cert"><i class="fas fa-certificate"></i> ${v.accountId ? 'Certified' : 'Training-center certified'}</span>`);
+    if (v.brownoutVerified) {
+      badges.push(`<span class="feat-badge brownout" style="background:#FEF3C7; color:#92400E;"><i class="fas fa-bolt"></i> Brownout-ready</span>`);
+    }
+    if (v.hireCount && v.hireCount > 0) {
+      badges.push(`<span class="feat-badge" style="background:rgba(16,185,129,0.1); color:#047857;"><i class="fas fa-handshake"></i> ${v.hireCount} hire${v.hireCount === 1 ? '' : 's'}</span>`);
+    }
+    if (v.reviewAverage != null && v.reviewCount > 0) {
+      badges.push(`<span class="feat-badge" style="background:rgba(245,158,11,0.1); color:#B45309;"><i class="fas fa-star"></i> ${v.reviewAverage.toFixed(1)} · ${v.reviewCount} review${v.reviewCount === 1 ? '' : 's'}</span>`);
+    }
     html('pfBadges', badges.join(''));
 
     const loc = [v.city, v.state].filter(Boolean).join(', ') || 'Philippines';
@@ -468,6 +628,7 @@
     document.getElementById('pfMessageBtn2').setAttribute('href', msgHref);
     text('pfMemberSince', since || '—');
     text('pfShareUrl', `jobseekers.ph/${v.slug}`);
+    setupSaveButton(v);
 
     // About — tagline overrides the generated bio if the VA set one.
     document.getElementById('pfAbout').textContent = v.tagline || buildAbout(v);
@@ -532,6 +693,9 @@
     }
 
     // Testimonials
+    // Real reviews from /api/reviews — only for accounts (have an accountId).
+    renderReviews(v);
+
     const testimonials = v.testimonials || [];
     if (testimonials.length) {
       html('pfTestimonials', testimonials.map(t => `

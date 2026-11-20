@@ -53,28 +53,48 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  if (!client.templates) client.templates = [];
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
+  let templates = [];
+  const SHIFTS = {
+    'us-east': { label: 'US Eastern', icon: 'fa-moon' },
+    'us-west': { label: 'US Pacific', icon: 'fa-moon' },
+    uk:        { label: 'UK',         icon: 'fa-sun'  },
+    au:        { label: 'AU',         icon: 'fa-sun'  },
+    ph:        { label: 'PH / Flex',  icon: 'fa-clock' },
+    flex:      { label: 'Flexible',   icon: 'fa-clock' },
+  };
+
+  async function load() {
+    try {
+      const r = await fetch('/api/templates', { cache: 'no-store' });
+      if (r.status === 401) { location.href = 'auth'; return; }
+      if (r.ok) templates = (await r.json()).templates || [];
+    } catch (e) {}
+    render();
+  }
+
+  function tdata(t) { return (t.data && typeof t.data === 'object') ? t.data : {}; }
 
   function render() {
-    $('tplList').innerHTML = client.templates.map(t => {
-      const shift = SHIFT_LABELS[t.shift] || { label: '—', icon: 'fa-clock' };
+    $('tplList').innerHTML = templates.map(t => {
+      const d = tdata(t);
+      const shift = SHIFTS[d.shift] || { label: '—', icon: 'fa-clock' };
+      const skills = Array.isArray(d.skills) ? d.skills : [];
+      const screening = Array.isArray(d.screening) ? d.screening : [];
       return `
         <div class="item-card">
           <div class="item-head">
             <div class="job-logo" style="background:rgba(79,70,229,0.08); width:48px; height:48px; font-size:1.25rem;"><i class="fas fa-copy" style="color:var(--primary);"></i></div>
             <div class="grow">
-              <h3>${esc(t.title)}</h3>
-              <p>${esc(t.rate || '—')} · <i class="fas ${shift.icon}"></i> ${shift.label} · Used ${t.used || 0}×</p>
-              ${t.summary ? `<p class="item-quote" style="margin-top:0.5rem;">${esc(t.summary)}</p>` : ''}
+              <h3>${esc(t.name)}</h3>
+              <p>${esc(d.rate || '—')} · <i class="fas ${shift.icon}"></i> ${shift.label}</p>
+              ${d.summary ? `<p class="item-quote" style="margin-top:0.5rem;">${esc(d.summary)}</p>` : ''}
             </div>
           </div>
-          ${(t.skills || []).length ? `<div class="item-meta" style="flex-wrap:wrap;">${t.skills.map(s => `<span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(s)}</span>`).join('')}</div>` : ''}
-          ${(t.screening || []).length ? `<details style="margin-top:0.5rem; font-size:0.85rem;"><summary style="cursor:pointer; color:var(--primary); font-weight:600;">${t.screening.length} screening question${t.screening.length === 1 ? '' : 's'}</summary>${t.screening.map(q => `<p style="margin-top:0.4rem; color:var(--text-light);">• ${esc(q)}</p>`).join('')}</details>` : ''}
+          ${skills.length ? `<div class="item-meta" style="flex-wrap:wrap;">${skills.map(s => `<span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(s)}</span>`).join('')}</div>` : ''}
+          ${screening.length ? `<details style="margin-top:0.5rem; font-size:0.85rem;"><summary style="cursor:pointer; color:var(--primary); font-weight:600;">${screening.length} screening question${screening.length === 1 ? '' : 's'}</summary>${screening.map(q => `<p style="margin-top:0.4rem; color:var(--text-light);">• ${esc(q)}</p>`).join('')}</details>` : ''}
           <div class="item-actions">
-            <a href="post-job?tpl=${t.id}" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i> Post from template</a>
+            <a href="post-job?tpl=${encodeURIComponent(t.id)}" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i> Post from template</a>
             <button class="btn btn-outline-primary btn-sm" data-act="edit" data-id="${t.id}"><i class="fas fa-edit"></i> Edit</button>
             <button class="btn btn-ghost btn-sm" data-act="duplicate" data-id="${t.id}"><i class="fas fa-clone"></i> Duplicate</button>
             <button class="btn btn-ghost btn-sm" data-act="delete" data-id="${t.id}" style="color:var(--danger);"><i class="fas fa-trash"></i> Delete</button>
@@ -84,15 +104,16 @@
   }
 
   function openModal(id) {
-    const t = client.templates.find(x => x.id === id) || { id: '', title: '', summary: '', rate: '', shift: 'us-east', skills: [], screening: [] };
+    const t = templates.find(x => x.id === id);
+    const d = tdata(t || {});
     $('tplModalTitle').textContent = id ? 'Edit template' : 'New template';
-    $('tplId').value = t.id || '';
-    $('tplTitle').value = t.title;
-    $('tplSummary').value = t.summary;
-    $('tplRate').value = t.rate;
-    $('tplShift').value = t.shift;
-    $('tplSkills').value = (t.skills || []).join(', ');
-    $('tplScreening').value = (t.screening || []).join('\n');
+    $('tplId').value = id || '';
+    $('tplTitle').value = t ? t.name : '';
+    $('tplSummary').value = d.summary || '';
+    $('tplRate').value = d.rate || '';
+    $('tplShift').value = d.shift || 'us-east';
+    $('tplSkills').value = (d.skills || []).join(', ');
+    $('tplScreening').value = (d.screening || []).join('\n');
     $('tplModal').hidden = false; $('tplBackdrop').hidden = false;
   }
   const close = () => { $('tplModal').hidden = true; $('tplBackdrop').hidden = true; };
@@ -100,10 +121,10 @@
   $('newTplBtn').addEventListener('click', () => openModal(''));
   $('tplCancel').addEventListener('click', close);
   $('tplBackdrop').addEventListener('click', close);
-  $('tplSave').addEventListener('click', () => {
-    if (!$('tplTitle').value.trim()) { $('tplTitle').focus(); return; }
+  $('tplSave').addEventListener('click', async () => {
+    const name = $('tplTitle').value.trim();
+    if (!name) { $('tplTitle').focus(); return; }
     const data = {
-      title: $('tplTitle').value.trim(),
       summary: $('tplSummary').value.trim(),
       rate: $('tplRate').value.trim(),
       shift: $('tplShift').value,
@@ -112,33 +133,46 @@
     };
     const id = $('tplId').value;
     if (id) {
-      const t = client.templates.find(x => x.id === id);
-      Object.assign(t, data);
+      await fetch('/api/templates/' + encodeURIComponent(id), {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, data }),
+      });
     } else {
-      client.templates.unshift({ id: 'tpl-' + Date.now().toString(36), used: 0, ...data });
+      await fetch('/api/templates', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, data }),
+      });
     }
-    save(); close(); render();
-    showToast('Template saved');
+    close();
+    await load();
+    showToast && showToast('Template saved');
   });
 
-  $('tplList').addEventListener('click', e => {
+  $('tplList').addEventListener('click', async e => {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
     const id = btn.dataset.id;
     if (btn.dataset.act === 'edit') { openModal(id); return; }
     if (btn.dataset.act === 'duplicate') {
-      const t = client.templates.find(x => x.id === id);
-      client.templates.unshift({ ...t, id: 'tpl-' + Date.now().toString(36), title: t.title + ' (copy)', used: 0 });
-      save(); render(); showToast('Template duplicated'); return;
+      const t = templates.find(x => x.id === id);
+      if (!t) return;
+      await fetch('/api/templates', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: t.name + ' (copy)', data: tdata(t) }),
+      });
+      await load();
+      showToast && showToast('Template duplicated');
+      return;
     }
     if (btn.dataset.act === 'delete') {
       if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to delete'; return; }
-      client.templates = client.templates.filter(x => x.id !== id);
-      save(); render(); showToast('Template deleted');
+      await fetch('/api/templates/' + encodeURIComponent(id), { method: 'DELETE' });
+      await load();
+      showToast && showToast('Template deleted');
     }
   });
 
-  render();
+  load();
 </script>
 </body>
 </html>

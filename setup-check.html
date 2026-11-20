@@ -324,14 +324,48 @@
     $('proofPreview').hidden = false;
   });
 
-  $('claimBadge').addEventListener('click', () => {
+  $('claimBadge').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const claim = {
+      down: results.down, up: results.up, ping: results.ping,
+      isp: $('isp').value, power: $('power').value, backupNet: $('backupNet').value, date: Date.now(),
+    };
+    // Keep a local copy so the UI survives offline — but the authoritative
+    // claim now lives on the user_settings row keyed by account_id.
+    try { localStorage.setItem('jsph-setup-badge', JSON.stringify(claim)); } catch (_) {}
+
+    btn.disabled = true;
     try {
-      localStorage.setItem('jsph-setup-badge', JSON.stringify({
-        down: results.down, up: results.up, ping: results.ping,
-        isp: $('isp').value, power: $('power').value, backupNet: $('backupNet').value, date: Date.now(),
-      }));
-    } catch (e) {}
-    showToast('⚡ Brownout-ready badge added to your profile');
+      // Route signed-out users to auth with a ?next= back here so they can
+      // sign in and still have their speed-test results pending.
+      const meR = await fetch('/api/me', { cache: 'no-store' });
+      if (meR.status !== 200) {
+        location.href = 'auth?next=' + encodeURIComponent('setup-check');
+        return;
+      }
+      const meData = await meR.json();
+      if (!meData.user || meData.user.role !== 'va') {
+        showToast('Only VA accounts can claim the Brownout-ready badge.');
+        btn.disabled = false;
+        return;
+      }
+      // Persist the claim as a JSON blob on user_settings.
+      // Admin review turns this into user_settings.brownout_verified=true.
+      const saveR = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brownout_claim:  JSON.stringify(claim),
+          brownout_status: 'pending',
+        }),
+      });
+      if (!saveR.ok) throw new Error('save failed');
+      showToast('⚡ Badge submitted — Trust & Safety usually reviews within 24 hrs.');
+      btn.innerHTML = '<i class="fas fa-check"></i> Submitted for review';
+    } catch (err) {
+      showToast('Could not submit your claim. Try again.');
+      btn.disabled = false;
+    }
   });
 
   evaluate();

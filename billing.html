@@ -28,6 +28,16 @@
   <p>Payment methods, autopay rules, and your monthly spend cap.</p>
 </div>
 
+<div class="dash-card" style="margin-bottom:1rem; padding:0.75rem 1rem; background:#FEF3C7; border-color:#F59E0B;">
+  <div style="display:flex; align-items:center; gap:0.6rem;">
+    <i class="fas fa-flask" style="color:#B45309;"></i>
+    <div>
+      <strong style="color:#92400E;">Payments are in sandbox mode.</strong>
+      <span style="color:#92400E; font-size:0.875rem;"> Cards aren't charged yet — we track invoices and your preferences only. Full Stripe integration is being enabled per workspace. Contact support@jobseekers.ph to switch on live billing.</span>
+    </div>
+  </div>
+</div>
+
 <div class="stat-card-grid" id="billStats"></div>
 
 <h2 class="dash-section-title"><i class="fas fa-credit-card" style="color:var(--primary);"></i> Payment methods</h2>
@@ -91,15 +101,49 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  if (!client.billing) client.billing = { methods: [], autopay: true, autopayAfterDays: 5, cap: 3000, cycle: 'weekly', history: [] };
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
+  const money = n => '$' + Number(n || 0).toFixed(2);
+  const fmtDay = t => new Date(t).toLocaleDateString();
+  const DAY_MS_LOCAL = 86400000;
+
+  // Billing state persists in /api/settings under a single `billing` key, so
+  // it survives logins across devices. Stripe isn't wired yet (demo banner above).
+  let billing = { methods: [], autopay: true, autopayAfterDays: 5, cap: 3000, history: [] };
+  let invoices = [];
+
+  async function load() {
+    try {
+      const [sRes, iRes] = await Promise.all([
+        fetch('/api/settings', { cache: 'no-store' }),
+        fetch('/api/invoices', { cache: 'no-store' }),
+      ]);
+      if (sRes.status === 401) { location.href = 'auth'; return; }
+      if (sRes.ok) {
+        const data = await sRes.json();
+        if (data.settings && data.settings.billing) {
+          try { billing = { ...billing, ...JSON.parse(data.settings.billing) }; } catch (e) {}
+        }
+      }
+      if (iRes.ok) invoices = (await iRes.json()).invoices || [];
+    } catch (e) {}
+    renderAll();
+  }
+
+  async function persist() {
+    try {
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ billing: JSON.stringify(billing) }),
+      });
+    } catch (e) {}
+  }
 
   function renderStats() {
-    const monthSpend = (client.billing.history || []).filter(h => Date.now() - h.t < 30 * DAY_MS).reduce((s, h) => s + h.amount, 0);
-    const pending = client.invoices.filter(i => i.status === 'due').reduce((s, i) => s + i.hours * i.rate, 0);
-    const defaultMethod = client.billing.methods.find(m => m.default);
+    const monthSpend = (billing.history || []).filter(h => Date.now() - h.t < 30 * DAY_MS_LOCAL).reduce((s, h) => s + h.amount, 0);
+    const pendingInv = invoices.filter(i => i.status === 'sent');
+    const pending = pendingInv.reduce((s, i) => s + Number(i.total || 0), 0);
+    const defaultMethod = billing.methods.find(m => m.default);
     const stat = (label, num, icon, color, sub) => `
       <div class="stat-card">
         <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
@@ -107,14 +151,14 @@
         <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
       </div>`;
     $('billStats').innerHTML =
-      stat('Spent this month', money(monthSpend), 'fa-dollar-sign', '#4F46E5', `cap ${money(client.billing.cap)}`) +
-      stat('Awaiting approval', money(pending), 'fa-hourglass-half', '#F59E0B', `${client.invoices.filter(i => i.status === 'due').length} invoices`) +
-      stat('Autopay', client.billing.autopay ? 'ON' : 'OFF', 'fa-robot', '#10B981', client.billing.autopay ? `after ${client.billing.autopayAfterDays}d review` : 'manual only') +
+      stat('Spent this month', money(monthSpend), 'fa-dollar-sign', '#4F46E5', `cap ${money(billing.cap)}`) +
+      stat('Awaiting approval', money(pending), 'fa-hourglass-half', '#F59E0B', `${pendingInv.length} invoices`) +
+      stat('Autopay', billing.autopay ? 'ON' : 'OFF', 'fa-robot', '#10B981', billing.autopay ? `after ${billing.autopayAfterDays}d review` : 'manual only') +
       stat('Default card', defaultMethod ? defaultMethod.brand + ' •' + defaultMethod.last4 : '—', 'fa-credit-card', '#EC4899', defaultMethod ? 'exp ' + defaultMethod.expiry : 'add one');
   }
 
   function renderMethods() {
-    $('methodList').innerHTML = client.billing.methods.map(m => `
+    $('methodList').innerHTML = billing.methods.map(m => `
       <div class="pay-card${m.default ? ' default' : ''}">
         <div style="display:flex; align-items:center; gap:0.75rem;">
           <i class="fab fa-cc-${m.brand.toLowerCase()}" style="font-size:1.75rem; color:var(--primary);"></i>
@@ -128,35 +172,36 @@
   }
 
   function renderAutopayForm() {
-    $('autopayToggle').checked = !!client.billing.autopay;
-    $('autopayDays').value = client.billing.autopayAfterDays;
-    $('autopayDaysLbl').textContent = client.billing.autopayAfterDays + ' days';
-    $('monthlyCap').value = client.billing.cap;
+    $('autopayToggle').checked = !!billing.autopay;
+    $('autopayDays').value = billing.autopayAfterDays;
+    $('autopayDaysLbl').textContent = billing.autopayAfterDays + ' days';
+    $('monthlyCap').value = billing.cap;
     renderCapBar();
   }
 
   function renderCapBar() {
-    const spend = (client.billing.history || []).filter(h => Date.now() - h.t < 30 * DAY_MS).reduce((s, h) => s + h.amount, 0);
-    const pct = Math.min(100, (spend / client.billing.cap) * 100);
-    $('capBar').innerHTML = `<div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-light); margin-bottom:0.25rem;"><span>Cap usage</span><strong style="color:${pct > 85 ? 'var(--danger)' : 'var(--dark)'};">${money(spend)} of ${money(client.billing.cap)}</strong></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%; background:${pct > 85 ? 'var(--danger)' : 'var(--primary)'};"></div></div>`;
+    const spend = (billing.history || []).filter(h => Date.now() - h.t < 30 * DAY_MS_LOCAL).reduce((s, h) => s + h.amount, 0);
+    const pct = Math.min(100, (spend / (billing.cap || 1)) * 100);
+    $('capBar').innerHTML = `<div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-light); margin-bottom:0.25rem;"><span>Cap usage</span><strong style="color:${pct > 85 ? 'var(--danger)' : 'var(--dark)'};">${money(spend)} of ${money(billing.cap)}</strong></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%; background:${pct > 85 ? 'var(--danger)' : 'var(--primary)'};"></div></div>`;
   }
 
   function renderHistory() {
-    $('historyBody').innerHTML = (client.billing.history || []).map(h => `<tr><td style="white-space:nowrap;">${fmtDay(h.t)}</td><td>${esc(h.desc)}</td><td style="color:var(--text-light);">${esc(h.method)}</td><td style="text-align:right; font-weight:700;">${money(h.amount)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center; color:var(--text-light); padding:1rem;">No charges yet.</td></tr>';
+    const rows = invoices.filter(i => i.status === 'paid').slice(0, 25);
+    $('historyBody').innerHTML = rows.map(i => `<tr><td style="white-space:nowrap;">${esc(i.issuedOn)}</td><td>Invoice ${esc(i.invoiceNo)}</td><td style="color:var(--text-light);">${esc(((i.vaFirstName || '') + ' ' + (i.vaLastName || '')).trim() || 'VA')}</td><td style="text-align:right; font-weight:700;">${money(i.total)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center; color:var(--text-light); padding:1rem;">No charges yet.</td></tr>';
   }
 
   function renderAll() { renderStats(); renderMethods(); renderAutopayForm(); renderHistory(); }
 
   $('autopayDays').addEventListener('input', e => { $('autopayDaysLbl').textContent = e.target.value + ' days'; });
-  $('saveBilling').addEventListener('click', () => {
-    client.billing.autopay = $('autopayToggle').checked;
-    client.billing.autopayAfterDays = Number($('autopayDays').value);
-    client.billing.cap = Number($('monthlyCap').value) || 0;
-    save(); renderStats(); renderCapBar();
-    showToast('Billing settings saved');
+  $('saveBilling').addEventListener('click', async () => {
+    billing.autopay = $('autopayToggle').checked;
+    billing.autopayAfterDays = Number($('autopayDays').value);
+    billing.cap = Number($('monthlyCap').value) || 0;
+    await persist();
+    renderStats(); renderCapBar();
+    showToast && showToast('Billing settings saved');
   });
 
-  // Add card modal
   $('addCard').addEventListener('click', () => {
     $('cardNum').value = ''; $('cardExp').value = ''; $('cardCvc').value = '';
     $('cardModal').hidden = false; $('cardBackdrop').hidden = false;
@@ -164,36 +209,40 @@
   const closeCard = () => { $('cardModal').hidden = true; $('cardBackdrop').hidden = true; };
   $('cardCancel').addEventListener('click', closeCard);
   $('cardBackdrop').addEventListener('click', closeCard);
-  $('cardSave').addEventListener('click', () => {
+  $('cardSave').addEventListener('click', async () => {
     const num = $('cardNum').value.replace(/\s/g, '');
     if (num.length < 15) { $('cardNum').style.borderColor = 'var(--danger)'; return; }
     const first = num[0];
     const brand = first === '4' ? 'Visa' : first === '5' ? 'Mastercard' : first === '3' ? 'Amex' : 'Visa';
-    client.billing.methods.push({ id: 'pm' + Date.now().toString(36), brand, last4: num.slice(-4), expiry: $('cardExp').value || '—', default: client.billing.methods.length === 0 });
-    save(); renderMethods(); renderStats(); closeCard();
-    showToast('Payment method added');
+    // Only store last4 + metadata. The real PAN never leaves the browser.
+    billing.methods.push({ id: 'pm' + Date.now().toString(36), brand, last4: num.slice(-4), expiry: $('cardExp').value || '—', default: billing.methods.length === 0 });
+    await persist();
+    renderMethods(); renderStats(); closeCard();
+    showToast && showToast('Payment method added (sandbox)');
   });
 
-  $('methodList').addEventListener('click', e => {
+  $('methodList').addEventListener('click', async e => {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
     const id = btn.dataset.id;
     if (btn.dataset.act === 'default') {
-      client.billing.methods.forEach(m => m.default = m.id === id);
-      save(); renderMethods(); renderStats();
-      showToast('Default payment method updated');
+      billing.methods.forEach(m => m.default = m.id === id);
+      await persist();
+      renderMethods(); renderStats();
+      showToast && showToast('Default payment method updated');
     }
     if (btn.dataset.act === 'remove') {
       if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = 'Click again to confirm'; return; }
-      const wasDefault = client.billing.methods.find(m => m.id === id)?.default;
-      client.billing.methods = client.billing.methods.filter(m => m.id !== id);
-      if (wasDefault && client.billing.methods[0]) client.billing.methods[0].default = true;
-      save(); renderMethods(); renderStats();
-      showToast('Removed');
+      const wasDefault = billing.methods.find(m => m.id === id) && billing.methods.find(m => m.id === id).default;
+      billing.methods = billing.methods.filter(m => m.id !== id);
+      if (wasDefault && billing.methods[0]) billing.methods[0].default = true;
+      await persist();
+      renderMethods(); renderStats();
+      showToast && showToast('Removed');
     }
   });
 
-  renderAll();
+  load();
 </script>
 </body>
 </html>

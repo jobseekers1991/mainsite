@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('./mail');
+const { sendVerificationEmail, sendPasswordResetEmail, sendNotificationEmail } = require('./mail');
 const db = require('./db');
 
 const PORT = process.env.PORT || 3004;
@@ -566,7 +566,7 @@ async function handleAuth(req, res, urlPath) {
 async function findVaAccountBySlug(slug) {
   const r = await db.query(
     `SELECT id, first_name AS "firstName", last_name AS "lastName", email,
-            title, tagline, city, skill, years,
+            title, tagline, city, skill, years, verified,
             profile_data AS "profileData",
             (avatar_data IS NOT NULL) AS "hasAvatar",
             created_at AS "createdAt"
@@ -582,11 +582,44 @@ async function findVaAccountBySlug(slug) {
 // Build a VA-shaped object (matching the shape loadFullProfiles/VAS returns)
 // from a signed-in account, so the /<slug> page renders the same way for both
 // demo and real users. Mirrors the client-side loadFromAccount() in va-profile.
-function accountToVaShape(acc) {
+async function accountToVaShape(acc) {
   const pd = acc.profileData || {};
   const slug = (acc.firstName + acc.lastName).toLowerCase().replace(/[^a-z0-9]/g, '');
   const name = `${acc.firstName || ''} ${acc.lastName || ''}`.trim();
   const pdSkills = Array.isArray(pd.skills) ? pd.skills : [];
+
+  // Hydrate portfolio + certs + reviews + trust signals so the public profile
+  // shows real uploads and real ratings, not placeholders.
+  const [portR, certR, reviewR, hireR, settingsR] = await Promise.all([
+    db.query(
+      `SELECT id, title, category, description, link_url, role, completed_on, skills_used, file_mime,
+              (file_data IS NOT NULL) AS has_file, created_at
+         FROM va_portfolio WHERE account_id = $1 ORDER BY created_at DESC`,
+      [acc.id]
+    ),
+    db.query(
+      `SELECT title FROM va_certificates WHERE account_id = $1 ORDER BY created_at DESC`,
+      [acc.id]
+    ),
+    db.query(
+      `SELECT COUNT(*)::int AS n, COALESCE(AVG(rating), 0) AS avg
+         FROM reviews WHERE subject_id = $1`,
+      [acc.id]
+    ),
+    db.query(
+      `SELECT COUNT(*)::int AS n FROM applications
+        WHERE va_id = $1 AND status = 'hired'`,
+      [acc.id]
+    ),
+    db.query('SELECT data FROM user_settings WHERE account_id = $1', [acc.id]),
+  ]);
+  const reviewCount = reviewR.rows[0].n;
+  const reviewAvg = reviewCount ? Math.round(Number(reviewR.rows[0].avg) * 10) / 10 : null;
+  const hireCount = hireR.rows[0].n;
+  const settings = (settingsR.rows[0] && settingsR.rows[0].data) || {};
+  const brownoutStatus = settings.brownout_status || null;
+  const brownoutVerified = settings.brownout_verified === true || settings.brownout_verified === 'true';
+
   return {
     slug,
     name,
@@ -597,8 +630,19 @@ function accountToVaShape(acc) {
     state: '',
     createdAt: Number(acc.createdAt) || Date.now(),
     skills: pdSkills.length ? pdSkills : (acc.skill ? [acc.skill] : []),
-    certs: [],
-    portfolio: [],
+    certs: certR.rows.map(r => r.title),
+    portfolio: portR.rows.map(r => ({
+      id: r.id,
+      title: r.title,
+      category: r.category,
+      description: r.description,
+      linkUrl: r.link_url,
+      role: r.role || null,
+      completedOn: r.completed_on || null,
+      skillsUsed: Array.isArray(r.skills_used) ? r.skills_used : [],
+      fileUrl: r.has_file ? `/api/portfolio/${r.id}/file` : null,
+      fileMime: r.file_mime || null,
+    })),
     services: [],
     experience: Array.isArray(pd.experience) ? pd.experience.map(e => ({
       role: e.title, company: e.company,
@@ -616,6 +660,14 @@ function accountToVaShape(acc) {
     preferences: pd.preferences || {},
     hasAvatar: !!acc.hasAvatar,
     accountId: acc.id,
+    // Trust signals used by va-profile.html to render Upwork-style badges.
+    verified: !!acc.verified,
+    hireCount,
+    reviewCount,
+    reviewAverage: reviewAvg,
+    brownoutStatus,         // 'pending' | 'verified' | null
+    brownoutVerified,       // true once Trust & Safety approves the claim
+    academyCertified: certR.rows.some(r => (r.title || '').includes('Academy')) || certR.rows.length > 0,
   };
 }
 
@@ -660,7 +712,7 @@ async function handleVaDirectory(req, res, urlPath) {
     if (lean) return sendJson(res, 200, { ok: true, va: lean });
     // Fall back to signed-up VA accounts whose derived slug matches.
     const acc = await findVaAccountBySlug(slug);
-    if (acc) return sendJson(res, 200, { ok: true, va: accountToVaShape(acc) });
+    if (acc) return sendJson(res, 200, { ok: true, va: await accountToVaShape(acc) });
     return sendJson(res, 404, { ok: false, error: 'Not found' });
   }
 
@@ -1194,7 +1246,21 @@ async function handlePortfolio(req, res, urlPath) {
     const mime = sniffUploadMime(row.file_data) === row.file_mime
       ? row.file_mime
       : 'application/octet-stream';
-    const ext = mime === 'image/jpeg' ? '.jpg' : (mime === 'application/pdf' ? '.pdf' : '');
+    // JPG portfolio images serve inline so <img src> tags on the public VA
+    // profile actually render them; PDFs still download as attachments.
+    if (mime === 'image/jpeg') {
+      res.writeHead(200, {
+        'Content-Type': mime,
+        'Content-Length': row.file_data.length,
+        'Content-Disposition': 'inline',
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'public, max-age=86400',
+        'Referrer-Policy': 'no-referrer',
+      });
+      res.end(row.file_data);
+      return true;
+    }
+    const ext = mime === 'application/pdf' ? '.pdf' : '';
     writeSecureFileHeaders(res, mime, row.file_data.length, (row.title || 'sample') + ext);
     res.end(row.file_data);
     return true;
@@ -1414,7 +1480,14 @@ async function handleJobs(req, res, urlPath) {
       `SELECT ${JOB_COLUMNS},
               (SELECT COUNT(*)::int FROM applications a WHERE a.job_id = j.id AND a.status <> 'withdrawn') AS applicant_count,
               a.verified AS "clientVerified", a.first_name AS "clientFirstName",
-              a.company_size AS "clientCompanySize", a.created_at AS "clientCreatedAt"
+              a.company_size AS "clientCompanySize", a.created_at AS "clientCreatedAt",
+              (SELECT COUNT(*)::int FROM applications a
+                 JOIN jobs j2 ON j2.id = a.job_id
+                WHERE j2.client_id = j.client_id AND a.status = 'hired')  AS "clientHireCount",
+              (SELECT COUNT(*)::int FROM jobs j3
+                WHERE j3.client_id = j.client_id AND j3.status = 'open') AS "clientOpenJobs",
+              (SELECT COUNT(*)::int FROM jobs j4
+                WHERE j4.client_id = j.client_id)                        AS "clientTotalJobs"
          FROM jobs j JOIN accounts a ON a.id = j.client_id
         WHERE j.id = $1`,
       [id]
@@ -1612,6 +1685,13 @@ async function handleApplications(req, res, urlPath) {
       if (err && err.code === '23505') return sendJson(res, 409, { ok: false, error: 'You already applied to this job.' });
       throw err;
     }
+    // Notify the job owner that a new application arrived.
+    const jobR = await db.query('SELECT title FROM jobs WHERE id = $1', [jobId]);
+    const jobTitle = jobR.rows[0] ? jobR.rows[0].title : 'your job';
+    await createNotification(job.client_id, 'application',
+      'New applicant',
+      `${user.firstName || 'A VA'} applied to "${jobTitle}".`,
+      `/applicants?jobId=${jobId}`);
     return sendJson(res, 200, { ok: true, id });
   }
 
@@ -1678,6 +1758,19 @@ async function handleApplications(req, res, urlPath) {
     }
 
     await db.query('UPDATE applications SET status = $1, updated_at = $2 WHERE id = $3', [status, Date.now(), id]);
+    // Notify the other party on meaningful status changes.
+    if (user.id !== row.va_id && ['interview', 'trial', 'hired', 'rejected'].includes(status)) {
+      const jr = await db.query('SELECT title FROM jobs WHERE id = $1', [row.job_id]);
+      const jt = jr.rows[0] ? jr.rows[0].title : 'a role';
+      const label = status === 'hired' ? 'You were hired' :
+                    status === 'rejected' ? 'Application update' :
+                    status === 'trial' ? 'Trial offer' : 'Interview invitation';
+      const body = status === 'hired' ? `Congratulations — the client hired you for "${jt}".` :
+                   status === 'rejected' ? `The client has closed your application for "${jt}".` :
+                   status === 'trial' ? `The client invited you to a trial for "${jt}".` :
+                   `The client wants to interview you for "${jt}".`;
+      await createNotification(row.va_id, 'application', label, body, '/my-applications');
+    }
     return sendJson(res, 200, { ok: true, status });
   }
 
@@ -1863,10 +1956,1486 @@ async function handleThreads(req, res, urlPath) {
       [id, threadId, user.id, text, offPlatform, now]
     );
     await db.query('UPDATE threads SET last_message_at = $1 WHERE id = $2', [now, threadId]);
+    // Notify the other party once per minute at most; we don't want to spam
+    // a bell for every single message in a fast back-and-forth.
+    const otherId = t.client_id === user.id ? t.va_id : t.client_id;
+    const recent = await db.query(
+      `SELECT 1 FROM notifications
+        WHERE account_id = $1 AND kind = 'message' AND created_at > $2 LIMIT 1`,
+      [otherId, now - 60 * 1000]
+    );
+    if (!recent.rows[0]) {
+      await createNotification(otherId, 'message',
+        `New message from ${user.firstName || 'someone'}`,
+        text.slice(0, 160),
+        '/messages');
+    }
     return sendJson(res, 200, {
       ok: true,
       message: { id, senderId: user.id, mine: true, body: text, offPlatform, readAt: null, createdAt: now },
     });
+  }
+
+  return false;
+}
+
+// ============================================================
+// Settings: per-user preferences blob (settings.html).
+// ============================================================
+
+async function handleSettings(req, res, urlPath) {
+  if (urlPath === '/api/settings' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query('SELECT data FROM user_settings WHERE account_id = $1', [user.id]);
+    const data = r.rows[0] ? r.rows[0].data : {};
+    return sendJson(res, 200, { ok: true, settings: data });
+  }
+
+  if (urlPath === '/api/settings' && req.method === 'PUT') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    let body;
+    try { body = JSON.parse(await readBody(req, 16 * 1024)); }
+    catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return sendJson(res, 400, { ok: false, error: 'Settings must be an object.' });
+    }
+    // Cap payload shape: only string, number, or boolean values at top level.
+    const safe = {};
+    for (const [k, v] of Object.entries(body)) {
+      if (!/^[a-z0-9_]{1,40}$/i.test(k)) continue;
+      if (typeof v === 'string')      safe[k] = v.slice(0, 500);
+      else if (typeof v === 'number') safe[k] = Number.isFinite(v) ? v : 0;
+      else if (typeof v === 'boolean')safe[k] = v;
+    }
+    await db.query(
+      `INSERT INTO user_settings (account_id, data, updated_at)
+       VALUES ($1, $2::jsonb, $3)
+       ON CONFLICT (account_id) DO UPDATE SET data = EXCLUDED.data, updated_at = EXCLUDED.updated_at`,
+      [user.id, JSON.stringify(safe), Date.now()]
+    );
+    return sendJson(res, 200, { ok: true, settings: safe });
+  }
+  return false;
+}
+
+// ============================================================
+// Notifications
+// ============================================================
+
+async function createNotification(accountId, kind, title, body, link) {
+  const id = 'ntf_' + crypto.randomBytes(8).toString('hex');
+  await db.query(
+    `INSERT INTO notifications (id, account_id, kind, title, body, link, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [id, accountId, kind, String(title).slice(0, 200),
+     body == null ? null : String(body).slice(0, 1000),
+     link == null ? null : String(link).slice(0, 500),
+     Date.now()]
+  );
+
+  // Fire-and-forget email. Honours per-user settings:
+  // user_settings.data.email_notifications === false silences all transactional
+  // mail (verify/reset still go through — those use their own senders). Per-kind
+  // pref_* keys (pref_applicants, pref_messages, etc.) opt out of specific kinds.
+  (async () => {
+    try {
+      const r = await db.query(
+        `SELECT a.email, a.first_name AS "firstName", a.verified, s.data AS settings
+           FROM accounts a LEFT JOIN user_settings s ON s.account_id = a.id
+          WHERE a.id = $1`,
+        [accountId]
+      );
+      const row = r.rows[0];
+      if (!row || !row.email || !row.verified) return;
+      const s = row.settings || {};
+      if (s.email_notifications === false) return;
+      // Map notification kinds to pref keys so Settings toggles apply.
+      const prefMap = {
+        application: 'pref_applicants',
+        message:     'pref_messages',
+        interview:   'pref_interviews',
+        timesheet:   'pref_timesheets',
+        invoice:     'pref_invoices',
+        trial:       'pref_trials',
+        review:      'pref_reviews',
+        team:        'pref_team',
+      };
+      const prefKey = prefMap[kind];
+      if (prefKey && s[prefKey] === false) return;
+      await sendNotificationEmail({
+        to: row.email, firstName: row.firstName,
+        heading: title, intro: body || title,
+        ctaLabel: 'Open Jobseekers.ph', ctaPath: link || '/',
+      });
+    } catch (e) {
+      console.error('[notify/email]', e && e.message ? e.message : e);
+    }
+  })();
+
+  return id;
+}
+
+async function handleNotifications(req, res, urlPath) {
+  if (urlPath === '/api/notifications' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query(
+      `SELECT id, kind, title, body, link, read_at, created_at
+         FROM notifications WHERE account_id = $1
+         ORDER BY created_at DESC LIMIT 100`,
+      [user.id]
+    );
+    const unread = r.rows.filter(n => !n.read_at).length;
+    return sendJson(res, 200, {
+      ok: true,
+      unread,
+      notifications: r.rows.map(n => ({
+        id: n.id, kind: n.kind, title: n.title, body: n.body, link: n.link,
+        readAt: n.read_at == null ? null : Number(n.read_at),
+        createdAt: Number(n.created_at),
+      })),
+    });
+  }
+
+  if (urlPath === '/api/notifications/read-all' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    await db.query('UPDATE notifications SET read_at = $1 WHERE account_id = $2 AND read_at IS NULL', [Date.now(), user.id]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  const readMatch = urlPath.match(/^\/api\/notifications\/([a-z0-9_]+)\/read$/);
+  if (readMatch && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    await db.query('UPDATE notifications SET read_at = $1 WHERE id = $2 AND account_id = $3',
+      [Date.now(), readMatch[1], user.id]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  const delMatch = urlPath.match(/^\/api\/notifications\/([a-z0-9_]+)$/);
+  if (delMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    await db.query('DELETE FROM notifications WHERE id = $1 AND account_id = $2', [delMatch[1], user.id]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  return false;
+}
+
+// ============================================================
+// Favorites (talent pool). Client-only.
+// ============================================================
+
+async function handleFavorites(req, res, urlPath) {
+  if (urlPath === '/api/favorites' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    const r = await db.query(
+      `SELECT f.id, f.saved_va_id, f.saved_va_slug, f.note, f.created_at,
+              a.first_name, a.last_name, a.city, a.skill, a.title,
+              (a.avatar_data IS NOT NULL) AS has_avatar
+         FROM favorites f LEFT JOIN accounts a ON a.id = f.saved_va_id
+        WHERE f.client_id = $1
+        ORDER BY f.created_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      favorites: r.rows.map(row => ({
+        id: row.id,
+        savedVaId: row.saved_va_id,
+        savedVaSlug: row.saved_va_slug,
+        note: row.note,
+        createdAt: Number(row.created_at),
+        va: row.saved_va_id ? {
+          id: row.saved_va_id,
+          firstName: row.first_name, lastName: row.last_name,
+          city: row.city, skill: row.skill, title: row.title,
+          hasAvatar: !!row.has_avatar,
+        } : null,
+      })),
+    });
+  }
+
+  if (urlPath === '/api/favorites' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const vaId   = body.savedVaId   ? String(body.savedVaId).trim()   : null;
+    const vaSlug = body.savedVaSlug ? String(body.savedVaSlug).trim().toLowerCase().slice(0, 100) : null;
+    const note   = body.note ? String(body.note).trim().slice(0, 500) : null;
+    if (!vaId && !vaSlug) return sendJson(res, 400, { ok: false, error: 'Provide savedVaId or savedVaSlug.' });
+    const id = 'fav_' + crypto.randomBytes(8).toString('hex');
+    try {
+      await db.query(
+        `INSERT INTO favorites (id, client_id, saved_va_id, saved_va_slug, note, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [id, user.id, vaId, vaSlug, note, Date.now()]
+      );
+    } catch (err) {
+      if (err && err.code === '23505') return sendJson(res, 409, { ok: false, error: 'Already in your talent pool.' });
+      throw err;
+    }
+    return sendJson(res, 200, { ok: true, id });
+  }
+
+  const delMatch = urlPath.match(/^\/api\/favorites\/([a-z0-9_]+)$/);
+  if (delMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    await db.query('DELETE FROM favorites WHERE id = $1 AND client_id = $2', [delMatch[1], user.id]);
+    return sendJson(res, 200, { ok: true });
+  }
+  return false;
+}
+
+// ============================================================
+// Job templates. Client-only.
+// ============================================================
+
+async function handleTemplates(req, res, urlPath) {
+  if (urlPath === '/api/templates' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    const r = await db.query(
+      `SELECT id, name, data, created_at, updated_at FROM job_templates
+        WHERE client_id = $1 ORDER BY updated_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      templates: r.rows.map(row => ({
+        id: row.id, name: row.name, data: row.data || {},
+        createdAt: Number(row.created_at), updatedAt: Number(row.updated_at),
+      })),
+    });
+  }
+
+  const idMatch = urlPath.match(/^\/api\/templates\/([a-z0-9_]+)$/);
+  if (idMatch && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query('SELECT id, client_id, name, data, created_at, updated_at FROM job_templates WHERE id = $1', [idMatch[1]]);
+    const row = r.rows[0];
+    if (!row || row.client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    return sendJson(res, 200, {
+      ok: true,
+      template: {
+        id: row.id, name: row.name, data: row.data || {},
+        createdAt: Number(row.created_at), updatedAt: Number(row.updated_at),
+      },
+    });
+  }
+
+  if (urlPath === '/api/templates' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    let body;
+    try { body = JSON.parse(await readBody(req, 64 * 1024)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const name = String(body.name || '').trim().slice(0, 150);
+    if (!name) return sendJson(res, 400, { ok: false, errors: { name: 'Name is required.' } });
+    const data = body.data && typeof body.data === 'object' ? body.data : {};
+    const id = 'tpl_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      `INSERT INTO job_templates (id, client_id, name, data, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$5)`,
+      [id, user.id, name, JSON.stringify(data), now]
+    );
+    return sendJson(res, 200, { ok: true, id });
+  }
+
+  if (idMatch && req.method === 'PUT') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query('SELECT client_id FROM job_templates WHERE id = $1', [idMatch[1]]);
+    const row = r.rows[0];
+    if (!row || row.client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    let body;
+    try { body = JSON.parse(await readBody(req, 64 * 1024)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const name = String(body.name || '').trim().slice(0, 150);
+    if (!name) return sendJson(res, 400, { ok: false, errors: { name: 'Name is required.' } });
+    const data = body.data && typeof body.data === 'object' ? body.data : {};
+    await db.query(
+      'UPDATE job_templates SET name = $1, data = $2, updated_at = $3 WHERE id = $4',
+      [name, JSON.stringify(data), Date.now(), idMatch[1]]
+    );
+    return sendJson(res, 200, { ok: true });
+  }
+
+  if (idMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    await db.query('DELETE FROM job_templates WHERE id = $1 AND client_id = $2', [idMatch[1], user.id]);
+    return sendJson(res, 200, { ok: true });
+  }
+  return false;
+}
+
+// ============================================================
+// Interviews. Client creates; VA can view and update own status.
+// ============================================================
+
+const INTERVIEW_PLATFORMS = new Set(['zoom', 'meet', 'phone', 'inplatform']);
+const INTERVIEW_STATUSES  = new Set(['upcoming', 'completed', 'cancelled', 'no-show']);
+
+function interviewRowToJson(row) {
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    vaId: row.va_id,
+    jobId: row.job_id,
+    applicationId: row.application_id,
+    scheduledFor: Number(row.scheduled_for),
+    durationMin: row.duration_min,
+    platform: row.platform,
+    meetingUrl: row.meeting_url,
+    notes: row.notes,
+    status: row.status,
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+    vaFirstName:     row.va_first_name     ?? undefined,
+    vaLastName:      row.va_last_name      ?? undefined,
+    clientFirstName: row.client_first_name ?? undefined,
+    clientCompany:   row.client_company    ?? undefined,
+    jobTitle:        row.job_title         ?? undefined,
+  };
+}
+
+async function handleInterviews(req, res, urlPath) {
+  if (urlPath === '/api/interviews' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query(
+      `SELECT i.*, va.first_name AS va_first_name, va.last_name AS va_last_name,
+              cli.first_name AS client_first_name, cli.company_name AS client_company,
+              j.title AS job_title
+         FROM interviews i
+         JOIN accounts va  ON va.id  = i.va_id
+         JOIN accounts cli ON cli.id = i.client_id
+         LEFT JOIN jobs j  ON j.id = i.job_id
+        WHERE i.client_id = $1 OR i.va_id = $1
+        ORDER BY i.scheduled_for ASC`,
+      [user.id]
+    );
+    return sendJson(res, 200, { ok: true, interviews: r.rows.map(interviewRowToJson) });
+  }
+
+  if (urlPath === '/api/interviews' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Only clients can schedule interviews.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const vaId = String(body.vaId || '').trim();
+    const jobId = body.jobId ? String(body.jobId).trim() : null;
+    const applicationId = body.applicationId ? String(body.applicationId).trim() : null;
+    const scheduledFor = Number(body.scheduledFor);
+    const durationMin = Math.max(15, Math.min(240, Number(body.durationMin) || 30));
+    const platform = String(body.platform || 'zoom').trim().toLowerCase();
+    const meetingUrl = body.meetingUrl ? String(body.meetingUrl).trim().slice(0, 500) : null;
+    const notes = body.notes ? String(body.notes).trim().slice(0, 2000) : null;
+
+    const errors = {};
+    if (!vaId) errors.vaId = 'Pick a VA.';
+    if (!isFinite(scheduledFor) || scheduledFor < Date.now() - 60 * 1000) errors.scheduledFor = 'Pick a future date/time.';
+    if (!INTERVIEW_PLATFORMS.has(platform)) errors.platform = 'Invalid platform.';
+    if (meetingUrl && !/^https?:\/\//i.test(meetingUrl)) errors.meetingUrl = 'Must be a full https:// URL.';
+    if (Object.keys(errors).length) return sendJson(res, 400, { ok: false, errors });
+
+    const vaR = await db.query('SELECT id, role FROM accounts WHERE id = $1', [vaId]);
+    if (!vaR.rows[0] || vaR.rows[0].role !== 'va') return sendJson(res, 400, { ok: false, error: 'VA not found.' });
+
+    if (jobId) {
+      const jr = await db.query('SELECT id FROM jobs WHERE id = $1 AND client_id = $2', [jobId, user.id]);
+      if (!jr.rows[0]) return sendJson(res, 400, { ok: false, error: 'Job not yours or not found.' });
+    }
+
+    const id = 'itv_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      `INSERT INTO interviews (id, client_id, va_id, job_id, application_id, scheduled_for,
+          duration_min, platform, meeting_url, notes, status, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'upcoming',$11,$11)`,
+      [id, user.id, vaId, jobId, applicationId, scheduledFor, durationMin, platform, meetingUrl, notes, now]
+    );
+
+    // Also bump the application status to 'interview' when one is attached.
+    if (applicationId) {
+      await db.query(
+        `UPDATE applications SET status = 'interview', updated_at = $1
+          WHERE id = $2 AND status IN ('submitted','viewed')`,
+        [now, applicationId]
+      );
+    }
+
+    await createNotification(vaId, 'interview',
+      'Interview scheduled',
+      `${user.firstName || 'A client'} scheduled an interview with you.`,
+      '/calendar');
+
+    return sendJson(res, 200, { ok: true, id });
+  }
+
+  const idMatch = urlPath.match(/^\/api\/interviews\/([a-z0-9_]+)$/);
+  if (idMatch && req.method === 'PATCH') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query('SELECT * FROM interviews WHERE id = $1', [idMatch[1]]);
+    const row = r.rows[0];
+    if (!row || (row.client_id !== user.id && row.va_id !== user.id)) {
+      return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    }
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const status = String(body.status || '').trim();
+    if (!INTERVIEW_STATUSES.has(status)) return sendJson(res, 400, { ok: false, error: 'Invalid status.' });
+    await db.query('UPDATE interviews SET status = $1, updated_at = $2 WHERE id = $3', [status, Date.now(), idMatch[1]]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  if (idMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query('SELECT client_id FROM interviews WHERE id = $1', [idMatch[1]]);
+    if (!r.rows[0] || r.rows[0].client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    await db.query('DELETE FROM interviews WHERE id = $1', [idMatch[1]]);
+    return sendJson(res, 200, { ok: true });
+  }
+  return false;
+}
+
+// ============================================================
+// Timesheets. VA creates; client approves/rejects.
+// ============================================================
+
+function timesheetRowToJson(row) {
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    vaId: row.va_id,
+    jobId: row.job_id,
+    weekStart: row.week_start,
+    minutes: row.minutes,
+    hours: Math.round((row.minutes / 60) * 100) / 100,
+    rate: row.rate == null ? null : Number(row.rate),
+    summary: row.summary,
+    status: row.status,
+    decidedAt: row.decided_at == null ? null : Number(row.decided_at),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+    vaFirstName:     row.va_first_name     ?? undefined,
+    vaLastName:      row.va_last_name      ?? undefined,
+    clientFirstName: row.client_first_name ?? undefined,
+    clientCompany:   row.client_company    ?? undefined,
+    jobTitle:        row.job_title         ?? undefined,
+  };
+}
+
+async function handleTimesheets(req, res, urlPath) {
+  if (urlPath === '/api/timesheets' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query(
+      `SELECT t.*, va.first_name AS va_first_name, va.last_name AS va_last_name,
+              cli.first_name AS client_first_name, cli.company_name AS client_company,
+              j.title AS job_title
+         FROM timesheets t
+         JOIN accounts va  ON va.id  = t.va_id
+         JOIN accounts cli ON cli.id = t.client_id
+         LEFT JOIN jobs j  ON j.id = t.job_id
+        WHERE t.client_id = $1 OR t.va_id = $1
+        ORDER BY t.week_start DESC, t.created_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, { ok: true, timesheets: r.rows.map(timesheetRowToJson) });
+  }
+
+  if (urlPath === '/api/timesheets' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'VAs submit timesheets.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const clientId = String(body.clientId || '').trim();
+    const jobId = body.jobId ? String(body.jobId).trim() : null;
+    const weekStart = String(body.weekStart || '').trim().slice(0, 10);
+    const minutes = Math.max(1, Math.min(60 * 24 * 7, Number(body.minutes) | 0));
+    const rate = Number(body.rate);
+    const summary = body.summary ? String(body.summary).trim().slice(0, 2000) : null;
+    const errors = {};
+    if (!clientId) errors.clientId = 'Pick a client.';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) errors.weekStart = 'Use YYYY-MM-DD.';
+    if (!isFinite(rate) || rate < 1 || rate > 500) errors.rate = 'Rate must be 1–500.';
+    if (!Number.isFinite(minutes) || minutes <= 0) errors.minutes = 'Enter minutes worked.';
+    if (Object.keys(errors).length) return sendJson(res, 400, { ok: false, errors });
+
+    const cr = await db.query('SELECT id, role FROM accounts WHERE id = $1', [clientId]);
+    if (!cr.rows[0] || cr.rows[0].role !== 'client') return sendJson(res, 400, { ok: false, error: 'Client not found.' });
+
+    const id = 'ts_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      `INSERT INTO timesheets (id, client_id, va_id, job_id, week_start, minutes, rate, summary,
+          status, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9,$9)`,
+      [id, clientId, user.id, jobId, weekStart, minutes, rate, summary, now]
+    );
+    await createNotification(clientId, 'timesheet',
+      'New timesheet to approve',
+      `${user.firstName || 'A VA'} submitted a timesheet for week of ${weekStart}.`,
+      '/timesheets');
+    return sendJson(res, 200, { ok: true, id });
+  }
+
+  const idMatch = urlPath.match(/^\/api\/timesheets\/([a-z0-9_]+)$/);
+  if (idMatch && req.method === 'PATCH') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query('SELECT * FROM timesheets WHERE id = $1', [idMatch[1]]);
+    const row = r.rows[0];
+    if (!row || row.client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const status = String(body.status || '').trim();
+    if (!['approved', 'rejected'].includes(status)) return sendJson(res, 400, { ok: false, error: 'Invalid status.' });
+    const now = Date.now();
+    await db.query(
+      'UPDATE timesheets SET status = $1, decided_at = $2, updated_at = $2 WHERE id = $3',
+      [status, now, idMatch[1]]
+    );
+    await createNotification(row.va_id, 'timesheet',
+      status === 'approved' ? 'Timesheet approved' : 'Timesheet needs changes',
+      status === 'approved'
+        ? `Your timesheet for week of ${row.week_start} was approved.`
+        : `Your timesheet for week of ${row.week_start} was rejected.`,
+      '/timesheets');
+    return sendJson(res, 200, { ok: true });
+  }
+  return false;
+}
+
+// ============================================================
+// Invoices. VA creates; client marks paid.
+// ============================================================
+
+const INVOICE_STATUSES = new Set(['draft', 'sent', 'paid', 'void']);
+
+function invoiceRowToJson(row) {
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    vaId: row.va_id,
+    jobId: row.job_id,
+    invoiceNo: row.invoice_no,
+    issuedOn: row.issued_on,
+    dueOn: row.due_on,
+    currency: row.currency,
+    subtotal: Number(row.subtotal),
+    total: Number(row.total),
+    items: Array.isArray(row.items) ? row.items : [],
+    notes: row.notes,
+    status: row.status,
+    paidAt: row.paid_at == null ? null : Number(row.paid_at),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+    vaFirstName:     row.va_first_name     ?? undefined,
+    vaLastName:      row.va_last_name      ?? undefined,
+    clientFirstName: row.client_first_name ?? undefined,
+    clientCompany:   row.client_company    ?? undefined,
+  };
+}
+
+async function handleInvoices(req, res, urlPath) {
+  if (urlPath === '/api/invoices' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query(
+      `SELECT i.*, va.first_name AS va_first_name, va.last_name AS va_last_name,
+              cli.first_name AS client_first_name, cli.company_name AS client_company
+         FROM invoices i
+         JOIN accounts va  ON va.id  = i.va_id
+         JOIN accounts cli ON cli.id = i.client_id
+        WHERE i.client_id = $1 OR i.va_id = $1
+        ORDER BY i.created_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, { ok: true, invoices: r.rows.map(invoiceRowToJson) });
+  }
+
+  if (urlPath === '/api/invoices' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'VAs create invoices.' });
+    let body;
+    try { body = JSON.parse(await readBody(req, 64 * 1024)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const clientId  = String(body.clientId || '').trim();
+    const jobId     = body.jobId ? String(body.jobId).trim() : null;
+    const invoiceNo = String(body.invoiceNo || '').trim().slice(0, 40) || ('INV-' + Date.now().toString(36).toUpperCase());
+    const issuedOn  = String(body.issuedOn  || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    const dueOn     = body.dueOn ? String(body.dueOn).trim().slice(0, 10) : null;
+    const currency  = String(body.currency || 'USD').trim().slice(0, 3).toUpperCase();
+    const notes     = body.notes ? String(body.notes).trim().slice(0, 2000) : null;
+
+    const items = Array.isArray(body.items)
+      ? body.items.slice(0, 50).map(it => ({
+          description: String(it && it.description || '').trim().slice(0, 300),
+          qty:  Number((it && it.qty) || 1),
+          rate: Number((it && it.rate) || 0),
+          amount: Number((it && it.amount) || 0),
+        })).filter(it => it.description)
+      : [];
+    const subtotal = items.reduce((s, it) => s + (isFinite(it.amount) ? it.amount : 0), 0);
+    const total = Number(body.total) || subtotal;
+    const errors = {};
+    if (!clientId) errors.clientId = 'Pick a client.';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(issuedOn)) errors.issuedOn = 'Use YYYY-MM-DD.';
+    if (!items.length) errors.items = 'Add at least one line item.';
+    if (!isFinite(total) || total <= 0) errors.total = 'Total must be positive.';
+    if (Object.keys(errors).length) return sendJson(res, 400, { ok: false, errors });
+
+    const cr = await db.query('SELECT id, role FROM accounts WHERE id = $1', [clientId]);
+    if (!cr.rows[0] || cr.rows[0].role !== 'client') return sendJson(res, 400, { ok: false, error: 'Client not found.' });
+
+    const id = 'inv_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      `INSERT INTO invoices (id, client_id, va_id, job_id, invoice_no, issued_on, due_on,
+          currency, subtotal, total, items, notes, status, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'sent',$13,$13)`,
+      [id, clientId, user.id, jobId, invoiceNo, issuedOn, dueOn,
+       currency, subtotal, total, JSON.stringify(items), notes, now]
+    );
+    await createNotification(clientId, 'invoice',
+      'New invoice received',
+      `${user.firstName || 'A VA'} sent invoice ${invoiceNo} for ${currency} ${total.toFixed(2)}.`,
+      '/invoices');
+    return sendJson(res, 200, { ok: true, id, invoiceNo });
+  }
+
+  const idMatch = urlPath.match(/^\/api\/invoices\/([a-z0-9_]+)$/);
+  if (idMatch && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query(
+      `SELECT i.*, va.first_name AS va_first_name, va.last_name AS va_last_name,
+              cli.first_name AS client_first_name, cli.company_name AS client_company
+         FROM invoices i
+         JOIN accounts va  ON va.id  = i.va_id
+         JOIN accounts cli ON cli.id = i.client_id
+        WHERE i.id = $1`,
+      [idMatch[1]]
+    );
+    const row = r.rows[0];
+    if (!row || (row.client_id !== user.id && row.va_id !== user.id)) {
+      return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    }
+    return sendJson(res, 200, { ok: true, invoice: invoiceRowToJson(row) });
+  }
+
+  if (idMatch && req.method === 'PATCH') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query('SELECT * FROM invoices WHERE id = $1', [idMatch[1]]);
+    const row = r.rows[0];
+    if (!row || (row.client_id !== user.id && row.va_id !== user.id)) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const status = String(body.status || '').trim();
+    if (!INVOICE_STATUSES.has(status)) return sendJson(res, 400, { ok: false, error: 'Invalid status.' });
+    // Client can mark paid/void; VA can mark void or draft→sent.
+    if (user.id === row.client_id && !['paid', 'void'].includes(status)) {
+      return sendJson(res, 403, { ok: false, error: 'Clients can only mark paid or void.' });
+    }
+    if (user.id === row.va_id && status === 'paid') {
+      return sendJson(res, 403, { ok: false, error: 'Only the client can mark an invoice paid.' });
+    }
+    const now = Date.now();
+    await db.query(
+      'UPDATE invoices SET status = $1, paid_at = $2, updated_at = $3 WHERE id = $4',
+      [status, status === 'paid' ? now : row.paid_at, now, idMatch[1]]
+    );
+    if (status === 'paid') {
+      await createNotification(row.va_id, 'invoice',
+        'Invoice paid',
+        `Invoice ${row.invoice_no} was marked paid.`,
+        '/invoices');
+    }
+    return sendJson(res, 200, { ok: true });
+  }
+  return false;
+}
+
+// ============================================================
+// Reviews. Mutual rating between a client and VA.
+// ============================================================
+
+async function handleReviews(req, res, urlPath) {
+  if (urlPath === '/api/reviews' && req.method === 'GET') {
+    const url = new URL(req.url, 'http://localhost');
+    const subjectId = (url.searchParams.get('subjectId') || '').trim();
+    if (!subjectId) return sendJson(res, 400, { ok: false, error: 'Missing subjectId.' });
+    const r = await db.query(
+      `SELECT r.id, r.reviewer_id, r.rating, r.body, r.created_at,
+              a.first_name AS reviewer_first_name, a.last_name AS reviewer_last_name,
+              a.role AS reviewer_role, a.company_name AS reviewer_company
+         FROM reviews r JOIN accounts a ON a.id = r.reviewer_id
+        WHERE r.subject_id = $1 ORDER BY r.created_at DESC LIMIT 50`,
+      [subjectId]
+    );
+    const avg = r.rows.length
+      ? Math.round((r.rows.reduce((s, x) => s + x.rating, 0) / r.rows.length) * 10) / 10
+      : null;
+    return sendJson(res, 200, {
+      ok: true,
+      count: r.rows.length,
+      average: avg,
+      reviews: r.rows.map(row => ({
+        id: row.id,
+        reviewerId: row.reviewer_id,
+        reviewerFirstName: row.reviewer_first_name,
+        reviewerLastName: row.reviewer_last_name,
+        reviewerRole: row.reviewer_role,
+        reviewerCompany: row.reviewer_company,
+        rating: row.rating,
+        body: row.body,
+        createdAt: Number(row.created_at),
+      })),
+    });
+  }
+
+  if (urlPath === '/api/reviews' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const subjectId = String(body.subjectId || '').trim();
+    const jobId = body.jobId ? String(body.jobId).trim() : null;
+    const rating = Math.max(1, Math.min(5, Number(body.rating) | 0));
+    const text = body.body ? String(body.body).trim().slice(0, 2000) : null;
+    if (!subjectId || subjectId === user.id) return sendJson(res, 400, { ok: false, error: 'Invalid subject.' });
+    if (!rating) return sendJson(res, 400, { ok: false, error: 'Rating must be 1–5.' });
+    // Must have at least one shared hire/thread/completed trial to review.
+    const gate = await db.query(
+      `SELECT 1 FROM applications a JOIN jobs j ON j.id = a.job_id
+        WHERE a.status IN ('hired','trialing','trial')
+          AND ((j.client_id = $1 AND a.va_id = $2) OR (j.client_id = $2 AND a.va_id = $1))
+        LIMIT 1`,
+      [user.id, subjectId]
+    );
+    if (!gate.rows[0]) {
+      return sendJson(res, 403, { ok: false, error: 'You can only review someone you have worked with.' });
+    }
+    const id = 'rv_' + crypto.randomBytes(8).toString('hex');
+    try {
+      await db.query(
+        `INSERT INTO reviews (id, reviewer_id, subject_id, job_id, rating, body, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [id, user.id, subjectId, jobId, rating, text, Date.now()]
+      );
+    } catch (err) {
+      if (err && err.code === '23505') return sendJson(res, 409, { ok: false, error: 'You already reviewed this person for this job.' });
+      throw err;
+    }
+    await createNotification(subjectId, 'review',
+      'You received a review',
+      `${user.firstName || 'Someone'} left you a ${rating}-star review.`, null);
+    return sendJson(res, 200, { ok: true, id });
+  }
+  return false;
+}
+
+// ============================================================
+// Teams. Client owner invites others by email. If the email already belongs
+// to a client account, the row is 'active'; otherwise 'invited' (they'll be
+// promoted when they sign up).
+// ============================================================
+
+async function getOrCreateTeamForOwner(ownerId, ownerFirstName) {
+  const r = await db.query('SELECT id, name FROM teams WHERE owner_id = $1 LIMIT 1', [ownerId]);
+  if (r.rows[0]) return r.rows[0];
+  const id = 'tm_' + crypto.randomBytes(8).toString('hex');
+  const name = (ownerFirstName || 'My') + "'s Team";
+  await db.query('INSERT INTO teams (id, owner_id, name, created_at) VALUES ($1,$2,$3,$4)',
+    [id, ownerId, name, Date.now()]);
+  // Seed owner as a team_member so the list includes them.
+  const mid = 'tmm_' + crypto.randomBytes(8).toString('hex');
+  await db.query(
+    `INSERT INTO team_members (id, team_id, account_id, invite_email, role, status, created_at)
+     VALUES ($1,$2,$3,NULL,'owner','active',$4)`,
+    [mid, id, ownerId, Date.now()]
+  );
+  return { id, name };
+}
+
+async function handleTeam(req, res, urlPath) {
+  if (urlPath === '/api/team' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    const team = await getOrCreateTeamForOwner(user.id, user.firstName);
+    const r = await db.query(
+      `SELECT m.id, m.account_id, m.invite_email, m.role, m.status, m.created_at,
+              a.first_name, a.last_name, a.email, a.company_name,
+              (a.avatar_data IS NOT NULL) AS has_avatar
+         FROM team_members m LEFT JOIN accounts a ON a.id = m.account_id
+        WHERE m.team_id = $1
+        ORDER BY m.created_at ASC`,
+      [team.id]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      team: { id: team.id, name: team.name },
+      members: r.rows.map(row => ({
+        id: row.id,
+        accountId: row.account_id,
+        inviteEmail: row.invite_email,
+        role: row.role,
+        status: row.status,
+        createdAt: Number(row.created_at),
+        firstName: row.first_name, lastName: row.last_name,
+        email: row.email || row.invite_email,
+        company: row.company_name,
+        hasAvatar: !!row.has_avatar,
+      })),
+    });
+  }
+
+  if (urlPath === '/api/team/invite' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const email = String(body.email || '').trim().toLowerCase();
+    const role = ['admin', 'member'].includes(body.role) ? body.role : 'member';
+    if (!EMAIL_RE.test(email)) return sendJson(res, 400, { ok: false, errors: { email: 'Enter a valid email.' } });
+    const team = await getOrCreateTeamForOwner(user.id, user.firstName);
+    const existing = await findAccountByEmail(email);
+    const id = 'tmm_' + crypto.randomBytes(8).toString('hex');
+    try {
+      await db.query(
+        `INSERT INTO team_members (id, team_id, account_id, invite_email, role, status, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [id, team.id, existing ? existing.id : null, existing ? null : email,
+         role, existing ? 'active' : 'invited', Date.now()]
+      );
+    } catch (err) {
+      if (err && err.code === '23505') return sendJson(res, 409, { ok: false, error: 'Already on your team.' });
+      throw err;
+    }
+    if (existing) {
+      await createNotification(existing.id, 'team',
+        'Added to a team',
+        `${user.firstName || 'Someone'} added you to their team.`, '/team');
+    }
+    return sendJson(res, 200, { ok: true, id, status: existing ? 'active' : 'invited' });
+  }
+
+  const idMatch = urlPath.match(/^\/api\/team\/members\/([a-z0-9_]+)$/);
+  if (idMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    // Only the team owner can remove members, and not themselves.
+    const r = await db.query(
+      `SELECT m.id, m.role, t.owner_id FROM team_members m JOIN teams t ON t.id = m.team_id
+        WHERE m.id = $1`, [idMatch[1]]);
+    const row = r.rows[0];
+    if (!row || row.owner_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    if (row.role === 'owner') return sendJson(res, 403, { ok: false, error: 'Cannot remove the owner.' });
+    await db.query('DELETE FROM team_members WHERE id = $1', [idMatch[1]]);
+    return sendJson(res, 200, { ok: true });
+  }
+  return false;
+}
+
+// ============================================================
+// Trials. Starts a trial from an application; records outcome.
+// ============================================================
+
+async function handleTrials(req, res, urlPath) {
+  if (urlPath === '/api/trials' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query(
+      `SELECT t.*, j.title AS job_title, j.trial_days, j.trial_hours,
+              va.first_name AS va_first_name, va.last_name AS va_last_name,
+              cli.first_name AS client_first_name, cli.company_name AS client_company
+         FROM trials t JOIN jobs j ON j.id = t.job_id
+         JOIN accounts va  ON va.id  = t.va_id
+         JOIN accounts cli ON cli.id = t.client_id
+        WHERE t.client_id = $1 OR t.va_id = $1
+        ORDER BY t.ends_at DESC`,
+      [user.id]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      trials: r.rows.map(row => ({
+        id: row.id,
+        applicationId: row.application_id,
+        jobId: row.job_id,
+        clientId: row.client_id,
+        vaId: row.va_id,
+        startedAt: Number(row.started_at),
+        endsAt: Number(row.ends_at),
+        scope: row.scope,
+        outcome: row.outcome,
+        decidedAt: row.decided_at == null ? null : Number(row.decided_at),
+        createdAt: Number(row.created_at),
+        jobTitle: row.job_title,
+        trialDays: row.trial_days,
+        trialHours: row.trial_hours,
+        vaFirstName: row.va_first_name, vaLastName: row.va_last_name,
+        clientFirstName: row.client_first_name, clientCompany: row.client_company,
+      })),
+    });
+  }
+
+  if (urlPath === '/api/trials' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const applicationId = String(body.applicationId || '').trim();
+    if (!applicationId) return sendJson(res, 400, { ok: false, error: 'Missing applicationId.' });
+    const ar = await db.query(
+      `SELECT a.id, a.job_id, a.va_id, j.client_id, j.trial_days, j.trial_hours, j.trial_scope
+         FROM applications a JOIN jobs j ON j.id = a.job_id WHERE a.id = $1`,
+      [applicationId]
+    );
+    const app = ar.rows[0];
+    if (!app || app.client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Application not found.' });
+
+    const days = Math.max(1, Math.min(14, Number(body.days || app.trial_days || 3)));
+    const scope = String(body.scope || app.trial_scope || '').slice(0, 2000) || null;
+    const now = Date.now();
+    const endsAt = now + days * 86400 * 1000;
+    const id = 'tr_' + crypto.randomBytes(8).toString('hex');
+    try {
+      await db.query(
+        `INSERT INTO trials (id, application_id, job_id, client_id, va_id, started_at, ends_at,
+            scope, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [id, applicationId, app.job_id, user.id, app.va_id, now, endsAt, scope, now]
+      );
+    } catch (err) {
+      if (err && err.code === '23505') return sendJson(res, 409, { ok: false, error: 'Trial already started for this application.' });
+      throw err;
+    }
+    await db.query(
+      `UPDATE applications SET status = 'trialing', updated_at = $1 WHERE id = $2`,
+      [now, applicationId]
+    );
+    await createNotification(app.va_id, 'trial',
+      'Trial started',
+      `A client started a ${days}-day paid trial with you.`, '/my-applications');
+    return sendJson(res, 200, { ok: true, id, endsAt });
+  }
+
+  const idMatch = urlPath.match(/^\/api\/trials\/([a-z0-9_]+)$/);
+  if (idMatch && req.method === 'PATCH') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query('SELECT * FROM trials WHERE id = $1', [idMatch[1]]);
+    const row = r.rows[0];
+    if (!row || row.client_id !== user.id) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const outcome = String(body.outcome || '').trim();
+    if (!['hired', 'passed', 'cancelled'].includes(outcome)) return sendJson(res, 400, { ok: false, error: 'Invalid outcome.' });
+    const now = Date.now();
+    await db.query('UPDATE trials SET outcome = $1, decided_at = $2 WHERE id = $3', [outcome, now, idMatch[1]]);
+    const nextAppStatus = outcome === 'hired' ? 'hired' : 'rejected';
+    await db.query('UPDATE applications SET status = $1, updated_at = $2 WHERE id = $3',
+      [nextAppStatus, now, row.application_id]);
+    await createNotification(row.va_id, 'trial',
+      outcome === 'hired' ? 'You were hired!' : 'Trial ended',
+      outcome === 'hired'
+        ? 'The client decided to hire you after the trial.'
+        : (outcome === 'passed' ? 'The client decided not to continue after the trial.' : 'The trial was cancelled.'),
+      '/my-applications');
+    return sendJson(res, 200, { ok: true });
+  }
+  return false;
+}
+
+// ============================================================
+// Academy progress (course step tracking).
+// ============================================================
+
+async function handleAcademyProgress(req, res, urlPath) {
+  if (urlPath === '/api/academy/progress' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    const r = await db.query(
+      'SELECT course, step, score, updated_at FROM academy_progress WHERE account_id = $1',
+      [user.id]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      progress: r.rows.map(row => ({
+        course: row.course, step: row.step, score: row.score,
+        updatedAt: Number(row.updated_at),
+      })),
+    });
+  }
+
+  if (urlPath === '/api/academy/progress' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'va') return sendJson(res, 403, { ok: false, error: 'VAs only.' });
+    let body;
+    try { body = JSON.parse(await readBody(req)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const course = String(body.course || '').trim().toLowerCase();
+    if (!ACADEMY_COURSES[course]) return sendJson(res, 400, { ok: false, error: 'Unknown course.' });
+    const step = Math.max(0, Math.min(50, Number(body.step) | 0));
+    const score = body.score != null ? Math.max(0, Math.min(100, Number(body.score) | 0)) : null;
+    await db.query(
+      `INSERT INTO academy_progress (account_id, course, step, score, updated_at)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (account_id, course) DO UPDATE
+         SET step = GREATEST(academy_progress.step, EXCLUDED.step),
+             score = COALESCE(EXCLUDED.score, academy_progress.score),
+             updated_at = EXCLUDED.updated_at`,
+      [user.id, course, step, score, Date.now()]
+    );
+    return sendJson(res, 200, { ok: true });
+  }
+  return false;
+}
+
+// ============================================================
+// Contact form. Public; rate-limited per IP.
+// ============================================================
+
+async function handleContact(req, res, urlPath) {
+  if (urlPath !== '/api/contact' || req.method !== 'POST') return false;
+  if (!rateLimit('contact:' + clientKey(req), 5, 60 * 60 * 1000)) {
+    return sendJson(res, 429, { ok: false, error: 'Too many messages. Try again later.' });
+  }
+  let body;
+  try { body = JSON.parse(await readBody(req, 16 * 1024)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+  const name = String(body.name || '').trim().slice(0, 120);
+  const email = String(body.email || '').trim().toLowerCase().slice(0, 160);
+  const subject = body.subject ? String(body.subject).trim().slice(0, 200) : null;
+  const text = String(body.body || body.message || '').trim().slice(0, 4000);
+  const errors = {};
+  if (!name) errors.name = 'Name is required.';
+  if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email.';
+  if (text.length < 10) errors.body = 'Message must be at least 10 characters.';
+  if (Object.keys(errors).length) return sendJson(res, 400, { ok: false, errors });
+  const id = 'cm_' + crypto.randomBytes(8).toString('hex');
+  await db.query(
+    `INSERT INTO contact_messages (id, name, email, subject, body, ip, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [id, name, email, subject, text, clientKey(req), Date.now()]
+  );
+  return sendJson(res, 200, { ok: true });
+}
+
+// ============================================================
+// Admin. Lightweight dashboard-backing endpoints. role === 'admin'.
+// ============================================================
+
+async function requireAdmin(req, res) {
+  const user = await currentUser(req);
+  if (!user) { sendJson(res, 401, { ok: false, error: 'Not signed in.' }); return null; }
+  if (user.role !== 'admin') { sendJson(res, 403, { ok: false, error: 'Admin only.' }); return null; }
+  return user;
+}
+
+async function handleAdmin(req, res, urlPath) {
+  if (!urlPath.startsWith('/api/admin/')) return false;
+
+  if (urlPath === '/api/admin/stats' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const [accounts, jobs, apps, flagged, contact] = await Promise.all([
+      db.query(`SELECT role, COUNT(*)::int AS n FROM accounts GROUP BY role`),
+      db.query(`SELECT status, COUNT(*)::int AS n FROM jobs GROUP BY status`),
+      db.query(`SELECT COUNT(*)::int AS n FROM applications`),
+      db.query(`SELECT COUNT(*)::int AS n FROM jobs WHERE status = 'flagged'`),
+      db.query(`SELECT COUNT(*)::int AS n FROM contact_messages`),
+    ]);
+    return sendJson(res, 200, {
+      ok: true,
+      accounts: Object.fromEntries(accounts.rows.map(r => [r.role, r.n])),
+      jobs: Object.fromEntries(jobs.rows.map(r => [r.status, r.n])),
+      applications: apps.rows[0].n,
+      flaggedJobs: flagged.rows[0].n,
+      contactMessages: contact.rows[0].n,
+    });
+  }
+
+  if (urlPath === '/api/admin/flagged-jobs' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const r = await db.query(
+      `SELECT j.id, j.title, j.description, j.company_name, j.created_at, j.status,
+              a.email AS client_email, a.first_name AS client_first_name
+         FROM jobs j JOIN accounts a ON a.id = j.client_id
+        WHERE j.status = 'flagged' ORDER BY j.created_at DESC LIMIT 100`
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      jobs: r.rows.map(row => ({
+        id: row.id, title: row.title, description: row.description,
+        companyName: row.company_name, createdAt: Number(row.created_at),
+        status: row.status, clientEmail: row.client_email, clientFirstName: row.client_first_name,
+      })),
+    });
+  }
+
+  const jobDecisionMatch = urlPath.match(/^\/api\/admin\/jobs\/([a-z0-9_]+)\/(approve|remove)$/);
+  if (jobDecisionMatch && req.method === 'POST') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const [_, jobId, action] = jobDecisionMatch;
+    const newStatus = action === 'approve' ? 'open' : 'removed';
+    await db.query('UPDATE jobs SET status = $1, updated_at = $2 WHERE id = $3',
+      [newStatus, Date.now(), jobId]);
+    return sendJson(res, 200, { ok: true, status: newStatus });
+  }
+
+  if (urlPath === '/api/admin/contact-messages' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const r = await db.query(
+      'SELECT id, name, email, subject, body, created_at FROM contact_messages ORDER BY created_at DESC LIMIT 200'
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      messages: r.rows.map(row => ({
+        id: row.id, name: row.name, email: row.email, subject: row.subject,
+        body: row.body, createdAt: Number(row.created_at),
+      })),
+    });
+  }
+
+  if (urlPath === '/api/admin/accounts' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const url = new URL(req.url, 'http://localhost');
+    const q = (url.searchParams.get('q') || '').trim().toLowerCase();
+    const params = [];
+    let where = '';
+    if (q) { params.push('%' + q + '%'); where = `WHERE LOWER(email) LIKE $1 OR LOWER(first_name || ' ' || last_name) LIKE $1`; }
+    const r = await db.query(
+      `SELECT id, role, email, first_name, last_name, company_name, verified, created_at
+         FROM accounts ${where} ORDER BY created_at DESC LIMIT 200`, params);
+    return sendJson(res, 200, {
+      ok: true,
+      accounts: r.rows.map(row => ({
+        id: row.id, role: row.role, email: row.email,
+        firstName: row.first_name, lastName: row.last_name,
+        companyName: row.company_name, verified: !!row.verified,
+        createdAt: Number(row.created_at),
+      })),
+    });
+  }
+
+  return false;
+}
+
+// ============================================================
+// Reports (client spend summary + CSV export).
+// ============================================================
+
+async function handleReports(req, res, urlPath) {
+  if (urlPath === '/api/reports/summary' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    const [paid, pending, hires] = await Promise.all([
+      db.query(`SELECT COALESCE(SUM(total),0) AS s FROM invoices WHERE client_id = $1 AND status = 'paid'`, [user.id]),
+      db.query(`SELECT COALESCE(SUM(total),0) AS s FROM invoices WHERE client_id = $1 AND status = 'sent'`, [user.id]),
+      db.query(`SELECT COUNT(*)::int AS n FROM applications a JOIN jobs j ON j.id = a.job_id
+                 WHERE j.client_id = $1 AND a.status = 'hired'`, [user.id]),
+    ]);
+    return sendJson(res, 200, {
+      ok: true,
+      paidTotal: Number(paid.rows[0].s),
+      pendingTotal: Number(pending.rows[0].s),
+      totalHires: hires.rows[0].n,
+    });
+  }
+
+  if (urlPath === '/api/reports/export.csv' && req.method === 'GET') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Not signed in.' });
+    if (user.role !== 'client') return sendJson(res, 403, { ok: false, error: 'Clients only.' });
+    const r = await db.query(
+      `SELECT i.invoice_no, i.issued_on, i.currency, i.total, i.status, i.paid_at,
+              va.first_name || ' ' || va.last_name AS va_name
+         FROM invoices i JOIN accounts va ON va.id = i.va_id
+        WHERE i.client_id = $1 ORDER BY i.issued_on DESC`,
+      [user.id]
+    );
+    const rows = [['Invoice', 'Issued', 'VA', 'Currency', 'Total', 'Status', 'Paid At']];
+    for (const row of r.rows) {
+      rows.push([
+        row.invoice_no, row.issued_on, row.va_name, row.currency,
+        Number(row.total).toFixed(2), row.status,
+        row.paid_at ? new Date(Number(row.paid_at)).toISOString() : '',
+      ]);
+    }
+    const csv = rows.map(cells => cells.map(c => {
+      const s = String(c == null ? '' : c);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',')).join('\r\n');
+    res.writeHead(200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="jobseekers-report-${new Date().toISOString().slice(0,10)}.csv"`,
+      'Cache-Control': 'no-store',
+    });
+    res.end(csv);
+    return true;
+  }
+  return false;
+}
+
+// ============================================================
+// Community forum: threads + replies. Anyone can read; signed-in
+// users can post. Scam/off-platform content is auto-flagged and
+// hidden from the public list until moderated.
+// ============================================================
+
+const FORUM_CATEGORIES = new Set([
+  'Newbies', 'Night Shift', 'Taxes', 'Rates', 'Tools', 'Scam Alert', 'Stories', 'General',
+]);
+
+function threadRowToForumJson(row) {
+  return {
+    id: row.id,
+    authorId: row.author_id,
+    authorFirstName: row.author_first_name,
+    authorLastName: row.author_last_name,
+    authorHasAvatar: !!row.author_has_avatar,
+    category: row.category,
+    title: row.title,
+    body: row.body,
+    views: row.views,
+    status: row.status,
+    replyCount: Number(row.reply_count || 0),
+    lastReplyAt: Number(row.last_reply_at),
+    createdAt: Number(row.created_at),
+  };
+}
+
+async function handleForum(req, res, urlPath) {
+  if (!urlPath.startsWith('/api/forum')) return false;
+
+  // GET /api/forum/threads — public list with filters + pagination
+  if (urlPath === '/api/forum/threads' && req.method === 'GET') {
+    const url = new URL(req.url, 'http://localhost');
+    const cat = (url.searchParams.get('category') || '').trim();
+    const q   = (url.searchParams.get('q') || '').trim().toLowerCase();
+    const page  = Math.max(1, parseInt(url.searchParams.get('page')  || '1', 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10) || 20));
+
+    const where = [`t.status IN ('open', 'closed')`];
+    const params = [];
+    if (cat && cat !== 'all' && FORUM_CATEGORIES.has(cat)) {
+      params.push(cat); where.push(`t.category = $${params.length}`);
+    }
+    if (q) {
+      params.push('%' + q + '%');
+      where.push(`(LOWER(t.title) LIKE $${params.length} OR LOWER(COALESCE(t.body,'')) LIKE $${params.length})`);
+    }
+    const whereSql = where.join(' AND ');
+
+    const countR = await db.query(`SELECT COUNT(*)::int AS n FROM forum_threads t WHERE ${whereSql}`, params);
+    const total = countR.rows[0].n;
+
+    params.push(limit);
+    params.push((page - 1) * limit);
+    const listR = await db.query(
+      `SELECT t.id, t.author_id, t.category, t.title, t.body, t.views, t.status,
+              t.last_reply_at, t.created_at,
+              a.first_name AS author_first_name, a.last_name AS author_last_name,
+              (a.avatar_data IS NOT NULL) AS author_has_avatar,
+              (SELECT COUNT(*)::int FROM forum_replies r WHERE r.thread_id = t.id AND r.flagged = FALSE) AS reply_count
+         FROM forum_threads t
+         JOIN accounts a ON a.id = t.author_id
+        WHERE ${whereSql}
+        ORDER BY t.last_reply_at DESC
+        LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+    return sendJson(res, 200, {
+      ok: true, total, page, limit, pages: Math.max(1, Math.ceil(total / limit)),
+      threads: listR.rows.map(threadRowToForumJson),
+    });
+  }
+
+  // POST /api/forum/threads — signed-in, verified users
+  if (urlPath === '/api/forum/threads' && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Sign in to post.' });
+    if (!user.verified) return sendJson(res, 403, { ok: false, error: 'Verify your email first.' });
+    if (!rateLimit('forum-thread:' + user.id, 10, 60 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many topics in the last hour.' });
+    }
+
+    let body;
+    try { body = JSON.parse(await readBody(req, 32 * 1024)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const title = String(body.title || '').trim().slice(0, 200);
+    const text  = String(body.body  || '').trim().slice(0, 8000);
+    const cat   = String(body.category || '').trim();
+    const errors = {};
+    if (title.length < 10) errors.title = 'Give your topic a descriptive title (10+ characters).';
+    if (!FORUM_CATEGORIES.has(cat)) errors.category = 'Pick a category.';
+    if (Object.keys(errors).length) return sendJson(res, 400, { ok: false, errors });
+
+    // Content safety: reuse the job-post scam rules + off-platform regex.
+    // Scam Alert threads are allowed to quote scam patterns (people warn the
+    // community) so we don't auto-flag that category.
+    const content = title + '\n\n' + text;
+    const scam = cat === 'Scam Alert' ? [] : JOB_SCAM_RULES.filter(r => r.re.test(content)).map(r => r.msg);
+    const offPlatform = OFF_PLATFORM_REGEX.test(content);
+    const status = (scam.length || offPlatform) ? 'flagged' : 'open';
+
+    const id = 'ft_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      `INSERT INTO forum_threads (id, author_id, category, title, body, status, last_reply_at, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$7)`,
+      [id, user.id, cat, title, text || null, status, now]
+    );
+    return sendJson(res, 200, {
+      ok: true, id, status,
+      flagged: status === 'flagged',
+      flagReasons: [...scam, ...(offPlatform ? ['Contains off-platform contact details'] : [])],
+    });
+  }
+
+  // GET /api/forum/threads/:id — single thread + replies (bumps view)
+  const idMatch = urlPath.match(/^\/api\/forum\/threads\/([a-z0-9_]+)$/);
+  if (idMatch && req.method === 'GET') {
+    const id = idMatch[1];
+    const r = await db.query(
+      `SELECT t.id, t.author_id, t.category, t.title, t.body, t.views, t.status,
+              t.last_reply_at, t.created_at,
+              a.first_name AS author_first_name, a.last_name AS author_last_name,
+              (a.avatar_data IS NOT NULL) AS author_has_avatar,
+              0 AS reply_count
+         FROM forum_threads t JOIN accounts a ON a.id = t.author_id
+        WHERE t.id = $1`,
+      [id]
+    );
+    const row = r.rows[0];
+    if (!row || row.status === 'removed') return sendJson(res, 404, { ok: false, error: 'Not found' });
+    // Flagged threads are only visible to the author + admins.
+    if (row.status === 'flagged') {
+      const user = await currentUser(req);
+      if (!user || (user.id !== row.author_id && user.role !== 'admin')) {
+        return sendJson(res, 404, { ok: false, error: 'Not found' });
+      }
+    }
+
+    // Bump the view count. Don't await — minor stat, don't gate the response.
+    db.query('UPDATE forum_threads SET views = views + 1 WHERE id = $1', [id]).catch(() => {});
+
+    const rr = await db.query(
+      `SELECT r.id, r.author_id, r.body, r.flagged, r.created_at,
+              a.first_name AS author_first_name, a.last_name AS author_last_name,
+              (a.avatar_data IS NOT NULL) AS author_has_avatar
+         FROM forum_replies r JOIN accounts a ON a.id = r.author_id
+        WHERE r.thread_id = $1 AND r.flagged = FALSE
+        ORDER BY r.created_at ASC
+        LIMIT 500`,
+      [id]
+    );
+    return sendJson(res, 200, {
+      ok: true,
+      thread: threadRowToForumJson(row),
+      replies: rr.rows.map(x => ({
+        id: x.id,
+        authorId: x.author_id,
+        authorFirstName: x.author_first_name,
+        authorLastName: x.author_last_name,
+        authorHasAvatar: !!x.author_has_avatar,
+        body: x.body,
+        createdAt: Number(x.created_at),
+      })),
+    });
+  }
+
+  // POST /api/forum/threads/:id/replies — signed-in reply
+  const replyMatch = urlPath.match(/^\/api\/forum\/threads\/([a-z0-9_]+)\/replies$/);
+  if (replyMatch && req.method === 'POST') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Sign in to reply.' });
+    if (!user.verified) return sendJson(res, 403, { ok: false, error: 'Verify your email first.' });
+    if (!rateLimit('forum-reply:' + user.id, 60, 60 * 60 * 1000)) {
+      return sendJson(res, 429, { ok: false, error: 'Too many replies in the last hour.' });
+    }
+    const threadId = replyMatch[1];
+    const tr = await db.query('SELECT id, status, author_id, title, category FROM forum_threads WHERE id = $1', [threadId]);
+    const t = tr.rows[0];
+    if (!t || t.status === 'removed') return sendJson(res, 404, { ok: false, error: 'Thread not found.' });
+    if (t.status === 'closed') return sendJson(res, 403, { ok: false, error: 'This thread is closed.' });
+    if (t.status === 'flagged') return sendJson(res, 403, { ok: false, error: 'This thread is under review.' });
+
+    let body;
+    try { body = JSON.parse(await readBody(req, 16 * 1024)); } catch (e) { return sendJson(res, 400, { ok: false, error: 'Invalid JSON' }); }
+    const text = String(body.body || '').trim().slice(0, 4000);
+    if (text.length < 2) return sendJson(res, 400, { ok: false, errors: { body: 'Reply is too short.' } });
+
+    const scam = t.category === 'Scam Alert' ? [] : JOB_SCAM_RULES.filter(r => r.re.test(text)).map(r => r.msg);
+    const offPlatform = OFF_PLATFORM_REGEX.test(text);
+    const flagged = scam.length > 0 || offPlatform;
+
+    const id = 'fr_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      `INSERT INTO forum_replies (id, thread_id, author_id, body, flagged, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [id, threadId, user.id, text, flagged, now]
+    );
+    if (!flagged) {
+      await db.query('UPDATE forum_threads SET last_reply_at = $1 WHERE id = $2', [now, threadId]);
+      // Notify the thread author (unless they replied to themselves).
+      if (t.author_id !== user.id) {
+        await createNotification(t.author_id, 'forum',
+          `New reply on "${t.title}"`,
+          text.slice(0, 160),
+          '/community?thread=' + encodeURIComponent(threadId));
+      }
+    }
+    return sendJson(res, 200, { ok: true, id, flagged });
+  }
+
+  // DELETE /api/forum/threads/:id — author only (or admin)
+  if (idMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Sign in.' });
+    const id = idMatch[1];
+    const r = await db.query('SELECT author_id FROM forum_threads WHERE id = $1', [id]);
+    const row = r.rows[0];
+    if (!row) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    if (row.author_id !== user.id && user.role !== 'admin') return sendJson(res, 403, { ok: false, error: 'Not yours.' });
+    await db.query(`UPDATE forum_threads SET status = 'removed' WHERE id = $1`, [id]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // DELETE /api/forum/replies/:id — author only (or admin)
+  const delReplyMatch = urlPath.match(/^\/api\/forum\/replies\/([a-z0-9_]+)$/);
+  if (delReplyMatch && req.method === 'DELETE') {
+    const user = await currentUser(req);
+    if (!user) return sendJson(res, 401, { ok: false, error: 'Sign in.' });
+    const id = delReplyMatch[1];
+    const r = await db.query('SELECT author_id FROM forum_replies WHERE id = $1', [id]);
+    const row = r.rows[0];
+    if (!row) return sendJson(res, 404, { ok: false, error: 'Not found.' });
+    if (row.author_id !== user.id && user.role !== 'admin') return sendJson(res, 403, { ok: false, error: 'Not yours.' });
+    await db.query('DELETE FROM forum_replies WHERE id = $1', [id]);
+    return sendJson(res, 200, { ok: true });
   }
 
   return false;
@@ -1944,6 +3513,36 @@ const server = http.createServer(async (req, res) => {
       if (handledApps) return;
       const handledThreads = await handleThreads(req, res, urlPath);
       if (handledThreads) return;
+      const handledSettings = await handleSettings(req, res, urlPath);
+      if (handledSettings) return;
+      const handledNotifications = await handleNotifications(req, res, urlPath);
+      if (handledNotifications) return;
+      const handledFavorites = await handleFavorites(req, res, urlPath);
+      if (handledFavorites) return;
+      const handledTemplates = await handleTemplates(req, res, urlPath);
+      if (handledTemplates) return;
+      const handledInterviews = await handleInterviews(req, res, urlPath);
+      if (handledInterviews) return;
+      const handledTimesheets = await handleTimesheets(req, res, urlPath);
+      if (handledTimesheets) return;
+      const handledInvoices = await handleInvoices(req, res, urlPath);
+      if (handledInvoices) return;
+      const handledReviews = await handleReviews(req, res, urlPath);
+      if (handledReviews) return;
+      const handledTeam = await handleTeam(req, res, urlPath);
+      if (handledTeam) return;
+      const handledTrials = await handleTrials(req, res, urlPath);
+      if (handledTrials) return;
+      const handledAcademyProg = await handleAcademyProgress(req, res, urlPath);
+      if (handledAcademyProg) return;
+      const handledContact = await handleContact(req, res, urlPath);
+      if (handledContact) return;
+      const handledAdmin = await handleAdmin(req, res, urlPath);
+      if (handledAdmin) return;
+      const handledReports = await handleReports(req, res, urlPath);
+      if (handledReports) return;
+      const handledForum = await handleForum(req, res, urlPath);
+      if (handledForum) return;
       const handled = await handleAuth(req, res, urlPath);
       if (handled) return;
     } catch (err) {

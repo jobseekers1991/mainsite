@@ -84,24 +84,42 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
-  if (!client.interviews) client.interviews = [];
-  const save = () => { Store.set('jsph-client', client); renderDashNav(); };
   const $ = id => document.getElementById(id);
-  let view = new URLSearchParams(location.search).get('schedule') ? 'list' : 'list';
+  const DAY_MS_LOCAL = 86400000;
+  let view = 'list';
   let monthRef = new Date();
+  let interviews = [];
+  let hires = []; // VA hires for the scheduler picker (client-side list of {id, name})
+  let jobs = [];
   const presetVa = new URLSearchParams(location.search).get('va');
   const presetJob = new URLSearchParams(location.search).get('job');
 
   const fmtDate = t => new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   const fmtTime = t => new Date(t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  const genLink = p => p === 'zoom' ? `https://zoom.us/j/${Math.floor(Math.random() * 1e10)}` : `https://meet.google.com/${Math.random().toString(36).slice(2, 5)}-${Math.random().toString(36).slice(2, 6)}-${Math.random().toString(36).slice(2, 5)}`;
+  const vaName = iv => ((iv.vaFirstName || '') + ' ' + (iv.vaLastName || '')).trim() || 'VA';
+  const genLink = p => p === 'zoom'
+    ? `https://zoom.us/j/${Math.floor(Math.random() * 1e10)}`
+    : `https://meet.google.com/${Math.random().toString(36).slice(2, 5)}-${Math.random().toString(36).slice(2, 6)}-${Math.random().toString(36).slice(2, 5)}`;
+
+  async function load() {
+    try {
+      const [iRes, jRes] = await Promise.all([
+        fetch('/api/interviews', { cache: 'no-store' }),
+        fetch('/api/jobs/mine', { cache: 'no-store' }),
+      ]);
+      if (iRes.status === 401) { location.href = 'auth'; return; }
+      if (iRes.ok) interviews = (await iRes.json()).interviews || [];
+      if (jRes.ok) jobs = (await jRes.json()).jobs || [];
+    } catch (e) {}
+    renderAll();
+    if (new URLSearchParams(location.search).get('schedule') || presetVa) openSched(presetVa, presetJob);
+  }
 
   function renderStats() {
-    const upcoming = client.interviews.filter(iv => iv.status === 'upcoming');
-    const today = upcoming.filter(iv => new Date(iv.when).toDateString() === new Date().toDateString()).length;
-    const thisWeek = upcoming.filter(iv => iv.when - Date.now() < 7 * DAY_MS).length;
-    const past = client.interviews.filter(iv => iv.status === 'done').length;
+    const upcoming = interviews.filter(iv => iv.status === 'upcoming');
+    const today = upcoming.filter(iv => new Date(iv.scheduledFor).toDateString() === new Date().toDateString()).length;
+    const thisWeek = upcoming.filter(iv => iv.scheduledFor - Date.now() < 7 * DAY_MS_LOCAL).length;
+    const past = interviews.filter(iv => iv.status === 'completed').length;
     const stat = (label, num, icon, color, sub) => `
       <div class="stat-card">
         <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
@@ -116,24 +134,22 @@
   }
 
   function card(iv) {
-    const va = vaById(iv.vaId);
-    const job = client.jobs.find(j => j.id === iv.jobId);
-    const soon = iv.when - Date.now();
-    const soonLabel = soon > 0 && soon < DAY_MS ? `in ${Math.round(soon / 3600000)}h` : soon > 0 ? `in ${Math.ceil(soon / DAY_MS)}d` : '';
+    const soon = iv.scheduledFor - Date.now();
+    const soonLabel = soon > 0 && soon < DAY_MS_LOCAL ? `in ${Math.round(soon / 3600000)}h` : soon > 0 ? `in ${Math.ceil(soon / DAY_MS_LOCAL)}d` : '';
     return `
-      <div class="item-card${iv.status === 'done' ? ' dim' : ''}">
+      <div class="item-card${iv.status !== 'upcoming' ? ' dim' : ''}">
         <div class="item-head">
-          <img src="https://i.pravatar.cc/100?img=${va.img}" alt="" />
+          <img src="/api/avatar/${encodeURIComponent(iv.vaId)}" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><rect width=%2280%22 height=%2280%22 fill=%22%23E2E8F0%22/></svg>'" />
           <div class="grow">
-            <h3>${esc(va.name)} <span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(job ? job.title : '—')}</span></h3>
-            <p><i class="fas fa-calendar-alt"></i> ${fmtDate(iv.when)} at ${fmtTime(iv.when)} · ${iv.duration} min ${soonLabel ? `· <strong style="color:var(--primary);">${soonLabel}</strong>` : ''}</p>
-            ${iv.note ? `<p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.25rem;"><i class="fas fa-sticky-note"></i> ${esc(iv.note)}</p>` : ''}
+            <h3>${esc(vaName(iv))} <span class="feat-badge" style="background:var(--bg); color:var(--text);">${esc(iv.jobTitle || '—')}</span></h3>
+            <p><i class="fas fa-calendar-alt"></i> ${fmtDate(iv.scheduledFor)} at ${fmtTime(iv.scheduledFor)} · ${iv.durationMin} min ${soonLabel ? `· <strong style="color:var(--primary);">${soonLabel}</strong>` : ''}</p>
+            ${iv.notes ? `<p style="font-size:0.8125rem; color:var(--text-light); margin-top:0.25rem;"><i class="fas fa-sticky-note"></i> ${esc(iv.notes)}</p>` : ''}
           </div>
           <span class="status-pill ${iv.status === 'upcoming' ? 'pending' : 'closed'}">${iv.status}</span>
         </div>
         <div class="item-actions">
-          ${iv.status === 'upcoming' ? `<a href="${iv.link}" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-video"></i> Join call</a>` : ''}
-          <a href="messages?as=client&to=${iv.vaId}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Message</a>
+          ${iv.status === 'upcoming' && iv.meetingUrl ? `<a href="${esc(iv.meetingUrl)}" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-video"></i> Join call</a>` : ''}
+          <a href="messages?as=client&to=${encodeURIComponent(iv.vaId)}" class="btn btn-outline-primary btn-sm"><i class="fas fa-comment"></i> Message</a>
           ${iv.status === 'upcoming' ? `<button class="btn btn-ghost btn-sm" data-act="done" data-id="${iv.id}"><i class="fas fa-check"></i> Mark done</button>` : ''}
           ${iv.status === 'upcoming' ? `<button class="btn btn-ghost btn-sm" data-act="cancel" data-id="${iv.id}" style="color:var(--danger);"><i class="fas fa-times"></i> Cancel</button>` : ''}
         </div>
@@ -141,11 +157,11 @@
   }
 
   function renderList() {
-    const list = client.interviews.filter(iv => iv.status === 'upcoming').sort((a, b) => a.when - b.when);
+    const list = interviews.filter(iv => iv.status === 'upcoming').sort((a, b) => a.scheduledFor - b.scheduledFor);
     $('listView').innerHTML = list.map(card).join('') || '<div class="empty-state"><i class="fas fa-calendar-plus"></i>No interviews yet. Click "Schedule interview" above.</div>';
   }
   function renderPast() {
-    const list = client.interviews.filter(iv => iv.status === 'done').sort((a, b) => b.when - a.when);
+    const list = interviews.filter(iv => iv.status !== 'upcoming').sort((a, b) => b.scheduledFor - a.scheduledFor);
     $('pastView').innerHTML = list.map(card).join('') || '<div class="empty-state"><i class="fas fa-history"></i>No past interviews yet.</div>';
   }
 
@@ -163,8 +179,8 @@
       d.setDate(start.getDate() + i);
       const other = d.getMonth() !== ref.getMonth() ? ' other' : '';
       const today = d.toDateString() === todayStr ? ' today' : '';
-      const events = client.interviews.filter(iv => new Date(iv.when).toDateString() === d.toDateString());
-      cells.push(`<div class="cal-cell${other}${today}"><div class="cal-day-num">${d.getDate()}</div>${events.map(iv => `<span class="cal-event ${iv.status === 'done' ? 'done' : ''}" title="${esc(vaById(iv.vaId).name)} · ${fmtTime(iv.when)}">${fmtTime(iv.when)} ${esc(vaById(iv.vaId).name.split(' ')[0])}</span>`).join('')}</div>`);
+      const events = interviews.filter(iv => new Date(iv.scheduledFor).toDateString() === d.toDateString());
+      cells.push(`<div class="cal-cell${other}${today}"><div class="cal-day-num">${d.getDate()}</div>${events.map(iv => `<span class="cal-event ${iv.status !== 'upcoming' ? 'done' : ''}" title="${esc(vaName(iv))} · ${fmtTime(iv.scheduledFor)}">${fmtTime(iv.scheduledFor)} ${esc(vaName(iv).split(' ')[0])}</span>`).join('')}</div>`);
     }
     $('calGrid').innerHTML = heads + cells.join('');
   }
@@ -183,12 +199,28 @@
   $('prevMonth').addEventListener('click', () => { monthRef = new Date(monthRef.getFullYear(), monthRef.getMonth() - 1, 1); renderMonth(); });
   $('nextMonth').addEventListener('click', () => { monthRef = new Date(monthRef.getFullYear(), monthRef.getMonth() + 1, 1); renderMonth(); });
 
-  // Schedule modal
-  function openSched(preVa, preJob) {
-    const vas = [...new Set([...client.applicants.map(a => a.vaId), ...(client.favorites || []), ...client.hires.map(h => h.vaId)])].map(vaById).filter(Boolean);
-    $('schedVa').innerHTML = vas.map(v => `<option value="${v.id}"${v.id === preVa ? ' selected' : ''}>${esc(v.name)} — ${esc(v.title || 'VA')}</option>`).join('');
-    $('schedJob').innerHTML = client.jobs.map(j => `<option value="${j.id}"${j.id === preJob ? ' selected' : ''}>${esc(j.title)}</option>`).join('');
-    const tomorrow = new Date(Date.now() + DAY_MS);
+  async function openSched(preVa, preJob) {
+    // Pull every VA the client has interacted with across all jobs so the picker has options.
+    const seen = new Map();
+    for (const iv of interviews) if (iv.vaId) seen.set(iv.vaId, vaName(iv));
+    // Fetch applicants across the client's jobs to add their VAs as options.
+    try {
+      for (const j of jobs.slice(0, 20)) {
+        const r = await fetch('/api/applications?jobId=' + encodeURIComponent(j.id), { cache: 'no-store' });
+        if (!r.ok) continue;
+        const data = await r.json();
+        for (const a of (data.applications || [])) {
+          const n = ((a.vaFirstName || '') + ' ' + (a.vaLastName || '')).trim() || 'VA';
+          if (a.vaId) seen.set(a.vaId, n);
+        }
+      }
+    } catch (e) {}
+
+    const opts = [...seen.entries()].map(([id, name]) => `<option value="${id}"${id === preVa ? ' selected' : ''}>${esc(name)}</option>`).join('')
+      || '<option value="" disabled>No candidates yet — review an application first.</option>';
+    $('schedVa').innerHTML = opts;
+    $('schedJob').innerHTML = '<option value="">Any / none</option>' + jobs.map(j => `<option value="${j.id}"${j.id === preJob ? ' selected' : ''}>${esc(j.title)}</option>`).join('');
+    const tomorrow = new Date(Date.now() + DAY_MS_LOCAL);
     $('schedDate').value = tomorrow.toISOString().slice(0, 10);
     $('schedTime').value = '10:00';
     $('schedNote').value = '';
@@ -199,35 +231,53 @@
   $('schedBtn').addEventListener('click', () => openSched());
   $('schedCancel').addEventListener('click', closeSched);
   $('schedBackdrop').addEventListener('click', closeSched);
-  $('schedSave').addEventListener('click', () => {
+  $('schedSave').addEventListener('click', async () => {
     const when = new Date(`${$('schedDate').value}T${$('schedTime').value}`).getTime();
-    if (!when) return;
-    const iv = { id: 'iv' + Date.now(), vaId: $('schedVa').value, jobId: $('schedJob').value, when, duration: Number($('schedDur').value), link: genLink($('schedLink').value), note: $('schedNote').value.trim(), status: 'upcoming' };
-    client.interviews.unshift(iv);
-    (client.notifications ||= []).unshift({ id: 'n' + Date.now(), kind: 'interview', title: `Interview scheduled with ${vaById(iv.vaId).name}`, body: `${fmtDate(iv.when)} at ${fmtTime(iv.when)} · ${iv.duration} min`, link: 'calendar', t: Date.now(), read: false });
-    save();
-    showToast(`Interview scheduled. ${vaById(iv.vaId).name} will get the invite with the meeting link.`);
+    if (!when || !isFinite(when)) return;
+    const vaId = $('schedVa').value;
+    if (!vaId) { showToast && showToast('Pick a VA first.'); return; }
+    const jobId = $('schedJob').value || null;
+    const durationMin = Number($('schedDur').value) || 30;
+    const platform = $('schedLink').value === 'zoom' ? 'zoom' : 'meet';
+    const meetingUrl = genLink(platform);
+    const r = await fetch('/api/interviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vaId, jobId, scheduledFor: when, durationMin, platform, meetingUrl,
+        notes: $('schedNote').value.trim(),
+      }),
+    });
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      showToast && showToast(data.error || 'Could not schedule.');
+      return;
+    }
+    showToast && showToast('Interview scheduled. The VA will be notified.');
     closeSched();
-    renderAll();
+    await load();
   });
 
-  document.querySelector('.dash-content').addEventListener('click', e => {
+  document.querySelector('.dash-content').addEventListener('click', async e => {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
-    const iv = client.interviews.find(x => x.id === btn.dataset.id);
-    if (!iv) return;
-    if (btn.dataset.act === 'done') { iv.status = 'done'; showToast('Interview marked as done'); }
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'done') {
+      await fetch('/api/interviews/' + encodeURIComponent(id), {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed' }),
+      });
+      showToast && showToast('Interview marked as done');
+    }
     if (btn.dataset.act === 'cancel') {
       if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Click again to cancel'; return; }
-      client.interviews = client.interviews.filter(x => x.id !== iv.id);
-      showToast('Interview cancelled');
+      await fetch('/api/interviews/' + encodeURIComponent(id), { method: 'DELETE' });
+      showToast && showToast('Interview cancelled');
     }
-    save(); renderAll();
+    await load();
   });
 
-  renderAll();
-  // Auto-open scheduler if ?schedule=1 or ?va=
-  if (new URLSearchParams(location.search).get('schedule') || presetVa) openSched(presetVa, presetJob);
+  load();
 </script>
 </body>
 </html>

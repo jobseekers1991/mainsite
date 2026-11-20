@@ -58,24 +58,34 @@
 
 <script src="js/main.js"></script>
 <script>
-  let client = Store.get('jsph-client', seedClient);
   const $ = id => document.getElementById(id);
   let tab = 'va';
+  let invoices = [];
+  let summary = { paidTotal: 0, pendingTotal: 0, totalHires: 0 };
+  const money = n => '$' + Number(n || 0).toFixed(2);
+  const vaName = i => ((i.vaFirstName || '') + ' ' + (i.vaLastName || '')).trim() || 'VA';
 
-  const amountOf = inv => inv.hours * inv.rate;
-  const paidInv = () => client.invoices.filter(i => i.status === 'paid' || i.status === 'due');
+  async function load() {
+    try {
+      const [sRes, iRes] = await Promise.all([
+        fetch('/api/reports/summary', { cache: 'no-store' }),
+        fetch('/api/invoices', { cache: 'no-store' }),
+      ]);
+      if (sRes.status === 401) { location.href = 'auth'; return; }
+      if (sRes.ok) summary = await sRes.json();
+      if (iRes.ok) invoices = (await iRes.json()).invoices || [];
+    } catch (e) {}
+    renderStats(); render();
+  }
 
   function renderStats() {
-    const inv = paidInv();
-    const total = inv.reduce((s, i) => s + amountOf(i), 0);
-    const uniqueVa = new Set(inv.map(i => i.vaId)).size;
-    const avg = inv.length ? total / inv.length : 0;
-    const topVa = (() => {
-      const map = {};
-      inv.forEach(i => map[i.vaId] = (map[i.vaId] || 0) + amountOf(i));
-      const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
-      return sorted[0] ? vaById(sorted[0][0]).name : '—';
-    })();
+    const paidInv = invoices.filter(i => i.status === 'paid');
+    const uniqueVa = new Set(invoices.map(i => i.vaId)).size;
+    const avg = paidInv.length ? Number(summary.paidTotal) / paidInv.length : 0;
+    const map = {};
+    paidInv.forEach(i => map[i.vaId] = (map[i.vaId] || 0) + Number(i.total || 0));
+    const topEntry = Object.entries(map).sort((a, b) => b[1] - a[1])[0];
+    const topVaName = topEntry ? (vaName(invoices.find(i => i.vaId === topEntry[0]) || {}) || '—') : '—';
     const stat = (label, num, icon, color, sub) => `
       <div class="stat-card">
         <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
@@ -83,26 +93,26 @@
         <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
       </div>`;
     $('repStats').innerHTML =
-      stat('Lifetime spend', money(total), 'fa-dollar-sign', '#4F46E5', `${inv.length} invoices`) +
+      stat('Lifetime spend', money(summary.paidTotal), 'fa-dollar-sign', '#4F46E5', `${paidInv.length} invoices paid`) +
       stat('VAs paid', uniqueVa, 'fa-users', '#EC4899', 'unique contractors') +
-      stat('Avg invoice', money(avg), 'fa-chart-line', '#10B981', 'per billing period') +
-      stat('Top VA', topVa.split(' ')[0], 'fa-star', '#F59E0B', 'biggest spend');
+      stat('Avg invoice', money(avg), 'fa-chart-line', '#10B981', 'per invoice') +
+      stat('Outstanding', money(summary.pendingTotal), 'fa-hourglass-half', '#F59E0B', 'due to VAs');
   }
 
   function groupBy(key, label) {
-    const inv = paidInv();
+    const inv = invoices.filter(i => i.status === 'paid' || i.status === 'sent');
     const map = {};
     inv.forEach(i => {
-      const k = key(i);
-      if (!map[k]) map[k] = { k, label: label(i), hours: 0, amount: 0, count: 0 };
-      map[k].hours += i.hours;
-      map[k].amount += amountOf(i);
+      const k = key(i); if (!k) return;
+      if (!map[k]) map[k] = { k, label: label(i), amount: 0, count: 0 };
+      map[k].amount += Number(i.total || 0);
       map[k].count++;
     });
     return Object.values(map).sort((a, b) => b.amount - a.amount);
   }
 
   function bars(data, sublabel) {
+    if (!data.length) return '<div class="empty-state"><i class="fas fa-chart-bar"></i>No invoices yet.</div>';
     const max = Math.max(...data.map(d => d.amount), 1);
     return `<div class="dash-card" style="padding:1rem;">${data.map(d => `
       <div class="bar-row">
@@ -118,18 +128,13 @@
   function render() {
     let data;
     if (tab === 'va') {
-      data = groupBy(i => i.vaId, i => vaById(i.vaId).name);
-      $('repContent').innerHTML = data.length ? bars(data, d => `${d.hours.toFixed(1)} hrs · ${d.count} invoice${d.count === 1 ? '' : 's'}`) : '<div class="empty-state"><i class="fas fa-chart-bar"></i>No invoices yet.</div>';
+      data = groupBy(i => i.vaId, i => vaName(i));
     } else if (tab === 'job') {
-      // Map vaId to the most recent job the VA was hired for
-      const hireRoleByVa = Object.fromEntries(client.hires.map(h => [h.vaId, h.role]));
-      data = groupBy(i => hireRoleByVa[i.vaId] || 'Other', i => hireRoleByVa[i.vaId] || 'Other');
-      $('repContent').innerHTML = bars(data, d => `${d.hours.toFixed(1)} hrs · ${d.count} invoice${d.count === 1 ? '' : 's'}`);
+      data = groupBy(i => i.jobId || '(no job)', i => i.jobId ? ('Job ' + i.jobId.slice(-6)) : '(no job)');
     } else {
-      // By month: group by the Period string (approximate — the period strings already include month)
-      data = groupBy(i => i.period, i => i.period);
-      $('repContent').innerHTML = bars(data, d => `${d.hours.toFixed(1)} hrs · ${d.count} invoice${d.count === 1 ? '' : 's'}`);
+      data = groupBy(i => (i.issuedOn || '').slice(0, 7), i => (i.issuedOn || '').slice(0, 7) || '—');
     }
+    $('repContent').innerHTML = bars(data, d => `${d.count} invoice${d.count === 1 ? '' : 's'}`);
   }
 
   document.querySelectorAll('.how-tab').forEach(t => t.addEventListener('click', () => {
@@ -140,19 +145,10 @@
   }));
 
   $('exportCsv').addEventListener('click', () => {
-    const inv = paidInv();
-    const rows = [['Invoice', 'VA', 'Period', 'Hours', 'Rate', 'Amount', 'Status']];
-    inv.forEach(i => rows.push([i.id, vaById(i.vaId).name, i.period, i.hours, i.rate, amountOf(i).toFixed(2), i.status]));
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `spend-report-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    showToast(`Exported ${rows.length - 1} rows`);
+    location.href = '/api/reports/export.csv';
   });
 
-  renderStats(); render();
+  load();
 </script>
 </body>
 </html>
