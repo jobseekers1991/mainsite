@@ -3,12 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Trust &amp; Safety — Jobseekers.ph</title>
+  <title>Admin Console — Jobseekers.ph</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+    .admin-filter-bar {
+      display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+      background: #fff; padding: 0.875rem 1rem; border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06); margin-bottom: 1rem;
+    }
+    .admin-filter-bar input, .admin-filter-bar select {
+      padding: 0.5rem 0.75rem; border: 1px solid rgba(15,23,42,0.1);
+      border-radius: 8px; font-family: inherit; font-size: 0.875rem;
+      background: #fff; color: var(--dark);
+    }
+    .admin-filter-bar input { flex: 1; min-width: 180px; }
+    .admin-kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 0.875rem; margin-bottom: 1.25rem;
+    }
+    .admin-two-col {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    @media (max-width: 900px) { .admin-two-col { grid-template-columns: 1fr; } }
+    .admin-trend { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(15,23,42,0.06); }
+    .admin-trend h3 { font-size: 0.875rem; margin: 0 0 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .admin-trend svg { width: 100%; height: 80px; display: block; }
+    .admin-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.625rem 0; border-bottom: 1px solid rgba(15,23,42,0.06);
+    }
+    .admin-list-item:last-child { border-bottom: none; }
+    .admin-list-item .name { font-weight: 600; color: var(--dark); font-size: 0.875rem; }
+    .admin-list-item .meta { font-size: 0.75rem; color: var(--text-light); }
+    .admin-list-item .amt { font-weight: 700; color: var(--dark); font-size: 0.9rem; }
+    .pill {
+      display: inline-flex; padding: 0.15rem 0.55rem; border-radius: 999px;
+      font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .pill-info    { background: rgba(14,165,233,0.12);  color: #0369A1; }
+    .pill-ok      { background: rgba(16,185,129,0.12);  color: #047857; }
+    .pill-warn    { background: rgba(245,158,11,0.15);  color: #B45309; }
+    .pill-danger  { background: rgba(239,68,68,0.12);   color: #B91C1C; }
+    .pill-muted   { background: rgba(100,116,139,0.1);  color: #475569; }
+    .pill-role-admin  { background: rgba(124,58,237,0.12); color: #6D28D9; }
+    .pill-role-client { background: rgba(79,70,229,0.12);  color: #4338CA; }
+    .pill-role-va     { background: rgba(236,72,153,0.12); color: #BE185D; }
+    .admin-actions-row { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+    .admin-actions-row .btn { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+    .drawer-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.45);
+      display: none; z-index: 60;
+    }
+    .drawer-backdrop.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 520px; max-width: 100vw;
+      background: #fff; box-shadow: -8px 0 24px rgba(15,23,42,0.1);
+      transform: translateX(100%); transition: transform 0.2s ease;
+      display: flex; flex-direction: column; z-index: 61;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-head {
+      padding: 1rem 1.25rem; border-bottom: 1px solid rgba(15,23,42,0.08);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .drawer-head h3 { margin: 0; font-size: 1rem; }
+    .drawer-body { padding: 1.25rem; overflow-y: auto; flex: 1; }
+    .drawer-section { margin-bottom: 1.25rem; }
+    .drawer-section h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin: 0 0 0.5rem; }
+    .kv-row { display: flex; justify-content: space-between; padding: 0.375rem 0; border-bottom: 1px dashed rgba(15,23,42,0.06); font-size: 0.875rem; }
+    .kv-row .k { color: var(--text-light); }
+    .kv-row .v { color: var(--dark); font-weight: 600; text-align: right; }
+    .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .mini-stat { background: rgba(79,70,229,0.04); padding: 0.75rem; border-radius: 10px; }
+    .mini-stat .l { font-size: 0.6875rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.04em; }
+    .mini-stat .v { font-size: 1.125rem; font-weight: 800; color: var(--dark); }
+    .quick-tiles {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin: 1rem 0;
+    }
+    .quick-tile {
+      background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+      display: flex; align-items: center; gap: 0.875rem; cursor: pointer; transition: transform 0.15s;
+      border-left: 4px solid var(--primary);
+    }
+    .quick-tile:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(15,23,42,0.08); }
+    .quick-tile .ico { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .quick-tile .n { font-size: 1.5rem; font-weight: 800; color: var(--dark); line-height: 1; }
+    .quick-tile .l { font-size: 0.8125rem; color: var(--text-light); }
+    .tile-red    { border-color: #EF4444; } .tile-red .ico    { background: rgba(239,68,68,0.1); color: #EF4444; }
+    .tile-amber  { border-color: #F59E0B; } .tile-amber .ico  { background: rgba(245,158,11,0.1); color: #F59E0B; }
+    .tile-indigo { border-color: #4F46E5; } .tile-indigo .ico { background: rgba(79,70,229,0.1); color: #4F46E5; }
+    .tile-green  { border-color: #10B981; } .tile-green .ico  { background: rgba(16,185,129,0.1); color: #10B981; }
+    .ann-form textarea, .ann-form input, .ann-form select {
+      width: 100%; padding: 0.625rem 0.75rem; border-radius: 8px; border: 1px solid rgba(15,23,42,0.1);
+      font-family: inherit; font-size: 0.875rem; margin-bottom: 0.625rem;
+    }
+    .ann-form textarea { min-height: 80px; resize: vertical; }
+    .audit-row td { font-size: 0.8125rem; }
+    .audit-row .act { font-family: ui-monospace, Menlo, monospace; font-size: 0.75rem; }
+    @media (max-width: 600px) {
+      .drawer { width: 100vw; }
+      .admin-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
 </head>
 <body class="dash-body">
 
@@ -18,165 +120,1111 @@
 
   <div class="dash-main">
     <header class="dash-topbar" id="dashTopbar"></header>
-<script src="js/va-data.js"></script>
-<script src="js/app-data.js"></script>
-<script src="js/dash.js"></script>
+    <script src="js/va-data.js"></script>
+    <script src="js/app-data.js"></script>
+    <script src="js/dash.js"></script>
 
     <main class="dash-content">
-<div class="dash-page-header">
-  <h1>Trust &amp; Safety</h1>
-  <p>Review flagged job posts, verify users and badges, and resolve payment disputes.</p>
-</div>
+      <div class="dash-page-header">
+        <h1 id="adminPageTitle">Admin Console</h1>
+        <p id="adminPageDesc">Everything you need to run the marketplace: users, jobs, money, trust &amp; safety, and system health.</p>
+      </div>
 
-<div class="stat-card-grid" id="adminStats"></div>
+      <!-- Overview ======================================================= -->
+      <section class="admin-panel active" id="panel-overview">
+        <div class="admin-kpi-grid" id="kpiGrid"></div>
+        <div class="quick-tiles" id="quickTiles"></div>
+        <div class="admin-two-col">
+          <div class="admin-trend"><h3>Signups — last 30 days</h3><svg id="signupChart" viewBox="0 0 300 80" preserveAspectRatio="none"></svg></div>
+          <div class="admin-trend"><h3>New jobs — last 30 days</h3><svg id="jobChart" viewBox="0 0 300 80" preserveAspectRatio="none"></svg></div>
+        </div>
+        <div class="admin-two-col" style="margin-top:1rem;">
+          <div class="dash-card">
+            <div class="dash-card-header"><div class="dash-card-title">Top clients (by jobs posted)</div></div>
+            <div class="dash-card-body" id="topClientsList"></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-header"><div class="dash-card-title">Top VAs (by applications sent)</div></div>
+            <div class="dash-card-body" id="topVasList"></div>
+          </div>
+        </div>
+      </section>
 
-<div class="how-tabs-wrap" style="justify-content:flex-start; margin:1.75rem 0 1.25rem;">
-  <div class="how-tabs" style="background:#fff; flex-wrap:wrap;">
-    <button class="how-tab active" data-target="flagged"><i class="fas fa-flag"></i> Flagged Posts</button>
-    <button class="how-tab" data-target="verify"><i class="fas fa-id-card"></i> Verifications</button>
-    <button class="how-tab" data-target="disputes"><i class="fas fa-balance-scale"></i> Disputes</button>
-    <button class="how-tab" data-target="log"><i class="fas fa-history"></i> Activity Log</button>
-  </div>
-</div>
+      <!-- Users ========================================================== -->
+      <section class="admin-panel" id="panel-users">
+        <div class="admin-filter-bar">
+          <input type="search" id="userSearch" placeholder="Search by name, email, or company…" />
+          <select id="userRole">
+            <option value="">All roles</option>
+            <option value="client">Clients</option>
+            <option value="va">VAs</option>
+            <option value="admin">Admins</option>
+          </select>
+          <select id="userStatus">
+            <option value="">Any status</option>
+            <option value="active">Active + verified</option>
+            <option value="unverified">Unverified</option>
+            <option value="suspended">Suspended</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="userRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div class="dash-card">
+          <div class="table-responsive">
+            <table class="dash-table" style="width:100%;">
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th style="text-align:right;">Actions</th></tr></thead>
+              <tbody id="usersBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-<div id="flagged" class="tab-panel active"><div id="flaggedList"></div></div>
-<div id="verify" class="tab-panel"><div class="seg-tabs" id="verifyTabs"></div><div id="verifyList"></div></div>
-<div id="disputes" class="tab-panel"><div id="disputeList"></div></div>
-<div id="log" class="tab-panel"><div class="dash-card"><div class="table-responsive"><table class="dash-table" style="width:100%;"><thead><tr><th>When</th><th>Action</th><th>Item</th><th>Note</th></tr></thead><tbody id="logBody"></tbody></table></div></div></div>
+      <!-- Verifications ================================================== -->
+      <section class="admin-panel" id="panel-verify">
+        <div class="admin-filter-bar">
+          <select id="verifyStatus">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="verifyRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div id="verifyList"></div>
+      </section>
+
+      <!-- Jobs =========================================================== -->
+      <section class="admin-panel" id="panel-jobs">
+        <div class="admin-filter-bar">
+          <input type="search" id="jobSearch" placeholder="Search by title or company…" />
+          <select id="jobStatus">
+            <option value="">All statuses</option>
+            <option value="open">Open</option>
+            <option value="flagged">Flagged</option>
+            <option value="closed">Closed</option>
+            <option value="removed">Removed</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="jobRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div class="dash-card">
+          <div class="table-responsive">
+            <table class="dash-table" style="width:100%;">
+              <thead><tr><th>Title</th><th>Client</th><th>Status</th><th>Apps</th><th>Posted</th><th style="text-align:right;">Actions</th></tr></thead>
+              <tbody id="jobsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Flagged ======================================================== -->
+      <section class="admin-panel" id="panel-flagged">
+        <div id="flaggedList"></div>
+      </section>
+
+      <!-- Applications =================================================== -->
+      <section class="admin-panel" id="panel-applications">
+        <div class="admin-filter-bar">
+          <select id="appStatus">
+            <option value="">All</option>
+            <option value="submitted">Submitted</option>
+            <option value="viewed">Viewed</option>
+            <option value="interview">Interview</option>
+            <option value="trial">Trial</option>
+            <option value="trialing">Trialing</option>
+            <option value="hired">Hired</option>
+            <option value="rejected">Rejected</option>
+            <option value="withdrawn">Withdrawn</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="appRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div class="dash-card">
+          <div class="table-responsive">
+            <table class="dash-table" style="width:100%;">
+              <thead><tr><th>VA</th><th>Job</th><th>Client</th><th>Status</th><th>Rate</th><th>Applied</th></tr></thead>
+              <tbody id="applicationsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Forum ========================================================== -->
+      <section class="admin-panel" id="panel-forum">
+        <div class="admin-filter-bar">
+          <select id="forumScope">
+            <option value="all">All threads</option>
+            <option value="flagged">Flagged only</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="forumRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div class="dash-card">
+          <div class="table-responsive">
+            <table class="dash-table" style="width:100%;">
+              <thead><tr><th>Title</th><th>Author</th><th>Category</th><th>Replies</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+              <tbody id="forumBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Finance ======================================================== -->
+      <section class="admin-panel" id="panel-finance">
+        <div class="admin-kpi-grid" id="financeKpi"></div>
+        <div class="admin-trend"><h3>Paid revenue — last 30 days (USD)</h3><svg id="revChart" viewBox="0 0 300 80" preserveAspectRatio="none"></svg></div>
+        <div class="admin-two-col" style="margin-top:1rem;">
+          <div class="dash-card">
+            <div class="dash-card-header"><div class="dash-card-title">Top spenders</div></div>
+            <div class="dash-card-body" id="topSpenders"></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-header"><div class="dash-card-title">Top earners (VAs)</div></div>
+            <div class="dash-card-body" id="topEarners"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Invoices ======================================================= -->
+      <section class="admin-panel" id="panel-invoices">
+        <div class="admin-filter-bar">
+          <select id="invStatus">
+            <option value="">All</option>
+            <option value="draft">Draft</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+            <option value="void">Void</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="invRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div class="dash-card">
+          <div class="table-responsive">
+            <table class="dash-table" style="width:100%;">
+              <thead><tr><th>Invoice #</th><th>Client</th><th>VA</th><th>Issued</th><th>Due</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody id="invoicesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Disputes ======================================================= -->
+      <section class="admin-panel" id="panel-disputes">
+        <div class="admin-filter-bar">
+          <select id="dispStatus">
+            <option value="">All</option>
+            <option value="open">Open</option>
+            <option value="investigating">Investigating</option>
+            <option value="resolved">Resolved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="dispRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div id="disputeList"></div>
+      </section>
+
+      <!-- Support Inbox ================================================== -->
+      <section class="admin-panel" id="panel-support">
+        <div class="admin-filter-bar">
+          <select id="supStatus">
+            <option value="unhandled">Unhandled</option>
+            <option value="handled">Handled</option>
+            <option value="">All</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="supRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div id="supportList"></div>
+      </section>
+
+      <!-- Announcements ================================================== -->
+      <section class="admin-panel" id="panel-announce">
+        <div class="dash-card">
+          <div class="dash-card-header"><div class="dash-card-title">Broadcast a new announcement</div></div>
+          <div class="dash-card-body">
+            <form class="ann-form" id="annForm">
+              <input type="text" id="annTitle" placeholder="Title" maxlength="200" required />
+              <textarea id="annMessage" placeholder="Message to broadcast…" maxlength="4000" required></textarea>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <select id="annAudience">
+                  <option value="all">Everyone</option>
+                  <option value="client">Clients only</option>
+                  <option value="va">VAs only</option>
+                </select>
+                <select id="annSeverity">
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="critical">Critical</option>
+                </select>
+                <button class="btn btn-primary btn-sm" type="submit"><i class="fas fa-paper-plane"></i> Publish</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="dash-card" style="margin-top:1rem;">
+          <div class="dash-card-header"><div class="dash-card-title">Published announcements</div></div>
+          <div class="dash-card-body">
+            <div class="table-responsive">
+              <table class="dash-table" style="width:100%;">
+                <thead><tr><th>Title</th><th>Audience</th><th>Severity</th><th>Status</th><th>Created</th><th style="text-align:right;">Actions</th></tr></thead>
+                <tbody id="annList"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Audit Log ====================================================== -->
+      <section class="admin-panel" id="panel-audit">
+        <div class="admin-filter-bar">
+          <input type="search" id="auditAction" placeholder="Filter by action prefix (e.g. user., job.)" />
+          <button class="btn btn-ghost btn-sm" id="auditRefresh"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div class="dash-card">
+          <div class="table-responsive">
+            <table class="dash-table" style="width:100%;">
+              <thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th>Note</th></tr></thead>
+              <tbody id="auditBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- System ========================================================= -->
+      <section class="admin-panel" id="panel-system">
+        <div class="admin-kpi-grid" id="systemKpi"></div>
+        <div class="dash-card" style="margin-top:1rem;">
+          <div class="dash-card-header"><div class="dash-card-title">Environment</div></div>
+          <div class="dash-card-body" id="envBox"></div>
+        </div>
+        <div class="dash-card" style="margin-top:1rem;">
+          <div class="dash-card-header"><div class="dash-card-title">Admin accounts</div></div>
+          <div class="dash-card-body" id="adminAccountsList"></div>
+        </div>
+      </section>
     </main>
   </div>
 </div>
 
+<!-- Detail drawer ================================================= -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3 id="drawerTitle">Details</h3>
+    <button class="btn btn-ghost btn-sm" id="drawerClose"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+
 <script src="js/main.js"></script>
 <script>
+(function(){
+  'use strict';
   const $ = id => document.getElementById(id);
-  const fmtDay = t => new Date(t).toLocaleDateString();
-  let stats = {};
-  let flagged = [];
-  let contacts = [];
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmtDate = t => t ? new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  const fmtDateTime = t => t ? new Date(t).toLocaleString() : '—';
+  const fmtMoney = n => '$' + (Number(n || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtNum = n => (Number(n || 0)).toLocaleString();
+  const ago = t => {
+    if (!t) return 'never';
+    const d = Date.now() - t;
+    if (d < 60000) return 'just now';
+    if (d < 3600000) return Math.round(d/60000) + 'm ago';
+    if (d < 86400000) return Math.round(d/3600000) + 'h ago';
+    return Math.round(d/86400000) + 'd ago';
+  };
+  const api = async (url, opts) => {
+    const r = await fetch(url, Object.assign({ cache: 'no-store' }, opts || {}));
+    const ct = r.headers.get('content-type') || '';
+    const json = ct.includes('json') ? await r.json() : {};
+    return { ok: r.ok, status: r.status, data: json };
+  };
+  const toast = msg => (typeof showToast === 'function') ? showToast(msg) : console.log('toast:', msg);
+  const confirmReason = (msg) => {
+    const r = prompt(msg + '\n\nOptional note for the audit log:', '');
+    return r === null ? null : String(r);
+  };
 
+  // ------------------------------------------------------------
+  // Access gate
+  // ------------------------------------------------------------
   async function guard() {
-    // Only let admin accounts render this page. Others get sent home.
     try {
       const r = await fetch('/api/me', { cache: 'no-store' });
       if (r.status !== 200) { location.href = 'auth'; return false; }
       const { user } = await r.json();
       if (!user || user.role !== 'admin') {
         document.querySelector('.dash-content').innerHTML =
-          '<div class="dash-card" style="padding:2rem; text-align:center;"><h2>Admin only</h2><p>You need an admin account to see Trust &amp; Safety tools.</p></div>';
+          '<div class="dash-card" style="padding:2rem; text-align:center;"><h2>Admin only</h2><p>You need an admin account to see this console. Ask the site owner to run <code>node scripts/make-admin.js your@email</code>.</p><p><a href="auth" class="btn btn-primary">Back to sign in</a></p></div>';
         return false;
       }
       return true;
     } catch (e) { return false; }
   }
 
-  async function load() {
-    if (!(await guard())) return;
-    try {
-      const [sR, fR, cR] = await Promise.all([
-        fetch('/api/admin/stats', { cache: 'no-store' }),
-        fetch('/api/admin/flagged-jobs', { cache: 'no-store' }),
-        fetch('/api/admin/contact-messages', { cache: 'no-store' }),
-      ]);
-      if (sR.ok) stats = await sR.json();
-      if (fR.ok) flagged = (await fR.json()).jobs || [];
-      if (cR.ok) contacts = (await cR.json()).messages || [];
-    } catch (e) {}
-    renderAll();
+  // ------------------------------------------------------------
+  // Hash-based panel routing. Each panel loads lazily the first time
+  // it's activated, then caches locally until the user hits refresh.
+  // ------------------------------------------------------------
+  const PANEL_TITLES = {
+    overview:     ['Overview', 'Everything you need to run the marketplace at a glance.'],
+    users:        ['Users', 'Search, filter, verify, suspend, or remove any account.'],
+    verify:       ['Verifications', 'Review identity, business, and certificate requests.'],
+    jobs:         ['Jobs', 'Every job on the platform — moderate, close, or remove.'],
+    flagged:      ['Flagged posts', 'Auto-flagged jobs waiting on a human decision.'],
+    applications: ['Applications', 'All applications across the platform.'],
+    forum:        ['Community forum', 'Moderate threads and replies.'],
+    finance:      ['Finance', 'Paid revenue, pending invoices, top spenders.'],
+    invoices:     ['Invoices', 'Every invoice on the platform.'],
+    disputes:     ['Disputes', 'Open cases filed by clients or VAs.'],
+    support:      ['Support inbox', 'Messages from the public contact form.'],
+    announce:     ['Announcements', 'Broadcast a notice to all users or a specific role.'],
+    audit:        ['Audit log', 'Every admin action, logged.'],
+    system:       ['System', 'Environment, database, and admin accounts.'],
+  };
+  const loaded = {};
+  const loaders = {
+    overview: loadOverview, users: loadUsers, verify: loadVerify,
+    jobs: loadJobs, flagged: loadFlagged, applications: loadApplications,
+    forum: loadForum, finance: loadFinance, invoices: loadInvoices,
+    disputes: loadDisputes, support: loadSupport, announce: loadAnnouncements,
+    audit: loadAudit, system: loadSystem,
+  };
+
+  function activate(name) {
+    if (!PANEL_TITLES[name]) name = 'overview';
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+    const el = $('panel-' + name);
+    if (el) el.classList.add('active');
+    const [title, desc] = PANEL_TITLES[name];
+    $('adminPageTitle').textContent = title;
+    $('adminPageDesc').textContent = desc;
+    const sb = document.getElementById('dashSidebar');
+    if (sb) { sb.dataset.active = name; if (typeof renderDashNav === 'function') renderDashNav(); }
+    if (!loaded[name]) { loaded[name] = true; loaders[name] && loaders[name](); }
   }
 
-  function openTabFromHash() {
-    const tab = document.querySelector(`.how-tab[data-target="${location.hash.slice(1)}"]`);
-    if (tab) tab.click();
+  function readHash() {
+    const h = location.hash.replace(/^#/, '').trim();
+    activate(h || 'overview');
   }
-  window.addEventListener('hashchange', openTabFromHash);
-  document.querySelectorAll('.how-tab').forEach(tab => tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.how-tab').forEach(x => x.classList.remove('active'));
-    tab.classList.add('active');
-    const panel = document.getElementById(tab.dataset.target);
-    if (panel) panel.classList.add('active');
-  }));
+  window.addEventListener('hashchange', readHash);
 
-  function renderStats() {
-    const stat = (label, num, icon, color, sub) => `
+  // Sidebar nav click interceptor. The sidebar is rendered by dash.js and
+  // re-rendered on every tab change, so we delegate from document and force
+  // panel activation here. This bypasses any browser quirks where a same-page
+  // hash-only link doesn't fire hashchange reliably.
+  document.addEventListener('click', e => {
+    const a = e.target.closest('.dash-sidebar a.dash-nav-item');
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    // Matches admin, admin#panel, or #panel — all target this page.
+    const m = href.match(/^(?:admin)?#([a-z]+)$/i);
+    if (!m) return;  // Let non-hash nav items (e.g. "index", "browse-jobs") navigate normally.
+    e.preventDefault();
+    const name = m[1].toLowerCase();
+    if (location.hash !== '#' + name) {
+      history.pushState(null, '', '#' + name);
+    }
+    activate(name);
+    const sb = document.getElementById('dashSidebar');
+    if (sb) sb.classList.remove('open');
+    const ov = document.getElementById('dashOverlay');
+    if (ov) ov.classList.remove('visible');
+  });
+
+  // ------------------------------------------------------------
+  // Overview
+  // ------------------------------------------------------------
+  async function loadOverview() {
+    const { ok, data } = await api('/api/admin/stats');
+    if (!ok) return;
+    const accounts = data.accounts || {};
+    const jobs = data.jobs || {};
+    const apps = data.applications || {};
+    // Stash badge counts the sidebar reads on every re-render.
+    window.__adminBadges = {
+      users: 0,
+      jobsmod: jobs.flagged || 0,
+      flagged: data.flaggedJobs || 0,
+      verify: data.pendingVerifications || 0,
+      disputes: data.openDisputes || 0,
+      support: data.contactMessages || 0,
+    };
+    if (typeof renderDashNav === 'function') renderDashNav();
+
+    const totalAccounts = (accounts.client || 0) + (accounts.va || 0) + (accounts.admin || 0);
+    const openJobs = jobs.open || 0;
+    const kpi = (label, num, icon, color, sub) => `
       <div class="stat-card">
-        <div class="stat-card-top"><span class="stat-card-label">${label}</span><div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
-        <div class="stat-card-num">${num}</div>
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span>
+          <div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${fmtNum(num)}</div>
         <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
       </div>`;
-    const accs = stats.accounts || {};
-    $('adminStats').innerHTML =
-      stat('Flagged posts', stats.flaggedJobs || 0, 'fa-flag', '#EF4444', 'hidden until reviewed') +
-      stat('Contact inbox', stats.contactMessages || 0, 'fa-envelope', '#4F46E5', 'all time') +
-      stat('Total accounts', (accs.client || 0) + (accs.va || 0) + (accs.admin || 0), 'fa-users', '#10B981', `${accs.client || 0} clients · ${accs.va || 0} VAs`) +
-      stat('Applications', stats.applications || 0, 'fa-file-alt', '#F59E0B', 'submitted');
+    $('kpiGrid').innerHTML = [
+      kpi('Total accounts', totalAccounts, 'fa-users', '#4F46E5', `${accounts.client || 0} clients · ${accounts.va || 0} VAs · ${accounts.admin || 0} admins`),
+      kpi('New (7 days)', data.recentSignups7d, 'fa-user-plus', '#10B981', 'signups this week'),
+      kpi('Open jobs', openJobs, 'fa-briefcase', '#0EA5E9', `${jobs.closed || 0} closed · ${jobs.removed || 0} removed`),
+      kpi('Applications', data.applicationsTotal, 'fa-file-alt', '#F59E0B', `${apps.submitted || 0} new · ${apps.hired || 0} hired`),
+      kpi('Hires made', data.hires, 'fa-handshake', '#8B5CF6', 'total VA hires'),
+      kpi('Paid revenue', fmtMoney(data.revenuePaid), 'fa-dollar-sign', '#10B981', 'all time'),
+      kpi('Pending revenue', fmtMoney(data.revenuePending), 'fa-hourglass-half', '#F59E0B', `${data.pendingInvoices} invoice(s)`),
+      kpi('Suspended', data.suspendedAccounts, 'fa-ban', '#EF4444', 'accounts blocked'),
+    ].join('');
+
+    const tile = (label, n, icon, cls, hash) => `
+      <a class="quick-tile ${cls}" href="#${hash}">
+        <div class="ico"><i class="fas ${icon}"></i></div>
+        <div><div class="n">${fmtNum(n)}</div><div class="l">${label}</div></div>
+      </a>`;
+    $('quickTiles').innerHTML = [
+      tile('Flagged posts to review', data.flaggedJobs, 'fa-flag', 'tile-red', 'flagged'),
+      tile('Verifications pending',   data.pendingVerifications, 'fa-id-card', 'tile-amber', 'verify'),
+      tile('Open disputes',           data.openDisputes, 'fa-balance-scale', 'tile-amber', 'disputes'),
+      tile('Flagged forum threads',   data.flaggedForum, 'fa-comments', 'tile-red', 'forum'),
+      tile('Overdue invoices',        data.overdueInvoices, 'fa-exclamation-triangle', 'tile-red', 'invoices'),
+      tile('Support inbox',           data.contactMessages, 'fa-envelope', 'tile-indigo', 'support'),
+    ].join('');
+
+    drawSpark('signupChart', data.signupTrend || [], '#4F46E5');
+    drawSpark('jobChart',    data.jobTrend    || [], '#10B981');
+
+    $('topClientsList').innerHTML = (data.topClients || []).length ? (data.topClients || []).map(c => `
+      <div class="admin-list-item">
+        <div><div class="name">${esc((c.firstName + ' ' + c.lastName).trim() || c.email)}</div>
+             <div class="meta">${esc(c.companyName || c.email)}</div></div>
+        <div class="amt">${c.jobCount} job${c.jobCount === 1 ? '' : 's'}</div>
+      </div>`).join('') : '<div class="empty-state"><i class="fas fa-user-slash"></i>No clients yet.</div>';
+
+    $('topVasList').innerHTML = (data.topVas || []).length ? (data.topVas || []).map(v => `
+      <div class="admin-list-item">
+        <div><div class="name">${esc((v.firstName + ' ' + v.lastName).trim() || v.email)}</div>
+             <div class="meta">${esc(v.email)}</div></div>
+        <div class="amt">${v.appCount} app${v.appCount === 1 ? '' : 's'}</div>
+      </div>`).join('') : '<div class="empty-state"><i class="fas fa-user-slash"></i>No VAs yet.</div>';
   }
 
-  function renderFlagged() {
-    $('flaggedList').innerHTML = flagged.map(f => `
+  function drawSpark(svgId, series, color) {
+    const svg = $(svgId);
+    if (!svg) return;
+    if (!series.length) { svg.innerHTML = '<text x="150" y="42" text-anchor="middle" fill="#94A3B8" font-size="11">No data yet.</text>'; return; }
+    const W = 300, H = 80, P = 4;
+    const max = Math.max(1, ...series.map(s => s.n || s.sum || 0));
+    const step = series.length > 1 ? (W - P*2) / (series.length - 1) : 0;
+    const pts = series.map((s, i) => {
+      const v = s.n != null ? s.n : (s.sum || 0);
+      const y = H - P - (v / max) * (H - P*2);
+      const x = P + i * step;
+      return [x, y];
+    });
+    const d = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const area = d + ` L${pts[pts.length-1][0].toFixed(1)},${H-P} L${pts[0][0].toFixed(1)},${H-P} Z`;
+    svg.innerHTML = `
+      <path d="${area}" fill="${color}" opacity="0.1" />
+      <path d="${d}" stroke="${color}" stroke-width="1.75" fill="none" stroke-linejoin="round" stroke-linecap="round" />
+    `;
+  }
+
+  // ------------------------------------------------------------
+  // Users
+  // ------------------------------------------------------------
+  async function loadUsers() {
+    const q = $('userSearch').value.trim();
+    const role = $('userRole').value;
+    const status = $('userStatus').value;
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (role) params.set('role', role);
+    if (status) params.set('status', status);
+    const { ok, data } = await api('/api/admin/accounts?' + params);
+    if (!ok) return;
+    const rows = (data.accounts || []).map(a => {
+      const full = ((a.firstName || '') + ' ' + (a.lastName || '')).trim() || '—';
+      const rolePill = `<span class="pill pill-role-${a.role}">${a.role}</span>`;
+      let statusPill = '<span class="pill pill-ok">active</span>';
+      if (a.suspended) statusPill = '<span class="pill pill-danger">suspended</span>';
+      else if (!a.verified) statusPill = '<span class="pill pill-warn">unverified</span>';
+      return `<tr>
+        <td><strong>${esc(full)}</strong><br><small style="color:var(--text-light);">${esc(a.companyName || a.city || '')}</small></td>
+        <td>${esc(a.email)}</td>
+        <td>${rolePill}</td>
+        <td>${statusPill}</td>
+        <td>${fmtDate(a.createdAt)}</td>
+        <td style="text-align:right;">
+          <button class="btn btn-ghost btn-sm" data-user-open="${a.id}"><i class="fas fa-eye"></i> Open</button>
+        </td>
+      </tr>`;
+    }).join('');
+    $('usersBody').innerHTML = rows || '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-light);">No accounts match those filters.</td></tr>';
+  }
+  $('userRefresh').addEventListener('click', loadUsers);
+  let userTimer;
+  $('userSearch').addEventListener('input', () => { clearTimeout(userTimer); userTimer = setTimeout(loadUsers, 250); });
+  $('userRole').addEventListener('change', loadUsers);
+  $('userStatus').addEventListener('change', loadUsers);
+
+  async function openUser(id) {
+    openDrawer('Loading…', '<p style="padding:2rem; text-align:center; color:var(--text-light);">Loading account…</p>');
+    const { ok, data } = await api('/api/admin/accounts/' + encodeURIComponent(id));
+    if (!ok) { closeDrawer(); return toast('Could not load user.'); }
+    const a = data.account;
+    const full = ((a.firstName || '') + ' ' + (a.lastName || '')).trim() || a.email;
+    const canSelfLock = a.id === (window.__me && window.__me.id);
+    $('drawerTitle').textContent = full;
+    const rolePill = `<span class="pill pill-role-${a.role}">${a.role}</span>`;
+    let statusPill = '<span class="pill pill-ok">active</span>';
+    if (a.suspended) statusPill = `<span class="pill pill-danger">suspended${a.suspendReason ? ' · ' + esc(a.suspendReason) : ''}</span>`;
+    else if (!a.verified) statusPill = '<span class="pill pill-warn">unverified</span>';
+    $('drawerBody').innerHTML = `
+      <div class="drawer-section">
+        <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">${rolePill}${statusPill}</div>
+        <div class="kv-row"><span class="k">Email</span><span class="v">${esc(a.email)}</span></div>
+        <div class="kv-row"><span class="k">Account ID</span><span class="v" style="font-family:monospace;font-size:0.8rem;">${esc(a.id)}</span></div>
+        <div class="kv-row"><span class="k">Joined</span><span class="v">${fmtDateTime(a.createdAt)}</span></div>
+        <div class="kv-row"><span class="k">Last seen</span><span class="v">${a.lastSeenAt ? ago(a.lastSeenAt) : '—'}</span></div>
+        ${a.companyName ? `<div class="kv-row"><span class="k">Company</span><span class="v">${esc(a.companyName)}${a.companySize ? ' · ' + esc(a.companySize) : ''}</span></div>` : ''}
+        ${a.mobile ? `<div class="kv-row"><span class="k">Mobile</span><span class="v">${esc(a.mobile)}</span></div>` : ''}
+        ${a.city   ? `<div class="kv-row"><span class="k">Location</span><span class="v">${esc(a.city)}</span></div>` : ''}
+        ${a.skill  ? `<div class="kv-row"><span class="k">Primary skill</span><span class="v">${esc(a.skill)}${a.years ? ' · ' + esc(a.years) + ' yrs' : ''}</span></div>` : ''}
+      </div>
+
+      <div class="drawer-section">
+        <h4>Activity</h4>
+        <div class="mini-stats">
+          <div class="mini-stat"><div class="l">Jobs posted</div><div class="v">${a.stats.jobsPosted}</div></div>
+          <div class="mini-stat"><div class="l">Applications</div><div class="v">${a.stats.applications}</div></div>
+          <div class="mini-stat"><div class="l">Open disputes</div><div class="v">${a.stats.openDisputes}</div></div>
+          <div class="mini-stat"><div class="l">Invoices paid</div><div class="v">${fmtMoney(a.stats.invoicesPaid)}</div></div>
+          <div class="mini-stat"><div class="l">Invoices sent</div><div class="v">${fmtMoney(a.stats.invoicesSent)}</div></div>
+          <div class="mini-stat"><div class="l">Rating</div><div class="v">${a.stats.reviewCount ? a.stats.avgRating.toFixed(1) + ' ★' : '—'}</div></div>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+        <h4>Admin notes</h4>
+        <textarea id="userNotes" style="width:100%; min-height:80px; padding:0.625rem; border-radius:8px; border:1px solid rgba(15,23,42,0.1); font-family:inherit; font-size:0.875rem;">${esc(a.adminNotes || '')}</textarea>
+        <button class="btn btn-ghost btn-sm" id="saveNotesBtn" style="margin-top:0.5rem;"><i class="fas fa-save"></i> Save notes</button>
+      </div>
+
+      <div class="drawer-section">
+        <h4>Actions</h4>
+        <div class="admin-actions-row">
+          ${a.verified
+            ? `<button class="btn btn-ghost btn-sm" data-act="unverify">Un-verify email</button>`
+            : `<button class="btn btn-ghost btn-sm" data-act="verify"><i class="fas fa-check-circle"></i> Verify email</button>`}
+          ${a.suspended
+            ? `<button class="btn btn-ghost btn-sm" data-act="unsuspend"><i class="fas fa-unlock"></i> Un-suspend</button>`
+            : `<button class="btn btn-ghost btn-sm" data-act="suspend" style="color:#DC2626;"><i class="fas fa-ban"></i> Suspend</button>`}
+          <button class="btn btn-ghost btn-sm" data-act="role"><i class="fas fa-user-tag"></i> Change role</button>
+          ${canSelfLock ? '' : `<button class="btn btn-ghost btn-sm" data-act="delete" style="color:#DC2626;"><i class="fas fa-trash"></i> Soft-delete</button>`}
+        </div>
+      </div>
+    `;
+
+    $('saveNotesBtn').addEventListener('click', async () => {
+      const note = $('userNotes').value;
+      const r = await api('/api/admin/accounts/' + encodeURIComponent(a.id) + '/note', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note }),
+      });
+      toast(r.ok ? 'Notes saved.' : 'Could not save.');
+    });
+
+    $('drawerBody').querySelectorAll('button[data-act]').forEach(b => b.addEventListener('click', async () => {
+      const act = b.dataset.act;
+      if (act === 'role') {
+        const r = prompt('Set role (client, va, or admin):', a.role);
+        if (!r || !['client','va','admin'].includes(r)) return;
+        const resp = await api('/api/admin/accounts/' + encodeURIComponent(a.id) + '/role', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: r }),
+        });
+        if (resp.ok) { toast('Role updated.'); openUser(a.id); loadUsers(); }
+        else toast(resp.data.error || 'Could not change role.');
+        return;
+      }
+      if (act === 'suspend' || act === 'delete') {
+        const msg = act === 'suspend' ? 'Suspend this account? They will be signed out and cannot log in.' : 'Soft-delete this account? Their email will be released and they will be signed out.';
+        const reason = confirmReason(msg);
+        if (reason === null) return;
+        const resp = await api('/api/admin/accounts/' + encodeURIComponent(a.id) + '/' + act, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason }),
+        });
+        if (resp.ok) { toast(act === 'suspend' ? 'Suspended.' : 'Deleted.'); openUser(a.id); loadUsers(); }
+        else toast(resp.data.error || 'Action failed.');
+        return;
+      }
+      const resp = await api('/api/admin/accounts/' + encodeURIComponent(a.id) + '/' + act, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (resp.ok) { toast(act[0].toUpperCase() + act.slice(1) + ' applied.'); openUser(a.id); loadUsers(); }
+      else toast(resp.data.error || 'Action failed.');
+    }));
+  }
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-user-open]');
+    if (b) openUser(b.dataset.userOpen);
+  });
+
+  // ------------------------------------------------------------
+  // Verifications
+  // ------------------------------------------------------------
+  async function loadVerify() {
+    const status = $('verifyStatus').value;
+    const { ok, data } = await api('/api/admin/verifications?status=' + encodeURIComponent(status));
+    if (!ok) return;
+    const list = data.verifications || [];
+    if (!list.length) {
+      $('verifyList').innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i>No ' + status + ' requests.</div>';
+      return;
+    }
+    $('verifyList').innerHTML = list.map(v => `
+      <div class="item-card">
+        <div class="item-head">
+          <div class="job-logo" style="background:rgba(14,165,233,0.08); width:48px; height:48px;"><i class="fas fa-id-card" style="color:#0EA5E9;"></i></div>
+          <div class="grow">
+            <h3>${esc(v.accountName || v.accountEmail)} — <small>${esc(v.kind)}</small></h3>
+            <p>${esc(v.accountEmail)} · ${esc(v.accountRole)} · submitted ${fmtDate(v.createdAt)}</p>
+          </div>
+          <span class="pill ${v.status === 'pending' ? 'pill-warn' : v.status === 'approved' ? 'pill-ok' : 'pill-danger'}">${v.status}</span>
+        </div>
+        ${v.submittedData && Object.keys(v.submittedData).length ? `<pre style="background:rgba(79,70,229,0.04); padding:0.75rem; border-radius:8px; font-size:0.75rem; overflow:auto;">${esc(JSON.stringify(v.submittedData, null, 2))}</pre>` : ''}
+        ${v.status === 'pending' ? `
+        <div class="item-actions">
+          <button class="btn btn-primary btn-sm" data-verify="${v.id}" data-act="approve"><i class="fas fa-check"></i> Approve</button>
+          <button class="btn btn-ghost btn-sm" data-verify="${v.id}" data-act="reject" style="color:#DC2626;"><i class="fas fa-times"></i> Reject</button>
+        </div>` : v.decisionNote ? `<p style="font-size:0.8125rem; color:var(--text-light); margin:0.5rem 0 0;"><em>Note: ${esc(v.decisionNote)}</em></p>` : ''}
+      </div>`).join('');
+  }
+  $('verifyRefresh').addEventListener('click', loadVerify);
+  $('verifyStatus').addEventListener('change', loadVerify);
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-verify]');
+    if (!b) return;
+    const note = b.dataset.act === 'approve' ? '' : (prompt('Reason for rejection?') || '');
+    const r = await api('/api/admin/verifications/' + encodeURIComponent(b.dataset.verify) + '/' + b.dataset.act, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    });
+    if (r.ok) { toast(b.dataset.act === 'approve' ? 'Approved.' : 'Rejected.'); loadVerify(); }
+  });
+
+  // ------------------------------------------------------------
+  // Jobs
+  // ------------------------------------------------------------
+  async function loadJobs() {
+    const params = new URLSearchParams();
+    if ($('jobSearch').value.trim()) params.set('q', $('jobSearch').value.trim());
+    if ($('jobStatus').value) params.set('status', $('jobStatus').value);
+    const { ok, data } = await api('/api/admin/jobs?' + params);
+    if (!ok) return;
+    const statusPill = s => {
+      if (s === 'open') return '<span class="pill pill-ok">open</span>';
+      if (s === 'flagged') return '<span class="pill pill-warn">flagged</span>';
+      if (s === 'closed') return '<span class="pill pill-muted">closed</span>';
+      if (s === 'removed') return '<span class="pill pill-danger">removed</span>';
+      return '<span class="pill pill-muted">' + s + '</span>';
+    };
+    const acts = j => {
+      const map = {
+        open:    [['flag','Flag','fa-flag'],['close','Close','fa-lock'],['remove','Remove','fa-trash','danger']],
+        flagged: [['approve','Publish','fa-check'],['remove','Remove','fa-trash','danger']],
+        closed:  [['reopen','Reopen','fa-undo'],['remove','Remove','fa-trash','danger']],
+        removed: [['reopen','Restore','fa-undo']],
+      };
+      return (map[j.status] || []).map(([a,l,i,d]) =>
+        `<button class="btn btn-ghost btn-sm" data-job="${j.id}" data-act="${a}"${d ? ' style="color:#DC2626;"' : ''}><i class="fas ${i}"></i> ${l}</button>`
+      ).join('');
+    };
+    $('jobsBody').innerHTML = (data.jobs || []).length ? data.jobs.map(j => `
+      <tr>
+        <td><strong>${esc(j.title)}</strong><br><small style="color:var(--text-light);">${esc(j.companyName || '')}${j.payMin ? ' · $' + j.payMin + '–' + j.payMax + '/hr' : ''}</small></td>
+        <td>${esc(j.clientName || j.clientEmail)}<br><small style="color:var(--text-light);">${esc(j.clientEmail)}</small></td>
+        <td>${statusPill(j.status)}</td>
+        <td>${j.applicationCount}</td>
+        <td>${fmtDate(j.createdAt)}</td>
+        <td style="text-align:right;"><div class="admin-actions-row" style="justify-content:flex-end;">${acts(j)}</div></td>
+      </tr>`).join('') : '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-light);">No jobs match those filters.</td></tr>';
+  }
+  $('jobRefresh').addEventListener('click', loadJobs);
+  let jobTimer;
+  $('jobSearch').addEventListener('input', () => { clearTimeout(jobTimer); jobTimer = setTimeout(loadJobs, 250); });
+  $('jobStatus').addEventListener('change', loadJobs);
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-job][data-act]');
+    if (!b) return;
+    const act = b.dataset.act;
+    let reason = '';
+    if (act === 'remove' || act === 'flag') {
+      const r = prompt(act === 'remove' ? 'Reason for removal?' : 'Reason for flagging?');
+      if (r === null) return;
+      reason = r;
+    }
+    const r = await api('/api/admin/jobs/' + encodeURIComponent(b.dataset.job) + '/' + act, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    if (r.ok) { toast('Done.'); loadJobs(); loadFlagged(); }
+  });
+
+  // ------------------------------------------------------------
+  // Flagged
+  // ------------------------------------------------------------
+  async function loadFlagged() {
+    const { ok, data } = await api('/api/admin/flagged-jobs');
+    if (!ok) return;
+    const list = data.jobs || [];
+    $('flaggedList').innerHTML = list.length ? list.map(f => `
       <div class="item-card">
         <div class="item-head">
           <div class="job-logo" style="background:rgba(239,68,68,0.08); width:48px; height:48px; font-size:1.25rem;">⚠️</div>
           <div class="grow">
             <h3>${esc(f.title)}</h3>
-            <p>${esc(f.companyName || '—')} · ${esc(f.clientEmail || '')} · flagged ${fmtDay(f.createdAt)}</p>
+            <p>${esc(f.companyName || '—')} · ${esc(f.clientEmail || '')} · flagged ${fmtDate(f.createdAt)}</p>
           </div>
           <span class="status-pill pending">Needs review</span>
         </div>
         <p class="item-quote">${esc((f.description || '').slice(0, 400))}${(f.description || '').length > 400 ? '…' : ''}</p>
         <div class="item-actions">
-          <button class="btn btn-ghost btn-sm" data-flag="${f.id}" data-act="approve"><i class="fas fa-check"></i> Publish</button>
-          <button class="btn btn-primary btn-sm" data-flag="${f.id}" data-act="remove" style="background:var(--danger); box-shadow:none;"><i class="fas fa-ban"></i> Remove</button>
+          <button class="btn btn-ghost btn-sm" data-job="${f.id}" data-act="approve"><i class="fas fa-check"></i> Publish</button>
+          <button class="btn btn-primary btn-sm" data-job="${f.id}" data-act="remove" style="background:var(--danger); box-shadow:none;"><i class="fas fa-ban"></i> Remove</button>
         </div>
-      </div>`).join('') || '<div class="empty-state"><i class="fas fa-check-circle"></i>Queue is clear.</div>';
+      </div>`).join('') : '<div class="empty-state"><i class="fas fa-check-circle"></i>Queue is clear.</div>';
   }
 
-  function renderVerify() {
-    $('verifyList').innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i>Identity &amp; business verifications are coming soon. Users can request verification from their Settings page and it will land here.</div>';
-    $('verifyTabs').innerHTML = '';
+  // ------------------------------------------------------------
+  // Applications
+  // ------------------------------------------------------------
+  async function loadApplications() {
+    const status = $('appStatus').value;
+    const { ok, data } = await api('/api/admin/applications' + (status ? '?status=' + status : ''));
+    if (!ok) return;
+    const pill = s => `<span class="pill pill-${s === 'hired' ? 'ok' : s === 'rejected' || s === 'withdrawn' ? 'danger' : 'info'}">${s}</span>`;
+    $('applicationsBody').innerHTML = (data.applications || []).length ? data.applications.map(a => `
+      <tr>
+        <td><strong>${esc(a.vaName || a.vaEmail)}</strong><br><small style="color:var(--text-light);">${esc(a.vaEmail)}</small></td>
+        <td>${esc(a.jobTitle)}</td>
+        <td>${esc(a.clientCompany || a.clientEmail)}</td>
+        <td>${pill(a.status)}</td>
+        <td>${fmtMoney(a.rate)}/hr</td>
+        <td>${fmtDate(a.createdAt)}</td>
+      </tr>`).join('') : '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-light);">No applications match.</td></tr>';
+  }
+  $('appRefresh').addEventListener('click', loadApplications);
+  $('appStatus').addEventListener('change', loadApplications);
+
+  // ------------------------------------------------------------
+  // Forum
+  // ------------------------------------------------------------
+  async function loadForum() {
+    const scope = $('forumScope').value;
+    const { ok, data } = await api('/api/admin/forum?scope=' + scope);
+    if (!ok) return;
+    const pill = s => {
+      if (s === 'open') return '<span class="pill pill-ok">open</span>';
+      if (s === 'flagged') return '<span class="pill pill-warn">flagged</span>';
+      if (s === 'closed') return '<span class="pill pill-muted">closed</span>';
+      if (s === 'removed') return '<span class="pill pill-danger">removed</span>';
+      return '<span class="pill pill-muted">' + s + '</span>';
+    };
+    $('forumBody').innerHTML = (data.threads || []).length ? data.threads.map(t => `
+      <tr>
+        <td><strong>${esc(t.title)}</strong><br><small style="color:var(--text-light);">${esc(t.body.slice(0, 120))}${t.body.length > 120 ? '…' : ''}</small></td>
+        <td>${esc(t.authorName || t.authorEmail)}</td>
+        <td>${esc(t.category)}</td>
+        <td>${t.replyCount}</td>
+        <td>${pill(t.status)}</td>
+        <td style="text-align:right;">
+          <div class="admin-actions-row" style="justify-content:flex-end;">
+            ${t.status === 'flagged' ? `<button class="btn btn-ghost btn-sm" data-forum="${t.id}" data-act="approve"><i class="fas fa-check"></i> Approve</button>` : ''}
+            ${t.status === 'open' ? `<button class="btn btn-ghost btn-sm" data-forum="${t.id}" data-act="close"><i class="fas fa-lock"></i> Close</button>` : ''}
+            ${t.status !== 'removed' ? `<button class="btn btn-ghost btn-sm" data-forum="${t.id}" data-act="remove" style="color:#DC2626;"><i class="fas fa-trash"></i> Remove</button>` : `<button class="btn btn-ghost btn-sm" data-forum="${t.id}" data-act="reopen"><i class="fas fa-undo"></i> Restore</button>`}
+          </div>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-light);">No threads.</td></tr>';
+  }
+  $('forumRefresh').addEventListener('click', loadForum);
+  $('forumScope').addEventListener('change', loadForum);
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-forum]');
+    if (!b) return;
+    const act = b.dataset.act;
+    const reason = (act === 'remove' || act === 'flag') ? (prompt('Reason?') || '') : '';
+    const r = await api('/api/admin/forum/threads/' + encodeURIComponent(b.dataset.forum) + '/' + act, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    if (r.ok) { toast('Done.'); loadForum(); }
+  });
+
+  // ------------------------------------------------------------
+  // Finance
+  // ------------------------------------------------------------
+  async function loadFinance() {
+    const { ok, data } = await api('/api/admin/finance/overview');
+    if (!ok) return;
+    const byStatus = Object.fromEntries((data.byStatus || []).map(r => [r.status, r]));
+    const kpi = (label, v, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span>
+          <div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${v}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    const sum = s => (byStatus[s] && byStatus[s].sum) || 0;
+    const cnt = s => (byStatus[s] && byStatus[s].count) || 0;
+    $('financeKpi').innerHTML = [
+      kpi('Paid (all time)',   fmtMoney(sum('paid')), 'fa-dollar-sign', '#10B981', cnt('paid') + ' invoices'),
+      kpi('Outstanding',       fmtMoney(sum('sent')), 'fa-hourglass-half', '#F59E0B', cnt('sent') + ' pending'),
+      kpi('Drafted',           fmtMoney(sum('draft')), 'fa-file', '#64748B', cnt('draft') + ' draft invoices'),
+      kpi('Voided',            fmtMoney(sum('void')),  'fa-ban', '#EF4444', cnt('void') + ' voided'),
+    ].join('');
+    drawSpark('revChart', data.revenueTrend || [], '#10B981');
+    $('topSpenders').innerHTML = (data.topSpenders || []).length ? data.topSpenders.map(c => `
+      <div class="admin-list-item">
+        <div><div class="name">${esc(c.name || c.email)}</div><div class="meta">${esc(c.company || c.email)}</div></div>
+        <div class="amt">${fmtMoney(c.spent)}</div>
+      </div>`).join('') : '<div class="empty-state"><i class="fas fa-chart-pie"></i>No paid invoices yet.</div>';
+    $('topEarners').innerHTML = (data.topEarners || []).length ? data.topEarners.map(v => `
+      <div class="admin-list-item">
+        <div><div class="name">${esc(v.name || v.email)}</div><div class="meta">${esc(v.email)}</div></div>
+        <div class="amt">${fmtMoney(v.earned)}</div>
+      </div>`).join('') : '<div class="empty-state"><i class="fas fa-chart-pie"></i>No paid invoices yet.</div>';
   }
 
-  function renderDisputes() {
-    // Mounted on the "disputes" panel, we use it for the contact inbox too.
-    $('disputeList').innerHTML = contacts.length ? contacts.map(c => `
+  // ------------------------------------------------------------
+  // Invoices
+  // ------------------------------------------------------------
+  async function loadInvoices() {
+    const s = $('invStatus').value;
+    const { ok, data } = await api('/api/admin/invoices' + (s ? '?status=' + s : ''));
+    if (!ok) return;
+    const pill = s => `<span class="pill pill-${s === 'paid' ? 'ok' : s === 'sent' ? 'warn' : s === 'void' ? 'danger' : 'muted'}">${s}</span>`;
+    $('invoicesBody').innerHTML = (data.invoices || []).length ? data.invoices.map(i => `
+      <tr>
+        <td><strong>${esc(i.invoiceNo)}</strong></td>
+        <td>${esc(i.clientCompany || i.clientEmail)}<br><small style="color:var(--text-light);">${esc(i.clientEmail)}</small></td>
+        <td>${esc(i.vaName || i.vaEmail)}<br><small style="color:var(--text-light);">${esc(i.vaEmail)}</small></td>
+        <td>${i.issuedOn}</td>
+        <td>${i.dueOn || '—'}</td>
+        <td><strong>${esc(i.currency)} ${Number(i.total).toFixed(2)}</strong></td>
+        <td>${pill(i.status)}</td>
+      </tr>`).join('') : '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-light);">No invoices match.</td></tr>';
+  }
+  $('invRefresh').addEventListener('click', loadInvoices);
+  $('invStatus').addEventListener('change', loadInvoices);
+
+  // ------------------------------------------------------------
+  // Disputes
+  // ------------------------------------------------------------
+  async function loadDisputes() {
+    const s = $('dispStatus').value;
+    const { ok, data } = await api('/api/admin/disputes' + (s ? '?status=' + s : ''));
+    if (!ok) return;
+    const list = data.disputes || [];
+    if (!list.length) { $('disputeList').innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i>No disputes.</div>'; return; }
+    $('disputeList').innerHTML = list.map(d => `
+      <div class="item-card">
+        <div class="item-head">
+          <div class="job-logo" style="background:rgba(245,158,11,0.08); width:48px; height:48px; font-size:1.25rem;">⚖️</div>
+          <div class="grow">
+            <h3>${esc(d.subject)} — <small style="font-weight:400; color:var(--text-light);">${esc(d.kind)}</small></h3>
+            <p><strong>${esc(d.opener.name || d.opener.email)}</strong> (${d.opener.role}) vs <strong>${esc(d.against.name || d.against.email)}</strong> (${d.against.role}) · filed ${fmtDate(d.createdAt)}</p>
+          </div>
+          <span class="pill pill-${d.status === 'open' ? 'warn' : d.status === 'investigating' ? 'info' : d.status === 'resolved' ? 'ok' : 'danger'}">${d.status}</span>
+        </div>
+        <p class="item-quote">${esc(d.body)}</p>
+        ${d.outcome ? `<p style="font-size:0.8125rem; color:var(--text-light);"><em>Outcome: ${esc(d.outcome)}</em></p>` : ''}
+        ${d.status === 'open' || d.status === 'investigating' ? `
+        <div class="item-actions">
+          ${d.status === 'open' ? `<button class="btn btn-ghost btn-sm" data-disp="${d.id}" data-act="investigate"><i class="fas fa-search"></i> Investigate</button>` : ''}
+          <button class="btn btn-primary btn-sm" data-disp="${d.id}" data-act="resolve"><i class="fas fa-check"></i> Resolve</button>
+          <button class="btn btn-ghost btn-sm" data-disp="${d.id}" data-act="reject" style="color:#DC2626;"><i class="fas fa-times"></i> Reject</button>
+        </div>` : ''}
+      </div>`).join('');
+  }
+  $('dispRefresh').addEventListener('click', loadDisputes);
+  $('dispStatus').addEventListener('change', loadDisputes);
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-disp]');
+    if (!b) return;
+    const act = b.dataset.act;
+    const outcome = (act === 'resolve' || act === 'reject') ? (prompt('Outcome / note for the record?') || '') : '';
+    const r = await api('/api/admin/disputes/' + encodeURIComponent(b.dataset.disp) + '/' + act, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outcome }),
+    });
+    if (r.ok) { toast('Updated.'); loadDisputes(); }
+  });
+
+  // ------------------------------------------------------------
+  // Support inbox
+  // ------------------------------------------------------------
+  async function loadSupport() {
+    const s = $('supStatus').value;
+    const { ok, data } = await api('/api/admin/contact-messages' + (s ? '?status=' + s : ''));
+    if (!ok) return;
+    const list = data.messages || [];
+    if (!list.length) { $('supportList').innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i>No messages in this view.</div>'; return; }
+    $('supportList').innerHTML = list.map(c => `
       <div class="item-card">
         <div class="item-head">
           <div class="job-logo" style="background:rgba(79,70,229,0.08); width:48px; height:48px; font-size:1.25rem;"><i class="fas fa-envelope" style="color:var(--primary);"></i></div>
           <div class="grow">
             <h3>${esc(c.name)} — ${esc(c.subject || 'No subject')}</h3>
-            <p>${esc(c.email)} · ${fmtDay(c.createdAt)}</p>
+            <p>${esc(c.email)} · ${fmtDate(c.createdAt)}</p>
           </div>
+          <span class="pill ${c.handledAt ? 'pill-ok' : 'pill-warn'}">${c.handledAt ? 'Handled' : 'Open'}</span>
         </div>
         <p class="item-quote">${esc(c.body)}</p>
+        ${c.adminNote ? `<p style="font-size:0.8125rem; color:var(--text-light);"><em>Note: ${esc(c.adminNote)}</em></p>` : ''}
         <div class="item-actions">
           <a href="mailto:${encodeURIComponent(c.email)}?subject=Re: ${encodeURIComponent(c.subject || 'Jobseekers.ph contact')}" class="btn btn-primary btn-sm"><i class="fas fa-reply"></i> Reply via email</a>
+          ${c.handledAt
+            ? `<button class="btn btn-ghost btn-sm" data-sup="${c.id}" data-act="reopen"><i class="fas fa-undo"></i> Reopen</button>`
+            : `<button class="btn btn-ghost btn-sm" data-sup="${c.id}" data-act="handle"><i class="fas fa-check"></i> Mark handled</button>`}
+          <button class="btn btn-ghost btn-sm" data-sup="${c.id}" data-act="note"><i class="fas fa-sticky-note"></i> Add note</button>
         </div>
-      </div>`).join('') : '<div class="empty-state"><i class="fas fa-check-circle"></i>No contact-form submissions yet.</div>';
+      </div>`).join('');
   }
-
-  function renderLog() {
-    $('logBody').innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-light); padding:2rem;">Audit log is coming soon.</td></tr>';
-  }
-
-  function renderAll() { renderStats(); renderFlagged(); renderVerify(); renderDisputes(); renderLog(); }
-
-  document.querySelector('.dash-content').addEventListener('click', async e => {
-    const b = e.target.closest('button');
+  $('supRefresh').addEventListener('click', loadSupport);
+  $('supStatus').addEventListener('change', loadSupport);
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-sup]');
     if (!b) return;
-    const d = b.dataset;
-    if (d.flag) {
-      const action = d.act === 'remove' ? 'remove' : 'approve';
-      const r = await fetch(`/api/admin/jobs/${encodeURIComponent(d.flag)}/${action}`, { method: 'POST' });
-      if (r.ok) {
-        flagged = flagged.filter(x => x.id !== d.flag);
-        showToast && showToast(action === 'remove' ? 'Post removed.' : 'Post published.');
-        renderFlagged();
-      }
-    }
+    const act = b.dataset.act;
+    const note = act === 'note' ? (prompt('Admin note:') || '') : '';
+    const r = await api('/api/admin/contact-messages/' + encodeURIComponent(b.dataset.sup) + '/' + act, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note }),
+    });
+    if (r.ok) { toast('Done.'); loadSupport(); }
   });
 
-  load().then(openTabFromHash);
+  // ------------------------------------------------------------
+  // Announcements
+  // ------------------------------------------------------------
+  async function loadAnnouncements() {
+    const { ok, data } = await api('/api/admin/announcements');
+    if (!ok) return;
+    $('annList').innerHTML = (data.announcements || []).length ? data.announcements.map(a => `
+      <tr>
+        <td><strong>${esc(a.title)}</strong><br><small style="color:var(--text-light);">${esc(a.body.slice(0, 120))}${a.body.length > 120 ? '…' : ''}</small></td>
+        <td>${esc(a.audience)}</td>
+        <td><span class="pill pill-${a.severity === 'critical' ? 'danger' : a.severity === 'warning' ? 'warn' : 'info'}">${a.severity}</span></td>
+        <td><span class="pill ${a.active ? 'pill-ok' : 'pill-muted'}">${a.active ? 'live' : 'off'}</span></td>
+        <td>${fmtDate(a.createdAt)}</td>
+        <td style="text-align:right;">
+          <div class="admin-actions-row" style="justify-content:flex-end;">
+            ${a.active
+              ? `<button class="btn btn-ghost btn-sm" data-ann="${a.id}" data-act="deactivate"><i class="fas fa-eye-slash"></i> Hide</button>`
+              : `<button class="btn btn-ghost btn-sm" data-ann="${a.id}" data-act="activate"><i class="fas fa-eye"></i> Publish</button>`}
+            <button class="btn btn-ghost btn-sm" data-ann="${a.id}" data-act="delete" style="color:#DC2626;"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-light);">No announcements yet. Publish one above.</td></tr>';
+  }
+  $('annForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const r = await api('/api/admin/announcements', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: $('annTitle').value, body: $('annMessage').value,
+        audience: $('annAudience').value, severity: $('annSeverity').value,
+      }),
+    });
+    if (r.ok) { toast('Announcement published.'); $('annForm').reset(); loadAnnouncements(); }
+  });
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-ann]');
+    if (!b) return;
+    if (b.dataset.act === 'delete' && !confirm('Delete this announcement?')) return;
+    const r = await api('/api/admin/announcements/' + encodeURIComponent(b.dataset.ann) + '/' + b.dataset.act, { method: 'POST' });
+    if (r.ok) { toast('Done.'); loadAnnouncements(); }
+  });
+
+  // ------------------------------------------------------------
+  // Audit log
+  // ------------------------------------------------------------
+  async function loadAudit() {
+    const act = $('auditAction').value.trim();
+    const { ok, data } = await api('/api/admin/audit' + (act ? '?action=' + encodeURIComponent(act) : ''));
+    if (!ok) return;
+    $('auditBody').innerHTML = (data.entries || []).length ? data.entries.map(e => `
+      <tr class="audit-row">
+        <td>${fmtDateTime(e.createdAt)}</td>
+        <td>${esc(e.adminEmail)}</td>
+        <td class="act">${esc(e.action)}</td>
+        <td><small style="color:var(--text-light);">${esc(e.targetKind)}</small> ${esc(e.targetId || '')}</td>
+        <td>${esc(e.note || '')}</td>
+      </tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-light);">No audit entries yet.</td></tr>';
+  }
+  $('auditRefresh').addEventListener('click', loadAudit);
+  let auditTimer;
+  $('auditAction').addEventListener('input', () => { clearTimeout(auditTimer); auditTimer = setTimeout(loadAudit, 250); });
+
+  // ------------------------------------------------------------
+  // System
+  // ------------------------------------------------------------
+  async function loadSystem() {
+    const { ok, data } = await api('/api/admin/system');
+    if (!ok) return;
+    const kpi = (label, v, icon, color, sub) => `
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">${label}</span>
+          <div class="stat-card-icon" style="background:${color}1a; color:${color};"><i class="fas ${icon}"></i></div></div>
+        <div class="stat-card-num">${v}</div>
+        <div class="stat-card-change" style="color:var(--text-light);">${sub}</div>
+      </div>`;
+    const h = Math.floor(data.uptimeSec / 3600);
+    const m = Math.floor((data.uptimeSec % 3600) / 60);
+    $('systemKpi').innerHTML = [
+      kpi('Database size',    esc(data.dbSize),            'fa-database',   '#4F46E5', data.tableCount + ' tables'),
+      kpi('Active sessions',  fmtNum(data.activeSessions), 'fa-user-shield','#10B981', 'currently signed in'),
+      kpi('Uptime',           h + 'h ' + m + 'm',          'fa-heartbeat',  '#0EA5E9', 'since last boot'),
+      kpi('Memory',           data.memoryMB + ' MB',       'fa-microchip',  '#F59E0B', 'resident set size'),
+    ].join('');
+    $('envBox').innerHTML = `
+      <div class="kv-row"><span class="k">Node version</span><span class="v">${esc(data.nodeVersion)}</span></div>
+      <div class="kv-row"><span class="k">Port</span><span class="v">${esc(data.env.port)}</span></div>
+      <div class="kv-row"><span class="k">Database</span><span class="v">${data.env.hasDatabase ? '<span class="pill pill-ok">connected</span>' : '<span class="pill pill-danger">missing</span>'}</span></div>
+      <div class="kv-row"><span class="k">Resend email</span><span class="v">${data.env.hasResend ? '<span class="pill pill-ok">configured</span>' : '<span class="pill pill-warn">not configured</span>'}</span></div>
+      <div class="kv-row"><span class="k">NOINDEX (staging)</span><span class="v">${data.env.noindex ? '<span class="pill pill-warn">on</span>' : '<span class="pill pill-ok">off</span>'}</span></div>
+    `;
+    $('adminAccountsList').innerHTML = (data.admins || []).map(a => `
+      <div class="admin-list-item">
+        <div><div class="name">${esc(a.name || a.email)}${a.isYou ? ' <small style="color:var(--primary);">(you)</small>' : ''}</div><div class="meta">${esc(a.email)} · joined ${fmtDate(a.createdAt)}</div></div>
+        <div class="amt" style="font-size:0.75rem; color:var(--text-light); font-weight:500;">${a.lastSeenAt ? 'seen ' + ago(a.lastSeenAt) : 'never seen'}</div>
+      </div>`).join('') || '<div class="empty-state"><i class="fas fa-user-shield"></i>You are the only admin.</div>';
+  }
+
+  // ------------------------------------------------------------
+  // Drawer helpers
+  // ------------------------------------------------------------
+  function openDrawer(title, html) {
+    $('drawerTitle').textContent = title;
+    $('drawerBody').innerHTML = html;
+    $('drawerBackdrop').classList.add('open');
+    $('drawer').classList.add('open');
+  }
+  function closeDrawer() {
+    $('drawerBackdrop').classList.remove('open');
+    $('drawer').classList.remove('open');
+  }
+  $('drawerClose').addEventListener('click', closeDrawer);
+  $('drawerBackdrop').addEventListener('click', closeDrawer);
+
+  // ------------------------------------------------------------
+  // Boot
+  // ------------------------------------------------------------
+  (async function boot() {
+    if (!(await guard())) return;
+    try {
+      const r = await fetch('/api/me', { cache: 'no-store' });
+      const j = await r.json();
+      window.__me = j.user || null;
+    } catch (_) {}
+    readHash();
+  })();
+})();
 </script>
 </body>
 </html>

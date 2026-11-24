@@ -478,3 +478,127 @@ CREATE INDEX IF NOT EXISTS idx_forum_replies_thread
   ON forum_replies (thread_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_forum_replies_author
   ON forum_replies (author_id);
+
+-- ============================================================
+-- Admin: account suspension. Soft-flag that keeps the row and all its
+-- history intact, but blocks login and hides the account from the
+-- marketplace. Admins can lift the flag at any time.
+-- ============================================================
+
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS suspended       BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS suspended_at    BIGINT;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS suspended_by    TEXT REFERENCES accounts(id) ON DELETE SET NULL;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS suspend_reason  TEXT;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS last_seen_at    BIGINT;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS admin_notes     TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_accounts_role     ON accounts (role);
+CREATE INDEX IF NOT EXISTS idx_accounts_created  ON accounts (created_at DESC);
+
+-- ============================================================
+-- Verifications queue. One row per identity / business / certificate
+-- verification request. Admins review and set status.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS verifications (
+  id            TEXT PRIMARY KEY,
+  account_id    TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  kind          TEXT NOT NULL CHECK (kind IN ('identity', 'business', 'certificate', 'payment')),
+  status        TEXT NOT NULL DEFAULT 'pending'
+                  CHECK (status IN ('pending', 'approved', 'rejected')),
+  submitted_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  decided_by    TEXT REFERENCES accounts(id) ON DELETE SET NULL,
+  decided_at    BIGINT,
+  decision_note TEXT,
+  created_at    BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_verifications_pending
+  ON verifications (created_at DESC) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_verifications_account
+  ON verifications (account_id, created_at DESC);
+
+-- ============================================================
+-- Disputes. Filed by a client or VA against the other party. Scope: a
+-- hire, a trial, or a payment. Admin resolves with a note and outcome.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS disputes (
+  id              TEXT PRIMARY KEY,
+  opened_by       TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  against_id      TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  job_id          TEXT REFERENCES jobs(id) ON DELETE SET NULL,
+  application_id  TEXT REFERENCES applications(id) ON DELETE SET NULL,
+  invoice_id      TEXT REFERENCES invoices(id) ON DELETE SET NULL,
+  kind            TEXT NOT NULL CHECK (kind IN ('payment', 'conduct', 'quality', 'scam', 'other')),
+  subject         TEXT NOT NULL,
+  body            TEXT NOT NULL,
+  status          TEXT NOT NULL DEFAULT 'open'
+                    CHECK (status IN ('open', 'investigating', 'resolved', 'rejected')),
+  outcome         TEXT,
+  resolved_by     TEXT REFERENCES accounts(id) ON DELETE SET NULL,
+  resolved_at     BIGINT,
+  created_at      BIGINT NOT NULL,
+  updated_at      BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_disputes_status  ON disputes (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_disputes_opener  ON disputes (opened_by);
+CREATE INDEX IF NOT EXISTS idx_disputes_against ON disputes (against_id);
+
+-- ============================================================
+-- Admin audit log. Every mutating admin action is appended here so we
+-- can answer "who did what, when, on which object, and why."
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS admin_audit (
+  id           TEXT PRIMARY KEY,
+  admin_id     TEXT NOT NULL REFERENCES accounts(id) ON DELETE SET NULL,
+  admin_email  TEXT NOT NULL,
+  action       TEXT NOT NULL,         -- e.g. user.suspend, job.remove, dispute.resolve
+  target_kind  TEXT NOT NULL,         -- account | job | application | forum_thread | invoice | dispute | verification | announcement
+  target_id    TEXT,
+  note         TEXT,
+  meta         JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at   BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_admin   ON admin_audit (admin_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_target  ON admin_audit (target_kind, target_id);
+
+-- ============================================================
+-- Announcements. System-wide banner notices surfaced on dashboards and
+-- optionally pushed as in-app notifications. active=TRUE means currently shown.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS announcements (
+  id            TEXT PRIMARY KEY,
+  title         TEXT NOT NULL,
+  body          TEXT NOT NULL,
+  audience      TEXT NOT NULL DEFAULT 'all'
+                  CHECK (audience IN ('all', 'client', 'va')),
+  severity      TEXT NOT NULL DEFAULT 'info'
+                  CHECK (severity IN ('info', 'warning', 'critical')),
+  active        BOOLEAN NOT NULL DEFAULT TRUE,
+  starts_at     BIGINT,
+  ends_at       BIGINT,
+  created_by    TEXT REFERENCES accounts(id) ON DELETE SET NULL,
+  created_at    BIGINT NOT NULL,
+  updated_at    BIGINT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_active
+  ON announcements (created_at DESC) WHERE active = TRUE;
+
+-- ============================================================
+-- Admin: handled flag on contact messages so admins can mark a
+-- support ticket as resolved without deleting it.
+-- ============================================================
+
+ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS handled_at   BIGINT;
+ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS handled_by   TEXT REFERENCES accounts(id) ON DELETE SET NULL;
+ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS admin_note   TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_unhandled
+  ON contact_messages (created_at DESC) WHERE handled_at IS NULL;

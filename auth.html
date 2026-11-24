@@ -516,7 +516,9 @@
       // Only allow same-origin relative paths so we can't be used as an open redirect.
       const nextParam = new URLSearchParams(location.search).get('next');
       const safeNext = nextParam && /^[a-z0-9][a-z0-9/_\-?&=.#]*$/i.test(nextParam) ? nextParam : null;
-      const fallback = payload.role === 'client' ? 'dashboard-client' : 'dashboard-va';
+      const fallback = payload.role === 'admin'  ? 'admin'
+                     : payload.role === 'client' ? 'dashboard-client'
+                     : 'dashboard-va';
       const dest = safeNext || fallback;
       window.location.href = payload.verified ? dest : 'verify-email?role=' + encodeURIComponent(payload.role) + (safeNext ? '&next=' + encodeURIComponent(safeNext) : '');
     } catch (err) {

@@ -328,6 +328,12 @@ async function handleAuth(req, res, urlPath) {
     if (!account || !verifyPassword(password, account.passwordSalt, account.passwordHash)) {
       return sendJson(res, 401, { ok: false, error: 'Email or password is incorrect.' });
     }
+    // Admin-suspended accounts can't start a new session. Existing sessions are
+    // cleared by the suspend action, so this is the backstop.
+    const sus = await db.query('SELECT suspended, suspend_reason FROM accounts WHERE id = $1', [account.id]);
+    if (sus.rows[0] && sus.rows[0].suspended) {
+      return sendJson(res, 403, { ok: false, error: 'This account has been suspended. ' + (sus.rows[0].suspend_reason || 'Contact support if you believe this is a mistake.') });
+    }
     const sid = await issueSession(account.id);
     sendJson(res, 200, { ok: true, role: account.role, verified: !!account.verified }, { 'Set-Cookie': sessionCookie(sid, req) });
     return true;
@@ -3044,7 +3050,11 @@ async function handleContact(req, res, urlPath) {
 }
 
 // ============================================================
-// Admin. Lightweight dashboard-backing endpoints. role === 'admin'.
+// Admin dashboard. Everything under /api/admin/* is gated by requireAdmin
+// (role === 'admin'). Mutating actions always write an admin_audit row so
+// we can answer "who did what, when, on which object, and why." Destructive
+// actions are soft — flip a status flag, don't delete the row — so a mistake
+// can be undone from the same screen.
 // ============================================================
 
 async function requireAdmin(req, res) {
@@ -3054,25 +3064,299 @@ async function requireAdmin(req, res) {
   return user;
 }
 
+async function auditAdmin(admin, action, targetKind, targetId, note, meta) {
+  try {
+    await db.query(
+      `INSERT INTO admin_audit (id, admin_id, admin_email, action, target_kind, target_id, note, meta, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)`,
+      [
+        'aud_' + crypto.randomBytes(8).toString('hex'),
+        admin.id, admin.email, action, targetKind,
+        targetId || null, note || null,
+        JSON.stringify(meta || {}),
+        Date.now(),
+      ]
+    );
+  } catch (err) { console.error('[admin audit]', err); }
+}
+
+async function readJsonBody(req) {
+  try { return JSON.parse(await readBody(req, 64 * 1024)); } catch (e) { return {}; }
+}
+
+function since(ms) { return Date.now() - ms; }
+
 async function handleAdmin(req, res, urlPath) {
   if (!urlPath.startsWith('/api/admin/')) return false;
+  const url = new URL(req.url, 'http://localhost');
 
+  // ------------------------------------------------------------
+  // Overview: everything the admin lands on. KPIs across users,
+  // jobs, applications, hires, revenue, disputes, verifications,
+  // forum moderation, and 30-day signup/post trends.
+  // ------------------------------------------------------------
   if (urlPath === '/api/admin/stats' && req.method === 'GET') {
     const admin = await requireAdmin(req, res); if (!admin) return true;
-    const [accounts, jobs, apps, flagged, contact] = await Promise.all([
+    const DAY = 86400 * 1000;
+    const [
+      accounts, jobs, apps, flagged, contact,
+      recentUsers, hires, revenue, pendingInv, overdueInv,
+      openDisputes, pendingVerifs, flaggedForum, suspended,
+      signupTrend, jobTrend, topClients, topVas,
+    ] = await Promise.all([
       db.query(`SELECT role, COUNT(*)::int AS n FROM accounts GROUP BY role`),
       db.query(`SELECT status, COUNT(*)::int AS n FROM jobs GROUP BY status`),
-      db.query(`SELECT COUNT(*)::int AS n FROM applications`),
+      db.query(`SELECT status, COUNT(*)::int AS n FROM applications GROUP BY status`),
       db.query(`SELECT COUNT(*)::int AS n FROM jobs WHERE status = 'flagged'`),
-      db.query(`SELECT COUNT(*)::int AS n FROM contact_messages`),
+      db.query(`SELECT COUNT(*)::int AS n FROM contact_messages WHERE handled_at IS NULL`),
+      db.query(`SELECT COUNT(*)::int AS n FROM accounts WHERE created_at > $1`, [since(7 * DAY)]),
+      db.query(`SELECT COUNT(*)::int AS n FROM applications WHERE status = 'hired'`),
+      db.query(`SELECT COALESCE(SUM(total),0)::float AS s FROM invoices WHERE status = 'paid'`),
+      db.query(`SELECT COALESCE(SUM(total),0)::float AS s, COUNT(*)::int AS n FROM invoices WHERE status = 'sent'`),
+      db.query(`SELECT COUNT(*)::int AS n FROM invoices WHERE status = 'sent' AND due_on IS NOT NULL AND due_on < to_char(now(), 'YYYY-MM-DD')`),
+      db.query(`SELECT COUNT(*)::int AS n FROM disputes WHERE status IN ('open','investigating')`),
+      db.query(`SELECT COUNT(*)::int AS n FROM verifications WHERE status = 'pending'`),
+      db.query(`SELECT COUNT(*)::int AS n FROM forum_threads WHERE status = 'flagged'`),
+      db.query(`SELECT COUNT(*)::int AS n FROM accounts WHERE suspended = TRUE`),
+      // 30-day signup trend grouped by day.
+      db.query(`
+        SELECT to_char(to_timestamp(created_at/1000) AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+               COUNT(*)::int AS n
+          FROM accounts
+         WHERE created_at > $1
+         GROUP BY day ORDER BY day`, [since(30 * DAY)]),
+      db.query(`
+        SELECT to_char(to_timestamp(created_at/1000) AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+               COUNT(*)::int AS n
+          FROM jobs
+         WHERE created_at > $1
+         GROUP BY day ORDER BY day`, [since(30 * DAY)]),
+      db.query(`
+        SELECT a.id, a.first_name, a.last_name, a.email, a.company_name,
+               COUNT(j.id)::int AS job_count
+          FROM accounts a JOIN jobs j ON j.client_id = a.id
+         WHERE a.role = 'client'
+         GROUP BY a.id ORDER BY job_count DESC LIMIT 5`),
+      db.query(`
+        SELECT a.id, a.first_name, a.last_name, a.email,
+               COUNT(ap.id)::int AS app_count
+          FROM accounts a JOIN applications ap ON ap.va_id = a.id
+         WHERE a.role = 'va'
+         GROUP BY a.id ORDER BY app_count DESC LIMIT 5`),
     ]);
     return sendJson(res, 200, {
       ok: true,
       accounts: Object.fromEntries(accounts.rows.map(r => [r.role, r.n])),
       jobs: Object.fromEntries(jobs.rows.map(r => [r.status, r.n])),
-      applications: apps.rows[0].n,
+      applications: Object.fromEntries(apps.rows.map(r => [r.status, r.n])),
+      applicationsTotal: apps.rows.reduce((n, r) => n + r.n, 0),
       flaggedJobs: flagged.rows[0].n,
       contactMessages: contact.rows[0].n,
+      recentSignups7d: recentUsers.rows[0].n,
+      hires: hires.rows[0].n,
+      revenuePaid: revenue.rows[0].s,
+      revenuePending: pendingInv.rows[0].s,
+      pendingInvoices: pendingInv.rows[0].n,
+      overdueInvoices: overdueInv.rows[0].n,
+      openDisputes: openDisputes.rows[0].n,
+      pendingVerifications: pendingVerifs.rows[0].n,
+      flaggedForum: flaggedForum.rows[0].n,
+      suspendedAccounts: suspended.rows[0].n,
+      signupTrend: signupTrend.rows.map(r => ({ day: r.day, n: r.n })),
+      jobTrend: jobTrend.rows.map(r => ({ day: r.day, n: r.n })),
+      topClients: topClients.rows.map(r => ({
+        id: r.id, firstName: r.first_name, lastName: r.last_name,
+        email: r.email, companyName: r.company_name, jobCount: r.job_count,
+      })),
+      topVas: topVas.rows.map(r => ({
+        id: r.id, firstName: r.first_name, lastName: r.last_name,
+        email: r.email, appCount: r.app_count,
+      })),
+    });
+  }
+
+  // ------------------------------------------------------------
+  // Users / Accounts
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/accounts' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const q = (url.searchParams.get('q') || '').trim().toLowerCase();
+    const role = (url.searchParams.get('role') || '').trim();
+    const status = (url.searchParams.get('status') || '').trim();
+    const limit = Math.min(500, Math.max(10, parseInt(url.searchParams.get('limit') || '200', 10)));
+    const where = []; const params = [];
+    if (q) { params.push('%' + q + '%'); where.push(`(LOWER(email) LIKE $${params.length} OR LOWER(first_name || ' ' || last_name) LIKE $${params.length} OR LOWER(COALESCE(company_name,'')) LIKE $${params.length})`); }
+    if (role === 'client' || role === 'va' || role === 'admin') { params.push(role); where.push(`role = $${params.length}`); }
+    if (status === 'suspended') where.push('suspended = TRUE');
+    else if (status === 'unverified') where.push('verified = FALSE');
+    else if (status === 'active') where.push('suspended = FALSE AND verified = TRUE');
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    params.push(limit);
+    const r = await db.query(
+      `SELECT id, role, email, first_name, last_name, company_name, company_size,
+              verified, suspended, suspend_reason, mobile, city, created_at, last_seen_at
+         FROM accounts ${whereSql} ORDER BY created_at DESC LIMIT $${params.length}`, params);
+    return sendJson(res, 200, {
+      ok: true,
+      accounts: r.rows.map(row => ({
+        id: row.id, role: row.role, email: row.email,
+        firstName: row.first_name, lastName: row.last_name,
+        companyName: row.company_name, companySize: row.company_size,
+        verified: !!row.verified, suspended: !!row.suspended,
+        suspendReason: row.suspend_reason, mobile: row.mobile, city: row.city,
+        createdAt: Number(row.created_at),
+        lastSeenAt: row.last_seen_at ? Number(row.last_seen_at) : null,
+      })),
+    });
+  }
+
+  const accountDetailMatch = urlPath.match(/^\/api\/admin\/accounts\/([a-z0-9_]+)$/);
+  if (accountDetailMatch && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const id = accountDetailMatch[1];
+    const r = await db.query(
+      `SELECT id, role, email, first_name, last_name, company_name, company_size,
+              verified, suspended, suspend_reason, suspended_at, mobile, city, skill,
+              years, title, tagline, admin_notes, created_at, last_seen_at,
+              (avatar_data IS NOT NULL) AS has_avatar
+         FROM accounts WHERE id = $1`, [id]);
+    if (!r.rows[0]) return sendJson(res, 404, { ok: false, error: 'Not found' });
+    const a = r.rows[0];
+    const [jobs, apps, invSent, invPaid, reviews, disputes] = await Promise.all([
+      db.query(`SELECT COUNT(*)::int AS n FROM jobs WHERE client_id = $1`, [id]),
+      db.query(`SELECT COUNT(*)::int AS n FROM applications WHERE va_id = $1`, [id]),
+      db.query(`SELECT COALESCE(SUM(total),0)::float AS s FROM invoices WHERE (client_id = $1 OR va_id = $1) AND status = 'sent'`, [id]),
+      db.query(`SELECT COALESCE(SUM(total),0)::float AS s FROM invoices WHERE (client_id = $1 OR va_id = $1) AND status = 'paid'`, [id]),
+      db.query(`SELECT COALESCE(AVG(rating),0)::float AS avg, COUNT(*)::int AS n FROM reviews WHERE subject_id = $1`, [id]),
+      db.query(`SELECT COUNT(*)::int AS n FROM disputes WHERE (opened_by = $1 OR against_id = $1) AND status IN ('open','investigating')`, [id]),
+    ]);
+    return sendJson(res, 200, {
+      ok: true,
+      account: {
+        id: a.id, role: a.role, email: a.email,
+        firstName: a.first_name, lastName: a.last_name,
+        companyName: a.company_name, companySize: a.company_size,
+        verified: !!a.verified, suspended: !!a.suspended, suspendReason: a.suspend_reason,
+        suspendedAt: a.suspended_at ? Number(a.suspended_at) : null,
+        mobile: a.mobile, city: a.city, skill: a.skill, years: a.years,
+        title: a.title, tagline: a.tagline, adminNotes: a.admin_notes,
+        createdAt: Number(a.created_at),
+        lastSeenAt: a.last_seen_at ? Number(a.last_seen_at) : null,
+        hasAvatar: !!a.has_avatar,
+        stats: {
+          jobsPosted:    jobs.rows[0].n,
+          applications:  apps.rows[0].n,
+          invoicesSent:  invSent.rows[0].s,
+          invoicesPaid:  invPaid.rows[0].s,
+          avgRating:     Math.round(reviews.rows[0].avg * 10) / 10,
+          reviewCount:   reviews.rows[0].n,
+          openDisputes:  disputes.rows[0].n,
+        },
+      },
+    });
+  }
+
+  const suspendMatch = urlPath.match(/^\/api\/admin\/accounts\/([a-z0-9_]+)\/(suspend|unsuspend|verify|unverify|role|note|delete)$/);
+  if (suspendMatch && req.method === 'POST') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const [, id, action] = suspendMatch;
+    if (id === admin.id && (action === 'suspend' || action === 'delete' || action === 'role')) {
+      return sendJson(res, 400, { ok: false, error: 'You cannot perform that action on your own account.' });
+    }
+    const body = await readJsonBody(req);
+    const reason = String(body.reason || '').trim().slice(0, 500);
+    if (action === 'suspend') {
+      await db.query(
+        `UPDATE accounts SET suspended = TRUE, suspended_at = $1, suspended_by = $2, suspend_reason = $3 WHERE id = $4`,
+        [Date.now(), admin.id, reason || 'Admin suspended account.', id]
+      );
+      await db.query('DELETE FROM sessions WHERE account_id = $1', [id]);
+      await auditAdmin(admin, 'user.suspend', 'account', id, reason);
+      return sendJson(res, 200, { ok: true });
+    }
+    if (action === 'unsuspend') {
+      await db.query(
+        `UPDATE accounts SET suspended = FALSE, suspended_at = NULL, suspended_by = NULL, suspend_reason = NULL WHERE id = $1`, [id]
+      );
+      await auditAdmin(admin, 'user.unsuspend', 'account', id, reason);
+      return sendJson(res, 200, { ok: true });
+    }
+    if (action === 'verify') {
+      await db.query(`UPDATE accounts SET verified = TRUE WHERE id = $1`, [id]);
+      await auditAdmin(admin, 'user.verify', 'account', id, reason);
+      return sendJson(res, 200, { ok: true });
+    }
+    if (action === 'unverify') {
+      await db.query(`UPDATE accounts SET verified = FALSE WHERE id = $1`, [id]);
+      await auditAdmin(admin, 'user.unverify', 'account', id, reason);
+      return sendJson(res, 200, { ok: true });
+    }
+    if (action === 'role') {
+      const newRole = String(body.role || '').trim();
+      if (!['client', 'va', 'admin'].includes(newRole)) {
+        return sendJson(res, 400, { ok: false, error: 'Invalid role.' });
+      }
+      await db.query(`UPDATE accounts SET role = $1 WHERE id = $2`, [newRole, id]);
+      await auditAdmin(admin, 'user.role', 'account', id, 'role -> ' + newRole, { role: newRole });
+      return sendJson(res, 200, { ok: true, role: newRole });
+    }
+    if (action === 'note') {
+      const note = String(body.note || '').trim().slice(0, 4000);
+      await db.query(`UPDATE accounts SET admin_notes = $1 WHERE id = $2`, [note || null, id]);
+      await auditAdmin(admin, 'user.note', 'account', id, 'Note updated');
+      return sendJson(res, 200, { ok: true });
+    }
+    if (action === 'delete') {
+      // Soft-delete: suspend indefinitely + mark email so they can sign up again
+      // later with the same address if they appeal. Keeps jobs/applications/
+      // messages so other users still see history.
+      await db.query(
+        `UPDATE accounts
+            SET suspended = TRUE, suspended_at = $1, suspended_by = $2,
+                suspend_reason = 'Deleted by admin.',
+                email = 'deleted_' || id || '_' || email
+          WHERE id = $3`,
+        [Date.now(), admin.id, id]
+      );
+      await db.query('DELETE FROM sessions WHERE account_id = $1', [id]);
+      await auditAdmin(admin, 'user.delete', 'account', id, reason);
+      return sendJson(res, 200, { ok: true });
+    }
+  }
+
+  // ------------------------------------------------------------
+  // Jobs — all jobs with filters + moderation
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/jobs' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const q = (url.searchParams.get('q') || '').trim().toLowerCase();
+    const status = (url.searchParams.get('status') || '').trim();
+    const where = []; const params = [];
+    if (q) { params.push('%' + q + '%'); where.push(`(LOWER(j.title) LIKE $${params.length} OR LOWER(COALESCE(j.company_name,'')) LIKE $${params.length})`); }
+    if (['open', 'closed', 'flagged', 'removed'].includes(status)) { params.push(status); where.push(`j.status = $${params.length}`); }
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const r = await db.query(
+      `SELECT j.id, j.title, j.company_name, j.status, j.pay_min, j.pay_max, j.shift,
+              j.job_type, j.created_at, j.description,
+              a.id AS client_id, a.email AS client_email,
+              a.first_name AS client_first_name, a.last_name AS client_last_name,
+              (SELECT COUNT(*)::int FROM applications ap WHERE ap.job_id = j.id) AS app_count
+         FROM jobs j JOIN accounts a ON a.id = j.client_id
+         ${whereSql}
+         ORDER BY j.created_at DESC LIMIT 200`, params);
+    return sendJson(res, 200, {
+      ok: true,
+      jobs: r.rows.map(row => ({
+        id: row.id, title: row.title, companyName: row.company_name,
+        status: row.status, payMin: row.pay_min ? Number(row.pay_min) : null,
+        payMax: row.pay_max ? Number(row.pay_max) : null,
+        shift: row.shift, jobType: row.job_type,
+        createdAt: Number(row.created_at),
+        description: (row.description || '').slice(0, 300),
+        clientId: row.client_id, clientEmail: row.client_email,
+        clientName: `${row.client_first_name || ''} ${row.client_last_name || ''}`.trim(),
+        applicationCount: row.app_count,
+      })),
     });
   }
 
@@ -3080,7 +3364,7 @@ async function handleAdmin(req, res, urlPath) {
     const admin = await requireAdmin(req, res); if (!admin) return true;
     const r = await db.query(
       `SELECT j.id, j.title, j.description, j.company_name, j.created_at, j.status,
-              a.email AS client_email, a.first_name AS client_first_name
+              a.id AS client_id, a.email AS client_email, a.first_name AS client_first_name
          FROM jobs j JOIN accounts a ON a.id = j.client_id
         WHERE j.status = 'flagged' ORDER BY j.created_at DESC LIMIT 100`
     );
@@ -3089,52 +3373,419 @@ async function handleAdmin(req, res, urlPath) {
       jobs: r.rows.map(row => ({
         id: row.id, title: row.title, description: row.description,
         companyName: row.company_name, createdAt: Number(row.created_at),
-        status: row.status, clientEmail: row.client_email, clientFirstName: row.client_first_name,
+        status: row.status, clientId: row.client_id,
+        clientEmail: row.client_email, clientFirstName: row.client_first_name,
       })),
     });
   }
 
-  const jobDecisionMatch = urlPath.match(/^\/api\/admin\/jobs\/([a-z0-9_]+)\/(approve|remove)$/);
+  const jobDecisionMatch = urlPath.match(/^\/api\/admin\/jobs\/([a-z0-9_]+)\/(approve|remove|flag|close|reopen)$/);
   if (jobDecisionMatch && req.method === 'POST') {
     const admin = await requireAdmin(req, res); if (!admin) return true;
     const [_, jobId, action] = jobDecisionMatch;
-    const newStatus = action === 'approve' ? 'open' : 'removed';
+    const nextStatus = { approve: 'open', reopen: 'open', remove: 'removed', flag: 'flagged', close: 'closed' }[action];
+    const body = await readJsonBody(req);
+    const reason = String(body.reason || '').trim().slice(0, 500);
     await db.query('UPDATE jobs SET status = $1, updated_at = $2 WHERE id = $3',
-      [newStatus, Date.now(), jobId]);
+      [nextStatus, Date.now(), jobId]);
+    await auditAdmin(admin, `job.${action}`, 'job', jobId, reason);
+    return sendJson(res, 200, { ok: true, status: nextStatus });
+  }
+
+  // ------------------------------------------------------------
+  // Applications — all apps with filters
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/applications' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const status = (url.searchParams.get('status') || '').trim();
+    const where = []; const params = [];
+    if (['submitted', 'viewed', 'interview', 'trial', 'trialing', 'hired', 'rejected', 'withdrawn'].includes(status)) {
+      params.push(status); where.push(`ap.status = $${params.length}`);
+    }
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const r = await db.query(
+      `SELECT ap.id, ap.status, ap.rate, ap.created_at,
+              j.id AS job_id, j.title AS job_title,
+              va.id AS va_id, va.first_name AS va_first, va.last_name AS va_last, va.email AS va_email,
+              c.id  AS client_id, c.email AS client_email, c.company_name AS client_company
+         FROM applications ap
+         JOIN jobs j ON j.id = ap.job_id
+         JOIN accounts va ON va.id = ap.va_id
+         JOIN accounts c  ON c.id  = j.client_id
+         ${whereSql}
+         ORDER BY ap.created_at DESC LIMIT 200`, params);
+    return sendJson(res, 200, {
+      ok: true,
+      applications: r.rows.map(row => ({
+        id: row.id, status: row.status, rate: Number(row.rate),
+        createdAt: Number(row.created_at),
+        jobId: row.job_id, jobTitle: row.job_title,
+        vaId: row.va_id, vaName: `${row.va_first || ''} ${row.va_last || ''}`.trim(),
+        vaEmail: row.va_email,
+        clientId: row.client_id, clientEmail: row.client_email,
+        clientCompany: row.client_company,
+      })),
+    });
+  }
+
+  // ------------------------------------------------------------
+  // Forum moderation
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/forum' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const scope = (url.searchParams.get('scope') || 'all').trim();
+    const where = scope === 'flagged' ? "WHERE t.status = 'flagged'" : '';
+    const r = await db.query(
+      `SELECT t.id, t.title, t.body, t.category, t.status, t.views, t.last_reply_at, t.created_at,
+              a.id AS author_id, a.first_name, a.last_name, a.email,
+              (SELECT COUNT(*)::int FROM forum_replies r WHERE r.thread_id = t.id) AS reply_count
+         FROM forum_threads t JOIN accounts a ON a.id = t.author_id
+         ${where}
+         ORDER BY t.last_reply_at DESC LIMIT 150`);
+    return sendJson(res, 200, {
+      ok: true,
+      threads: r.rows.map(row => ({
+        id: row.id, title: row.title, body: (row.body || '').slice(0, 400),
+        category: row.category, status: row.status, views: row.views,
+        lastReplyAt: Number(row.last_reply_at), createdAt: Number(row.created_at),
+        authorId: row.author_id, authorEmail: row.email,
+        authorName: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+        replyCount: row.reply_count,
+      })),
+    });
+  }
+
+  const forumMatch = urlPath.match(/^\/api\/admin\/forum\/threads\/([a-z0-9_]+)\/(approve|close|flag|remove|reopen)$/);
+  if (forumMatch && req.method === 'POST') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const [, tid, action] = forumMatch;
+    const nextStatus = { approve: 'open', reopen: 'open', close: 'closed', flag: 'flagged', remove: 'removed' }[action];
+    const body = await readJsonBody(req);
+    await db.query('UPDATE forum_threads SET status = $1 WHERE id = $2', [nextStatus, tid]);
+    await auditAdmin(admin, `forum.${action}`, 'forum_thread', tid, String(body.reason || '').slice(0, 500));
+    return sendJson(res, 200, { ok: true, status: nextStatus });
+  }
+
+  // ------------------------------------------------------------
+  // Verifications queue
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/verifications' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const status = (url.searchParams.get('status') || 'pending').trim();
+    const params = []; const where = [];
+    if (['pending', 'approved', 'rejected'].includes(status)) { params.push(status); where.push(`v.status = $${params.length}`); }
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const r = await db.query(
+      `SELECT v.id, v.kind, v.status, v.submitted_data, v.decided_at, v.decision_note, v.created_at,
+              a.id AS account_id, a.email, a.first_name, a.last_name, a.role
+         FROM verifications v JOIN accounts a ON a.id = v.account_id
+         ${whereSql}
+         ORDER BY v.created_at DESC LIMIT 100`, params);
+    return sendJson(res, 200, {
+      ok: true,
+      verifications: r.rows.map(row => ({
+        id: row.id, kind: row.kind, status: row.status,
+        submittedData: row.submitted_data,
+        decidedAt: row.decided_at ? Number(row.decided_at) : null,
+        decisionNote: row.decision_note,
+        createdAt: Number(row.created_at),
+        accountId: row.account_id, accountEmail: row.email,
+        accountRole: row.role,
+        accountName: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+      })),
+    });
+  }
+
+  const verifMatch = urlPath.match(/^\/api\/admin\/verifications\/([a-z0-9_]+)\/(approve|reject)$/);
+  if (verifMatch && req.method === 'POST') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const [, vid, action] = verifMatch;
+    const body = await readJsonBody(req);
+    const newStatus = action === 'approve' ? 'approved' : 'rejected';
+    const note = String(body.note || '').trim().slice(0, 500);
+    const r = await db.query(
+      `UPDATE verifications SET status = $1, decided_by = $2, decided_at = $3, decision_note = $4
+       WHERE id = $5 RETURNING account_id, kind`, [newStatus, admin.id, Date.now(), note || null, vid]);
+    if (!r.rows[0]) return sendJson(res, 404, { ok: false });
+    // Approving an identity verification also flips the user's verified flag.
+    if (action === 'approve' && r.rows[0].kind === 'identity') {
+      await db.query('UPDATE accounts SET verified = TRUE WHERE id = $1', [r.rows[0].account_id]);
+    }
+    await auditAdmin(admin, `verification.${action}`, 'verification', vid, note, { kind: r.rows[0].kind });
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // ------------------------------------------------------------
+  // Disputes
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/disputes' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const status = (url.searchParams.get('status') || '').trim();
+    const where = []; const params = [];
+    if (['open', 'investigating', 'resolved', 'rejected'].includes(status)) {
+      params.push(status); where.push(`d.status = $${params.length}`);
+    }
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const r = await db.query(
+      `SELECT d.id, d.kind, d.subject, d.body, d.status, d.outcome, d.created_at, d.resolved_at,
+              o.id AS opener_id, o.email AS opener_email, o.first_name AS opener_first, o.last_name AS opener_last, o.role AS opener_role,
+              a.id AS against_id, a.email AS against_email, a.first_name AS against_first, a.last_name AS against_last, a.role AS against_role
+         FROM disputes d
+         JOIN accounts o ON o.id = d.opened_by
+         JOIN accounts a ON a.id = d.against_id
+         ${whereSql}
+         ORDER BY d.created_at DESC LIMIT 100`, params);
+    return sendJson(res, 200, {
+      ok: true,
+      disputes: r.rows.map(row => ({
+        id: row.id, kind: row.kind, subject: row.subject, body: row.body,
+        status: row.status, outcome: row.outcome,
+        createdAt: Number(row.created_at),
+        resolvedAt: row.resolved_at ? Number(row.resolved_at) : null,
+        opener: { id: row.opener_id, email: row.opener_email, name: `${row.opener_first || ''} ${row.opener_last || ''}`.trim(), role: row.opener_role },
+        against: { id: row.against_id, email: row.against_email, name: `${row.against_first || ''} ${row.against_last || ''}`.trim(), role: row.against_role },
+      })),
+    });
+  }
+
+  const disputeMatch = urlPath.match(/^\/api\/admin\/disputes\/([a-z0-9_]+)\/(investigate|resolve|reject)$/);
+  if (disputeMatch && req.method === 'POST') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const [, did, action] = disputeMatch;
+    const body = await readJsonBody(req);
+    const newStatus = { investigate: 'investigating', resolve: 'resolved', reject: 'rejected' }[action];
+    const outcome = String(body.outcome || '').trim().slice(0, 500) || null;
+    await db.query(
+      `UPDATE disputes SET status = $1, outcome = COALESCE($2, outcome),
+              resolved_by = CASE WHEN $1 IN ('resolved','rejected') THEN $3 ELSE resolved_by END,
+              resolved_at = CASE WHEN $1 IN ('resolved','rejected') THEN $4 ELSE resolved_at END,
+              updated_at = $4
+         WHERE id = $5`, [newStatus, outcome, admin.id, Date.now(), did]);
+    await auditAdmin(admin, `dispute.${action}`, 'dispute', did, outcome);
     return sendJson(res, 200, { ok: true, status: newStatus });
   }
 
+  // ------------------------------------------------------------
+  // Finance — invoices + revenue breakdown
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/finance/overview' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const DAY = 86400 * 1000;
+    const [byStatus, revenueTrend, topSpenders, topEarners] = await Promise.all([
+      db.query(`SELECT status, COUNT(*)::int AS n, COALESCE(SUM(total),0)::float AS s FROM invoices GROUP BY status`),
+      db.query(`
+        SELECT to_char(to_timestamp(created_at/1000) AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+               COALESCE(SUM(total),0)::float AS s
+          FROM invoices WHERE status = 'paid' AND created_at > $1
+         GROUP BY day ORDER BY day`, [Date.now() - 30 * DAY]),
+      db.query(`
+        SELECT c.id, c.email, c.first_name, c.last_name, c.company_name,
+               COALESCE(SUM(i.total),0)::float AS spent, COUNT(i.id)::int AS n
+          FROM accounts c JOIN invoices i ON i.client_id = c.id
+         WHERE i.status = 'paid'
+         GROUP BY c.id ORDER BY spent DESC LIMIT 5`),
+      db.query(`
+        SELECT v.id, v.email, v.first_name, v.last_name,
+               COALESCE(SUM(i.total),0)::float AS earned, COUNT(i.id)::int AS n
+          FROM accounts v JOIN invoices i ON i.va_id = v.id
+         WHERE i.status = 'paid'
+         GROUP BY v.id ORDER BY earned DESC LIMIT 5`),
+    ]);
+    return sendJson(res, 200, {
+      ok: true,
+      byStatus: byStatus.rows.map(r => ({ status: r.status, count: r.n, sum: r.s })),
+      revenueTrend: revenueTrend.rows.map(r => ({ day: r.day, sum: r.s })),
+      topSpenders: topSpenders.rows.map(r => ({
+        id: r.id, email: r.email, company: r.company_name,
+        name: `${r.first_name || ''} ${r.last_name || ''}`.trim(),
+        spent: r.spent, invoices: r.n,
+      })),
+      topEarners: topEarners.rows.map(r => ({
+        id: r.id, email: r.email,
+        name: `${r.first_name || ''} ${r.last_name || ''}`.trim(),
+        earned: r.earned, invoices: r.n,
+      })),
+    });
+  }
+
+  if (urlPath === '/api/admin/invoices' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const status = (url.searchParams.get('status') || '').trim();
+    const where = []; const params = [];
+    if (['draft', 'sent', 'paid', 'void'].includes(status)) { params.push(status); where.push(`i.status = $${params.length}`); }
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    const r = await db.query(
+      `SELECT i.id, i.invoice_no, i.issued_on, i.due_on, i.currency, i.total, i.status, i.created_at,
+              c.email AS client_email, c.company_name AS client_company,
+              v.email AS va_email, v.first_name AS va_first, v.last_name AS va_last
+         FROM invoices i JOIN accounts c ON c.id = i.client_id JOIN accounts v ON v.id = i.va_id
+         ${whereSql}
+         ORDER BY i.created_at DESC LIMIT 200`, params);
+    return sendJson(res, 200, {
+      ok: true,
+      invoices: r.rows.map(row => ({
+        id: row.id, invoiceNo: row.invoice_no,
+        issuedOn: row.issued_on, dueOn: row.due_on,
+        currency: row.currency, total: Number(row.total), status: row.status,
+        createdAt: Number(row.created_at),
+        clientEmail: row.client_email, clientCompany: row.client_company,
+        vaEmail: row.va_email, vaName: `${row.va_first || ''} ${row.va_last || ''}`.trim(),
+      })),
+    });
+  }
+
+  // ------------------------------------------------------------
+  // Support inbox — contact messages
+  // ------------------------------------------------------------
   if (urlPath === '/api/admin/contact-messages' && req.method === 'GET') {
     const admin = await requireAdmin(req, res); if (!admin) return true;
+    const status = (url.searchParams.get('status') || '').trim();
+    const where = status === 'unhandled' ? 'WHERE handled_at IS NULL'
+               : status === 'handled'   ? 'WHERE handled_at IS NOT NULL' : '';
     const r = await db.query(
-      'SELECT id, name, email, subject, body, created_at FROM contact_messages ORDER BY created_at DESC LIMIT 200'
+      `SELECT id, name, email, subject, body, created_at, handled_at, admin_note
+         FROM contact_messages ${where} ORDER BY created_at DESC LIMIT 200`
     );
     return sendJson(res, 200, {
       ok: true,
       messages: r.rows.map(row => ({
         id: row.id, name: row.name, email: row.email, subject: row.subject,
         body: row.body, createdAt: Number(row.created_at),
+        handledAt: row.handled_at ? Number(row.handled_at) : null,
+        adminNote: row.admin_note,
       })),
     });
   }
 
-  if (urlPath === '/api/admin/accounts' && req.method === 'GET') {
+  const contactMatch = urlPath.match(/^\/api\/admin\/contact-messages\/([a-z0-9_]+)\/(handle|reopen|note)$/);
+  if (contactMatch && req.method === 'POST') {
     const admin = await requireAdmin(req, res); if (!admin) return true;
-    const url = new URL(req.url, 'http://localhost');
-    const q = (url.searchParams.get('q') || '').trim().toLowerCase();
-    const params = [];
-    let where = '';
-    if (q) { params.push('%' + q + '%'); where = `WHERE LOWER(email) LIKE $1 OR LOWER(first_name || ' ' || last_name) LIKE $1`; }
+    const [, mid, action] = contactMatch;
+    const body = await readJsonBody(req);
+    if (action === 'handle') {
+      await db.query('UPDATE contact_messages SET handled_at = $1, handled_by = $2 WHERE id = $3',
+        [Date.now(), admin.id, mid]);
+    } else if (action === 'reopen') {
+      await db.query('UPDATE contact_messages SET handled_at = NULL, handled_by = NULL WHERE id = $1', [mid]);
+    } else if (action === 'note') {
+      await db.query('UPDATE contact_messages SET admin_note = $1 WHERE id = $2',
+        [String(body.note || '').slice(0, 2000) || null, mid]);
+    }
+    await auditAdmin(admin, `contact.${action}`, 'contact_message', mid, String(body.note || '').slice(0, 500));
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // ------------------------------------------------------------
+  // Audit log
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/audit' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const limit = Math.min(500, Math.max(10, parseInt(url.searchParams.get('limit') || '100', 10)));
+    const action = (url.searchParams.get('action') || '').trim();
+    const adminId = (url.searchParams.get('admin_id') || '').trim();
+    const where = []; const params = [];
+    if (action) { params.push(action + '%'); where.push(`action LIKE $${params.length}`); }
+    if (adminId) { params.push(adminId); where.push(`admin_id = $${params.length}`); }
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    params.push(limit);
     const r = await db.query(
-      `SELECT id, role, email, first_name, last_name, company_name, verified, created_at
-         FROM accounts ${where} ORDER BY created_at DESC LIMIT 200`, params);
+      `SELECT id, admin_id, admin_email, action, target_kind, target_id, note, meta, created_at
+         FROM admin_audit ${whereSql} ORDER BY created_at DESC LIMIT $${params.length}`, params);
     return sendJson(res, 200, {
       ok: true,
-      accounts: r.rows.map(row => ({
-        id: row.id, role: row.role, email: row.email,
-        firstName: row.first_name, lastName: row.last_name,
-        companyName: row.company_name, verified: !!row.verified,
+      entries: r.rows.map(row => ({
+        id: row.id, adminId: row.admin_id, adminEmail: row.admin_email,
+        action: row.action, targetKind: row.target_kind, targetId: row.target_id,
+        note: row.note, meta: row.meta, createdAt: Number(row.created_at),
+      })),
+    });
+  }
+
+  // ------------------------------------------------------------
+  // Announcements
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/announcements' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const r = await db.query(
+      `SELECT id, title, body, audience, severity, active, starts_at, ends_at, created_at
+         FROM announcements ORDER BY created_at DESC LIMIT 100`);
+    return sendJson(res, 200, {
+      ok: true,
+      announcements: r.rows.map(row => ({
+        id: row.id, title: row.title, body: row.body,
+        audience: row.audience, severity: row.severity, active: !!row.active,
+        startsAt: row.starts_at ? Number(row.starts_at) : null,
+        endsAt: row.ends_at ? Number(row.ends_at) : null,
         createdAt: Number(row.created_at),
+      })),
+    });
+  }
+
+  if (urlPath === '/api/admin/announcements' && req.method === 'POST') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const body = await readJsonBody(req);
+    const title = String(body.title || '').trim().slice(0, 200);
+    const text  = String(body.body  || '').trim().slice(0, 4000);
+    const audience = ['all', 'client', 'va'].includes(body.audience) ? body.audience : 'all';
+    const severity = ['info', 'warning', 'critical'].includes(body.severity) ? body.severity : 'info';
+    if (!title || !text) return sendJson(res, 400, { ok: false, error: 'Title and body are required.' });
+    const id = 'ann_' + crypto.randomBytes(8).toString('hex');
+    const now = Date.now();
+    await db.query(
+      `INSERT INTO announcements (id, title, body, audience, severity, active, created_by, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,TRUE,$6,$7,$7)`,
+      [id, title, text, audience, severity, admin.id, now]
+    );
+    await auditAdmin(admin, 'announcement.create', 'announcement', id, title);
+    return sendJson(res, 200, { ok: true, id });
+  }
+
+  const annMatch = urlPath.match(/^\/api\/admin\/announcements\/([a-z0-9_]+)\/(activate|deactivate|delete)$/);
+  if (annMatch && req.method === 'POST') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const [, aid, action] = annMatch;
+    if (action === 'delete') {
+      await db.query('DELETE FROM announcements WHERE id = $1', [aid]);
+    } else {
+      await db.query('UPDATE announcements SET active = $1, updated_at = $2 WHERE id = $3',
+        [action === 'activate', Date.now(), aid]);
+    }
+    await auditAdmin(admin, `announcement.${action}`, 'announcement', aid);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  // ------------------------------------------------------------
+  // System health / settings
+  // ------------------------------------------------------------
+  if (urlPath === '/api/admin/system' && req.method === 'GET') {
+    const admin = await requireAdmin(req, res); if (!admin) return true;
+    const [dbSize, admins, sessions, tables] = await Promise.all([
+      db.query(`SELECT pg_size_pretty(pg_database_size(current_database())) AS size`),
+      db.query(`SELECT id, email, first_name, last_name, created_at, last_seen_at
+                  FROM accounts WHERE role = 'admin' ORDER BY created_at ASC`),
+      db.query(`SELECT COUNT(*)::int AS n FROM sessions WHERE expires > $1`, [Date.now()]),
+      db.query(`SELECT COUNT(*)::int AS n FROM pg_tables WHERE schemaname = 'public'`),
+    ]);
+    return sendJson(res, 200, {
+      ok: true,
+      dbSize: dbSize.rows[0].size,
+      activeSessions: sessions.rows[0].n,
+      tableCount: tables.rows[0].n,
+      nodeVersion: process.version,
+      uptimeSec: Math.round(process.uptime()),
+      memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
+      env: {
+        hasResend: !!process.env.RESEND_API_KEY,
+        hasDatabase: !!process.env.DATABASE_URL,
+        noindex: NOINDEX,
+        port: PORT,
+      },
+      admins: admins.rows.map(a => ({
+        id: a.id, email: a.email,
+        name: `${a.first_name || ''} ${a.last_name || ''}`.trim(),
+        createdAt: Number(a.created_at),
+        lastSeenAt: a.last_seen_at ? Number(a.last_seen_at) : null,
+        isYou: a.id === admin.id,
       })),
     });
   }

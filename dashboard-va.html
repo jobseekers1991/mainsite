@@ -136,6 +136,9 @@
 (function(){
   fetch('/api/me').then(r => r.json()).then(d => {
     if (!d.ok || !d.user) return;
+    // Admins land here only if an older auth.html pointed them at the wrong
+    // dashboard. Bounce them to the admin console immediately.
+    if (d.user.role === 'admin') { location.replace('admin'); return; }
 
     const fn = (d.user.firstName || '').trim();
     const ln = (d.user.lastName || '').trim();

@@ -55,14 +55,28 @@ const DASH_ROLES = {
   admin: {
     user: { name: 'Trust &amp; Safety', role: 'Admin', img: 65, short: 'Admin' },
     nav: [
-      ['Moderation'],
-      ['overview', 'admin', 'fa-th-large', 'Overview'],
-      ['flagged', 'admin#flagged', 'fa-flag', 'Flagged Posts', 'flagged'],
-      ['verify', 'admin#verify', 'fa-id-card', 'Verifications', 'verify'],
-      ['disputes', 'admin#disputes', 'fa-balance-scale', 'Disputes', 'disputes'],
+      ['Dashboard'],
+      ['overview',     'admin#overview',       'fa-th-large',          'Overview'],
+      ['People'],
+      ['users',        'admin#users',          'fa-users',             'Users', 'users'],
+      ['verify',       'admin#verify',         'fa-id-card',           'Verifications', 'verify'],
+      ['Marketplace'],
+      ['jobs',         'admin#jobs',           'fa-briefcase',         'Jobs', 'jobsmod'],
+      ['flagged',      'admin#flagged',        'fa-flag',              'Flagged Posts', 'flagged'],
+      ['applications', 'admin#applications',   'fa-file-alt',          'Applications'],
+      ['forum',        'admin#forum',          'fa-comments',          'Forum'],
+      ['Money'],
+      ['finance',      'admin#finance',        'fa-chart-line',        'Finance'],
+      ['invoices',     'admin#invoices',       'fa-file-invoice-dollar', 'Invoices'],
+      ['disputes',     'admin#disputes',       'fa-balance-scale',     'Disputes', 'disputes'],
+      ['Platform'],
+      ['support',      'admin#support',        'fa-envelope-open-text','Support Inbox', 'support'],
+      ['announce',     'admin#announce',       'fa-bullhorn',          'Announcements'],
+      ['audit',        'admin#audit',          'fa-history',           'Audit Log'],
+      ['system',       'admin#system',         'fa-server',            'System'],
       ['Site'],
-      ['site', 'index', 'fa-globe', 'View Website'],
-      ['jobs', 'browse-jobs', 'fa-briefcase', 'Live Job Board'],
+      ['site',         'index',                'fa-globe',             'View Website'],
+      ['board',        'browse-jobs',          'fa-search',            'Live Job Board'],
     ],
   },
 };
@@ -84,11 +98,16 @@ function dashBadges(roleKey) {
     };
   }
   if (roleKey === 'admin') {
-    const a = Store.get('jsph-admin', seedAdmin);
+    // Live admin badge counts come from /api/admin/stats, stashed on window
+    // by admin.html once it loads. Falls back to zeros until then.
+    const a = (typeof window !== 'undefined' && window.__adminBadges) || {};
     return {
-      flagged: a.flagged.filter(x => x.status === 'open').length,
-      verify: a.verifications.filter(x => x.status === 'pending').length,
-      disputes: a.disputes.filter(x => x.status === 'open').length,
+      users:    a.users    || 0,
+      jobsmod:  a.jobsmod  || 0,
+      flagged:  a.flagged  || 0,
+      verify:   a.verify   || 0,
+      disputes: a.disputes || 0,
+      support:  a.support  || 0,
     };
   }
   return {
