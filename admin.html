@@ -445,11 +445,11 @@
   async function guard() {
     try {
       const r = await fetch('/api/me', { cache: 'no-store' });
-      if (r.status !== 200) { location.href = 'auth'; return false; }
+      if (r.status !== 200) { location.href = '/portal/login'; return false; }
       const { user } = await r.json();
       if (!user || user.role !== 'admin') {
         document.querySelector('.dash-content').innerHTML =
-          '<div class="dash-card" style="padding:2rem; text-align:center;"><h2>Admin only</h2><p>You need an admin account to see this console. Ask the site owner to run <code>node scripts/make-admin.js your@email</code>.</p><p><a href="auth" class="btn btn-primary">Back to sign in</a></p></div>';
+          '<div class="dash-card" style="padding:2rem; text-align:center;"><h2>Admin only</h2><p>You need an admin account to see this console. Ask the site owner to run <code>node scripts/make-admin.js your@email</code>.</p><p><a href="/portal/login" class="btn btn-primary">Operator sign in</a></p></div>';
         return false;
       }
       return true;

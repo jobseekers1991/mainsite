@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Operator Portal — Jobseekers.ph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --bg: #0B1120;
+      --panel: #111827;
+      --panel-2: #0F172A;
+      --border: #1F2937;
+      --text: #E5E7EB;
+      --muted: #94A3B8;
+      --accent: #38BDF8;
+      --accent-strong: #0EA5E9;
+      --danger: #F87171;
+      --ok: #34D399;
+      --focus: rgba(56,189,248,0.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      background-image:
+        radial-gradient(1200px 600px at 10% -20%, rgba(14,165,233,0.12), transparent 60%),
+        radial-gradient(900px 500px at 110% 120%, rgba(139,92,246,0.10), transparent 60%),
+        linear-gradient(180deg, #0B1120 0%, #0A0F1C 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .grid-bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(148,163,184,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse at center, #000 40%, transparent 85%);
+    }
+    .portal-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      background: linear-gradient(180deg, rgba(17,24,39,0.95) 0%, rgba(15,23,42,0.95) 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.25rem 2rem 1.75rem;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .brand {
+      display: flex; align-items: center; gap: 0.6rem;
+      color: var(--text); text-decoration: none;
+      font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em;
+    }
+    .brand .mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent) 0%, #6366F1 100%);
+      display: grid; place-items: center;
+      color: #0B1120; font-size: 1rem;
+      box-shadow: 0 6px 20px rgba(56,189,248,0.35);
+    }
+    .brand .dot { color: var(--accent); }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      margin-top: 1.5rem;
+      padding: 0.3rem 0.65rem;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.68rem; font-weight: 600;
+      color: var(--accent);
+      background: rgba(56,189,248,0.1);
+      border: 1px solid rgba(56,189,248,0.25);
+      border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .eyebrow .pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(56,189,248,0.15);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(56,189,248,0.15); }
+      50%      { box-shadow: 0 0 0 7px rgba(56,189,248,0.0); }
+    }
+    h1 {
+      margin: 0.6rem 0 0.35rem;
+      font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em;
+      color: #F8FAFC;
+    }
+    .sub {
+      margin: 0 0 1.75rem;
+      font-size: 0.875rem; color: var(--muted); line-height: 1.55;
+    }
+    .field { margin-bottom: 1rem; }
+    .field label {
+      display: block; margin-bottom: 0.4rem;
+      font-size: 0.75rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .input-wrap {
+      position: relative;
+      display: flex; align-items: center;
+    }
+    .input-wrap i.leading {
+      position: absolute; left: 0.9rem;
+      color: var(--muted); font-size: 0.85rem;
+      pointer-events: none;
+    }
+    .field input {
+      width: 100%;
+      padding: 0.75rem 0.9rem 0.75rem 2.4rem;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit; font-size: 0.925rem;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .field input::placeholder { color: #475569; }
+    .field input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--focus);
+      background: #0B1220;
+    }
+    .toggle-pw {
+      position: absolute; right: 0.6rem;
+      background: transparent; border: 0;
+      color: var(--muted); cursor: pointer;
+      padding: 0.4rem;
+      border-radius: 6px;
+    }
+    .toggle-pw:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+    .row-between {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 0.25rem 0 1.25rem;
+      font-size: 0.8125rem;
+    }
+    .row-between a { color: var(--accent); text-decoration: none; }
+    .row-between a:hover { text-decoration: underline; }
+    .checkbox {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      color: var(--muted); user-select: none; cursor: pointer;
+    }
+    .checkbox input {
+      width: 14px; height: 14px; accent-color: var(--accent);
+    }
+    .submit {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+      color: #0B1120; font-weight: 700; letter-spacing: 0.01em;
+      border: 0; border-radius: 10px;
+      font-family: inherit; font-size: 0.925rem;
+      cursor: pointer;
+      transition: transform 0.08s, box-shadow 0.15s, filter 0.15s;
+      box-shadow: 0 10px 25px -8px rgba(14,165,233,0.55);
+    }
+    .submit:hover:not(:disabled) { filter: brightness(1.08); }
+    .submit:active:not(:disabled) { transform: translateY(1px); }
+    .submit:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .alert {
+      display: none;
+      margin-bottom: 1rem;
+      padding: 0.7rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.85rem; line-height: 1.5;
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.35);
+      color: #FCA5A5;
+    }
+    .alert.show { display: block; }
+
+    .foot {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.75rem; color: var(--muted);
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    .foot a { color: var(--muted); text-decoration: none; }
+    .foot a:hover { color: var(--accent); }
+    .foot .env-tag {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.18rem 0.55rem;
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.25);
+      color: var(--ok);
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .foot .env-tag .dotdot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--ok);
+    }
+
+    @media (max-width: 480px) {
+      .portal-card { padding: 1.75rem 1.25rem 1.25rem; border-radius: 16px; }
+      h1 { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <main class="portal-card" role="main">
+    <a class="brand" href="/">
+      <span class="mark"><i class="fas fa-shield-halved"></i></span>
+      Jobseekers<span class="dot">.ph</span>
+    </a>
+
+    <span class="eyebrow"><span class="pulse"></span> Operator Portal</span>
+    <h1>Sign in to admin console</h1>
+    <p class="sub">Restricted access. All actions in this console are recorded in the audit log.</p>
+
+    <div id="alert" class="alert" role="alert" aria-live="polite"></div>
+
+    <form id="portalLoginForm" novalidate>
+      <div class="field">
+        <label for="email">Operator email</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope leading"></i>
+          <input
+            id="email" name="email" type="email"
+            placeholder="admin@jobseekers.ph"
+            autocomplete="username"
+            required autofocus
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock leading"></i>
+          <input
+            id="password" name="password" type="password"
+            placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+            autocomplete="current-password"
+            required
+          />
+          <button type="button" class="toggle-pw" id="togglePw" aria-label="Show password">
+            <i class="fas fa-eye" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="row-between">
+        <label class="checkbox">
+          <input type="checkbox" id="remember" />
+          Keep me signed in
+        </label>
+        <a href="/forgot-password">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="submit" id="submitBtn">
+        <i class="fas fa-arrow-right-to-bracket" style="margin-right:0.4rem;"></i>
+        Enter console
+      </button>
+    </form>
+
+    <div class="foot">
+      <a href="/"><i class="fas fa-chevron-left" style="margin-right:0.3rem;"></i>Back to public site</a>
+      <span class="env-tag"><span class="dotdot"></span>Secure</span>
+    </div>
+  </main>
+
+<script>
+(function(){
+  'use strict';
+  const form   = document.getElementById('portalLoginForm');
+  const btn    = document.getElementById('submitBtn');
+  const alertBox = document.getElementById('alert');
+  const toggle = document.getElementById('togglePw');
+  const pw     = document.getElementById('password');
+
+  // If already signed in as admin, skip straight to the console.
+  fetch('/api/me', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { if (d && d.user && d.user.role === 'admin') location.replace('/admin'); })
+    .catch(() => {});
+
+  toggle.addEventListener('click', () => {
+    const show = pw.type === 'password';
+    pw.type = show ? 'text' : 'password';
+    toggle.querySelector('i').className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+  });
+
+  function showError(msg) {
+    alertBox.textContent = msg;
+    alertBox.classList.add('show');
+  }
+  function clearError() {
+    alertBox.classList.remove('show');
+    alertBox.textContent = '';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError();
+    const email    = document.getElementById('email').value.trim();
+    const password = pw.value;
+    if (!email || !password) {
+      showError('Enter your operator email and password.');
+      return;
+    }
+
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:0.4rem;"></i>Signing in…';
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // `portal: true` tells the server to reject non-admin accounts before
+        // issuing a session cookie. See server.js /api/login.
+        body: JSON.stringify({ email, password, portal: true }),
+      });
+      const payload = await res.json().catch(() => ({ ok: false, error: 'Unexpected response.' }));
+      if (!res.ok || !payload.ok) {
+        showError(payload.error || 'Email or password is incorrect.');
+        return;
+      }
+      location.replace('/admin');
+    } catch (err) {
+      showError('Could not reach the server. Check your connection and try again.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  });
+})();
+</script>
+</body>
+</html>

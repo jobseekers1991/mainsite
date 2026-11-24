@@ -328,6 +328,12 @@ async function handleAuth(req, res, urlPath) {
     if (!account || !verifyPassword(password, account.passwordSalt, account.passwordHash)) {
       return sendJson(res, 401, { ok: false, error: 'Email or password is incorrect.' });
     }
+    // Admin portal: /portal/login POSTs { portal: true }. Reject anyone who
+    // isn't an admin before issuing a session so a VA/client who guesses the
+    // URL never gets a cookie through this door.
+    if (body.portal && account.role !== 'admin') {
+      return sendJson(res, 403, { ok: false, error: 'This portal is for admin accounts only.' });
+    }
     // Admin-suspended accounts can't start a new session. Existing sessions are
     // cleared by the suspend action, so this is the backstop.
     const sus = await db.query('SELECT suspended, suspend_reason FROM accounts WHERE id = $1', [account.id]);
